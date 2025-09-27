@@ -1,0 +1,34 @@
+{
+  "authors": [
+    {
+      "stuNum": "2577390",
+      "name": "Lebo Kharafu"
+    },
+    {
+      "stuNum": "DevTeamMember1StudentNumber",
+      "name": "DevTeamMember1Name"
+    },
+    {
+      "stuNum": "DevTeamMember2StudentNumber",
+      "name": "DevTeamMember2Name"
+    },
+    {
+      "stuNum": "DevTeamMember2StudentNumber",
+      "name": "DevTeamMember2Name"
+    }
+  ],
+  "credits": [
+    {
+      "resource": "Church Of St Peter Stourton",
+      "link": "https://skfb.ly/oGNzU",
+      "credit": "\"Church Of St Peter Stourton\" (https://skfb.ly/oGNzU) by artfletch is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+      "file": "church_of_st_peter_stourton.glb"
+    },
+    {
+      "resource": "Beast Hunter Character Model",
+      "link": "https://skfb.ly/ooJIJ",
+      "credit": "\"Beast Hunter Character Model\" (https://skfb.ly/ooJIJ) by RedDevon is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+      "file": "beast_hunter_character_model.glb"
+    }
+  ]
+}
