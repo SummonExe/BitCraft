@@ -25,7 +25,7 @@ async function createCharacter(scene, world) {
       (gltf) => {
         const character = gltf.scene;
         character.position.set(0, 0, 0); // Start on ground
-        character.scale.set(1, 1, 1); // Adjust if needed
+        character.scale.set(1, 1, 1.0); // Adjust if needed
         
         scene.add(character);
 
