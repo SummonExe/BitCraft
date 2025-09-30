@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "deploy": "npm run build && git add . && git commit -m 'Deploy to gh-pages' && git subtree push --prefix dist origin gh-pages"
   },
   "devDependencies": {
     "vite": "^7.1.7"
