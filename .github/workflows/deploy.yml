@@ -4,9 +4,9 @@ name: Deploy static content to Pages
 on:
   # Runs on pushes and pull_request targeting the default branch
   push:
-    branches: [main, develop/Lebo]
+    branches: [main]
   pull_request:
-    branches: [main, develop/Lebo]
+    branches: [main]
 
 
   # Allows you to run this workflow manually from the Actions tab
