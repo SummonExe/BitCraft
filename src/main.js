@@ -20,7 +20,7 @@ async function init() {
     console.error('Texture loading failed:', error);
   });
   const groundMaterial = new MeshStandardMaterial({ map: groundTexture, side: DoubleSide });
-  const groundGeometry = new PlaneGeometry(1000, 1000);
+  const groundGeometry = new PlaneGeometry(250, 250);
   const ground = new Mesh(groundGeometry, groundMaterial);
   ground.rotation.x = Math.PI / 2;
   scene.add(ground);
