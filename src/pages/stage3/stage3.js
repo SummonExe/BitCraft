@@ -1,6 +1,6 @@
 import { Clock, Scene, PerspectiveCamera, WebGLRenderer, Mesh, PlaneGeometry, DoubleSide, TextureLoader, MeshStandardMaterial, AmbientLight, Vector3 } from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
-import Character from './assets/character/undercover_cop/character.js';
+import Character from '../../assets/character/undercover_cop/character.js';
 
 let clock = new Clock();
 

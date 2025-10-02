@@ -12,10 +12,10 @@ export default defineConfig({
       },
     },
   },
-  assetsInclude: ['**/*.wasm'], // Include WASM files in the build
+  assetsInclude: ['**/*.wasm',"**/*.glb","**/*.fbx","**/*.gltf"],
   server: {
     fs: {
-      strict: false, // Allow serving files outside root for WASM
+      strict: false, 
     },
   },
 });
