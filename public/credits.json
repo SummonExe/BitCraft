@@ -22,13 +22,32 @@
       "resource": "Church Of St Peter Stourton",
       "link": "https://skfb.ly/oGNzU",
       "credit": "\"Church Of St Peter Stourton\" (https://skfb.ly/oGNzU) by artfletch is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
-      "file": "church_of_st_peter_stourton.glb"
+      "file": ["church_of_st_peter_stourton.glb"]
     },
     {
       "resource": "Beast Hunter Character Model",
       "link": "https://skfb.ly/ooJIJ",
       "credit": "\"Beast Hunter Character Model\" (https://skfb.ly/ooJIJ) by RedDevon is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
-      "file": "beast_hunter_character_model.glb"
+      "file": ["beast_hunter_character_model.glb"]
+    },
+    {
+      "resource": "Jack Of Blade",
+      "link": "https://skfb.ly/oxyq9",
+      "credit": "\"Jack Of Blades\" (https://skfb.ly/oxyq9) by FrancisLam. is licensed under CC Attribution-NonCommercial-ShareAlike (http://creativecommons.org/licenses/by-nc-sa/4.0/).",
+      "file": ["jack_of_blades.glb","jack-of-blades.zip"]
+    },
+    {
+      "resource": "Undercover Cop - Animated",
+      "link": "https://skfb.ly/o87Uu",
+      "credit": "\"Undercover Cop - Animated\" (https://skfb.ly/o87Uu) by tonyflanagan is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+      "file": ["undercover_cop_-_animated.glb","undercover_cop_-_animated.zip"]
+    },
+    {
+      "resource": "Stone Pavement Ground Tile",
+      "link": "https://opengameart.org/content/stone-pavement-ground-tile",
+      "credit": "\"Stone Pavement Ground Tile\" (https://opengameart.org/content/stone-pavement-ground-tile) by Saroman is licensed under  Creative Commons Attribution 3.0 Unported license (https://creativecommons.org/licenses/by/3.0/).",
+      "file": ["Cobblestone.png"]
     }
+
   ]
 }
