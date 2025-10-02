@@ -17,7 +17,10 @@ export default defineConfig({
 		"**/*.glb",
 		"**/*.fbx",
 		"**/*.gltf",
-		"**/*.json",
+		"**/*.mp3",
+		"**/*.mp4",
+		"**/*.m4a",
+		"**/*.wav",
 	],
 	server: {
 		fs: {

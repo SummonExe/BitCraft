@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import creditsData from '/public/credits.json' assert { type: 'json' };
+import creditsData from './credits.json' assert { type: 'json' };
 
 const canvasContainer = document.getElementById('canvasContainer');
 const canvas = document.getElementById('bgCanvas');
