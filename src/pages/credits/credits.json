@@ -59,6 +59,12 @@
 			"link": "https://www.mixamo.com/#/?page=1&query=magic&type=Motion%2CMotionPack",
 			"credit": "\"Standing 2H Magic Attack\" Copyright © 2025 Adobe Systems Incorporated. All rights reserved",
 			"file": ["Standing 2H Magic Area Attack 02.fbx"]
+		},
+		{
+			"resource": "Church Of St Peter Stourton",
+			"link": "https://skfb.ly/oGNzU",
+			"credit": "\"Church Of St Peter Stourton\" (https://skfb.ly/oGNzU) by artfletch is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["church_of_st_peter_stourton.glb"]
 		}
 	]
 }
