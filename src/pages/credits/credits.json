@@ -65,6 +65,31 @@
 			"link": "https://skfb.ly/oGNzU",
 			"credit": "\"Church Of St Peter Stourton\" (https://skfb.ly/oGNzU) by artfletch is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
 			"file": ["church_of_st_peter_stourton.glb"]
+		},
+		{
+			"resource": "Horror corridor 3",
+			"link": "https://sketchfab.com/3d-models/horror-corridor-3-e03a192de67d442ebdf42f43a8a2d37a",
+			"credit": "\"Horror corridor 3\" (https://sketchfab.com/3d-models/horror-corridor-3-e03a192de67d442ebdf42f43a8a2d37a) by Katydid is licensed under Free Standard",
+			"file": ["horror_corridor_3.glb"]
+		},
+		{
+			"resource": "Horror corridor for game developers",
+			"link": "https://skfb.ly/pAQCE",
+			"credit": "\"Horror corridor for game developers\" (https://skfb.ly/pAQCE) by Katydid is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["horror_corridor_for_game_developers.glb"]
+		}
+		,
+		{
+			"resource": "little-girl-stylised",
+			"link": "https://www.cgtrader.com/free-3d-models/character/child/little-girl-stylised",
+			"credit": "\"little-girl-stylised\" (https://www.cgtrader.com/free-3d-models/character/child/little-girl-stylised) ...",
+			"file": ["uploads_files_5589376_Little_Girl_OBJ (2).zip"]
+		},
+		{
+			"resource": "Witch",
+			"link": "(https://skfb.ly/oAHKM",
+			"credit": "\"Witch\" (https://skfb.ly/oAHKM) by LxNazarov is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["witch.zip"]
 		}
 	]
 }
