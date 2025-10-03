@@ -58,16 +58,22 @@ async function init() {
   let activeBuildingRoots = [];
   let flashingObjects = [];
   let doorMixers = [];
+  let coins = [];
+  let score = 0;
+  let scoreElement;
 
   const loader = new GLTFLoader();
 
-  // building loader
+  // --------------------------
+  // BUILDING LOADER
+  // --------------------------
   function loadBuilding(url, positionOffset, name = "", targetScale = null) {
     return new Promise((resolve) => {
       loader.load(url, (gltf) => {
         const building = gltf.scene;
         if (name) building.name = name;
         building.position.copy(positionOffset);
+
         if (name === "bedroom") {
           building.position.y = 0;
           building.scale.set(0.5, 0.5, 0.5);
@@ -116,7 +122,9 @@ async function init() {
     });
   }
 
-  // flashing objects
+  // --------------------------
+  // FLASHING MODEL
+  // --------------------------
   function loadFlashingModel(url, position) {
     loader.load(url, (gltf) => {
       const model = gltf.scene;
@@ -137,7 +145,6 @@ async function init() {
       flashingObjects.push(model);
     }, undefined, (err) => console.error("Failed to load flashing model:", err));
   }
-
   function updateFlashing(delta) {
     for (const obj of flashingObjects) {
       obj.userData.flashTime += delta * 5;
@@ -148,7 +155,9 @@ async function init() {
     }
   }
 
-  // door
+  // --------------------------
+  // DOORS
+  // --------------------------
   function loadDoorModel(url, position) {
     loader.load(url, (gltf) => {
       const door = gltf.scene;
@@ -177,88 +186,21 @@ async function init() {
       }
     }, undefined, (err) => console.error("Failed to load door model:", err));
   }
-
   function updateDoors(delta) {
     for (const mixer of doorMixers) mixer.update(delta);
   }
 
-  // minimap
+  // --------------------------
+  // MINIMAP
+  // --------------------------
   let miniMap = null;
   function initMiniMap() {
     miniMap = new MiniMap(renderer, scene, character);
   }
 
-  // unload helpers
-  function unloadActiveBuilding() {
-    for (const col of activeColliders) {
-      try {
-        world.removeCollider(col, true);
-      } catch (e) {
-        try { world.removeCollider(col); } catch (err) {}
-      }
-    }
-    activeColliders.length = 0;
-
-    for (const root of activeBuildingRoots) {
-      root.traverse((node) => {
-        if (node.isMesh) {
-          try { if (node.geometry) node.geometry.dispose?.(); } catch (e) {}
-          try {
-            if (node.material) {
-              if (Array.isArray(node.material)) {
-                node.material.forEach(m => {
-                  if (m.map) m.map.dispose?.();
-                  m.dispose?.();
-                });
-              } else {
-                if (node.material.map) node.material.map.dispose?.();
-                node.material.dispose?.();
-              }
-            }
-          } catch (e) {}
-        }
-      });
-      scene.remove(root);
-    }
-    activeBuildingRoots.length = 0;
-    flashingObjects.length = 0;
-    doorMixers.length = 0;
-  }
-
-  // scene switch
-  async function switchScene(filePath, name = "") {
-    console.log("Switching scene to:", name);
-    isSwitching = true;
-    unloadActiveBuilding();
-    const targetScale = name === "bedroom" ? new Vector3(0.5, 0.5, 0.5) : new Vector3(1, 1, 1);
-    mazeSize = await loadBuilding(filePath, new Vector3(0, name === "bedroom" ? 0 : -50, 0), name, targetScale);
-
-    character.rigidBody.setTranslation({ x: 0, y: 2, z: 0 }, true);
-    character.model.scale.set(1.5, 1.5, 1.5);
-    character.rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
-    character.rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
-    character.update(0);
-    updateCamera(0);
-    isSwitching = false;
-  }
-
-  // initial building
-  async function loadInitialScene() {
-    mazeSize = await loadBuilding('../../assets/models/maze_room.glb', new Vector3(0, -50, 0), "maze_room");
-  }
-
-  // arrows + doors
-  loadFlashingModel('../../assets/models/arrow.glb', new Vector3(-45.78, 0.60, -76.07));
-  loadFlashingModel('../../assets/models/arrow.glb', new Vector3(-45.78, 0.60, 30.00));
-  loadDoorModel('../../assets/models/door_wood.glb', new Vector3(-28.28, -48.51, -74.33));
-
-  // ---------------------------
-  // COINS + SCORE
-  // ---------------------------
-  let coins = [];
-  let score = 0;
-  let scoreElement;
-
+  // --------------------------
+  // COINS
+  // --------------------------
   scoreElement = document.createElement("div");
   scoreElement.style.position = "absolute";
   scoreElement.style.top = "10px";
@@ -293,13 +235,6 @@ async function init() {
       });
     }, undefined, (err) => console.error("Failed to load coin:", err));
   }
-
-  loadCoin('../../assets/models/coin_point.glb', new Vector3(-35, -21, -145));
-  loadCoin('../../assets/models/coin_point.glb', new Vector3(-45, 2, -105));
-  loadCoin('../../assets/models/coin_point.glb', new Vector3(-45, 2, -25));
-  loadCoin('../../assets/models/coin_point.glb', new Vector3(-30, 2, 25));
-  loadCoin('../../assets/models/coin_point.glb', new Vector3(24, 2, 25));
-
   function updateCoins(delta, pos) {
     for (let i = coins.length - 1; i >= 0; i--) {
       const coin = coins[i];
@@ -324,10 +259,77 @@ async function init() {
     }
   }
 
+  // --------------------------
+  // UNLOAD
+  // --------------------------
+  function unloadActiveBuilding() {
+    for (const col of activeColliders) {
+      try { world.removeCollider(col, true); }
+      catch (e) { try { world.removeCollider(col); } catch {} }
+    }
+    activeColliders.length = 0;
+
+    for (const root of activeBuildingRoots) {
+      root.traverse((node) => {
+        if (node.isMesh) {
+          try { if (node.geometry) node.geometry.dispose?.(); } catch {}
+          try {
+            if (node.material) {
+              if (Array.isArray(node.material)) {
+                node.material.forEach(m => { if (m.map) m.map.dispose?.(); m.dispose?.(); });
+              } else {
+                if (node.material.map) node.material.map.dispose?.();
+                node.material.dispose?.();
+              }
+            }
+          } catch {}
+        }
+      });
+      scene.remove(root);
+    }
+    activeBuildingRoots.length = 0;
+    flashingObjects.length = 0;
+    doorMixers.length = 0;
+  }
+
+  // --------------------------
+  // SCENE SWITCHING
+  // --------------------------
+  async function switchScene(filePath, name = "") {
+    console.log("Switching scene to:", name);
+    isSwitching = true;
+    unloadActiveBuilding();
+    const targetScale = name === "bedroom" ? new Vector3(0.5, 0.5, 0.5) : new Vector3(1, 1, 1);
+    mazeSize = await loadBuilding(filePath, new Vector3(0, name === "bedroom" ? 0 : -50, 0), name, targetScale);
+
+    character.rigidBody.setTranslation({ x: 0, y: 2, z: 0 }, true);
+    character.model.scale.set(1.5, 1.5, 1.5);
+    character.rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    character.rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
+    character.update(0);
+    updateCamera(0);
+    isSwitching = false;
+  }
+
+  // --------------------------
+  // INITIAL LOAD
+  // --------------------------
+  async function loadInitialScene() {
+    mazeSize = await loadBuilding('../../assets/models/maze_room.glb', new Vector3(0, -50, 0), "maze_room");
+  }
+
+  loadFlashingModel('../../assets/models/arrow.glb', new Vector3(-45.78, 0.60, -76.07));
+  loadFlashingModel('../../assets/models/arrow.glb', new Vector3(-45.78, 0.60, 30.00));
+  loadDoorModel('../../assets/models/door_wood.glb', new Vector3(-28.28, -48.51, -74.33));
+  loadCoin('../../assets/models/coin_point.glb', new Vector3(-35, -21, -145));
+  loadCoin('../../assets/models/coin_point.glb', new Vector3(-45, 2, -105));
+  loadCoin('../../assets/models/coin_point.glb', new Vector3(-45, 2, -25));
+  loadCoin('../../assets/models/coin_point.glb', new Vector3(-30, 2, 25));
+  loadCoin('../../assets/models/coin_point.glb', new Vector3(24, 2, 25));
+
   await loadInitialScene();
   initMiniMap();
 
-  // camera update
   function updateCamera(delta) {
     if (!character.model) return;
     const rotatedOffset = cameraOffset.clone().applyAxisAngle(
@@ -340,7 +342,6 @@ async function init() {
     camera.lookAt(lookTarget);
   }
 
-  // animate
   function animate() {
     const delta = clock.getDelta();
     if (!isSwitching) {
@@ -349,9 +350,7 @@ async function init() {
       updateFlashing(delta);
       updateDoors(delta);
     }
-
     updateCamera(delta);
-
     renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
     renderer.setScissor(0, 0, window.innerWidth, window.innerHeight);
     renderer.setScissorTest(true);
@@ -359,10 +358,7 @@ async function init() {
 
     if (character.model) {
       const pos = character.model.position;
-      //console.log(`x:${pos.z}, y: ${pos.y}, z:${pos.z}`)
       if (miniMap) miniMap.update(pos);
-
-      // update coins
       updateCoins(delta, pos);
 
       if (currentScene === "maze") {
