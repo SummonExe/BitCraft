@@ -1,50 +1,43 @@
-import * as THREE from 'three';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import RAPIER from '@dimforge/rapier3d-compat';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import * as THREE from 'three';
 
-function createSphere(scene, world) {
-  const sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
-  const sphereMaterial = new THREE.MeshBasicMaterial({ color: 0xff0000 });
-  const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMaterial);
-  sphereMesh.position.set(0, 5, 0);
-  scene.add(sphereMesh);
+export default class Building {
+  constructor(world, scene, position) {
+    this.scene = scene;
+    this.position = position;
+    this.world = world;
 
-  const sphereBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 5, 0);
-  const sphereBody = world.createRigidBody(sphereBodyDesc);
-  const sphereShape = RAPIER.ColliderDesc.ball(1);
-  world.createCollider(sphereShape, sphereBody);
-
-  return { mesh: sphereMesh, body: sphereBody };
-}
-
-async function createCharacter(scene, world) {
-  return new Promise((resolve) => {
     const loader = new GLTFLoader();
-    loader.load(
-      '../assets/models/characters/beast_hunter/beast_hunter_character_model.glb', // Updated path
-      (gltf) => {
-        const character = gltf.scene;
-        character.position.set(0, 0, 0); // Start on ground
-        character.scale.set(1, 1, 1.0); // Adjust if needed
-        
-        scene.add(character);
+    loader.load('/src/assets/scene/church/church_of_st_peter_stourton.glb', (gltf) => {
+      this.model = gltf.scene;
+      this.model.position.copy(position);
+      this.model.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      scene.add(this.model);
 
-        const characterBodyDesc = RAPIER.RigidBodyDesc.dynamic().setTranslation(0, 1, 0);
-        const characterBody = world.createRigidBody(characterBodyDesc);
-        const characterShape = RAPIER.ColliderDesc.cuboid(0.5, 1, 0.5);
-        world.createCollider(characterShape, characterBody);
+      // Physics setup for static building
+      const rigidBodyDesc = new RAPIER.RigidBodyDesc(RAPIER.RigidBodyType.Fixed)
+        .setTranslation(position.x, position.y, position.z);
+      this.rigidBody = world.createRigidBody(rigidBodyDesc);
 
-        console.log('Character loaded:', character);
-        resolve({ mesh: character, body: characterBody });
-      },
-      (progress) => {
-        console.log('Loading progress:', (progress.loaded / progress.total * 100) + '%');
-      },
-      (error) => {
-        console.error('Error loading character:', error);
-      }
-    );
-  });
+      // Approximate collider for the church (adjust size based on model scale)
+      const colliderDesc = RAPIER.ColliderDesc.cuboid(5, 5, 5); // Rough size, adjust as needed
+      world.createCollider(colliderDesc, this.rigidBody);
+    }, undefined, (error) => {
+      console.error('GLTF loading error for building:', error);
+    });
+  }
+
+  update(delta) {
+    // No dynamic updates needed for a static building
+    if (this.rigidBody) {
+      const position = this.rigidBody.translation();
+      this.model.position.set(position.x, position.y, position.z);
+    }
+  }
 }
-
-export { createSphere, createCharacter };   
