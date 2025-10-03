@@ -13,6 +13,9 @@ export default class Character {
     this.animations = {};
     this.currentAction = null;
 
+    this.rotationY = 0;
+    this.rotationSpeed = Math.PI;
+
     const loader = new GLTFLoader();
     loader.load('/src/assets/character/undercover_cop/undercover_cop_-_animated.glb', (gltf) => {
       this.model = gltf.scene;
@@ -32,7 +35,7 @@ export default class Character {
       // Temporary ground collider
       const groundBodyDesc = new RAPIER.RigidBodyDesc(RAPIER.RigidBodyType.Fixed).setTranslation(0, 0, 0);
       const groundBody = world.createRigidBody(groundBodyDesc);
-      const groundColliderDesc = RAPIER.ColliderDesc.cuboid(125, 0.1, 125);
+      const groundColliderDesc = RAPIER.ColliderDesc.cuboid(5000, 0.1, 5000);
       world.createCollider(groundColliderDesc, groundBody);
 
       // Animation setup with debugging
@@ -60,42 +63,34 @@ export default class Character {
 
     // Controls setup
     this.keys = {};
-    this.targetRotation = 0;
-    document.addEventListener('keydown', (e) => this.keys[e.key] = true);
-    document.addEventListener('keyup', (e) => this.keys[e.key] = false);
+    document.addEventListener('keydown', (e) => { this.keys[e.key] = true; });
+    document.addEventListener('keyup', (e) => { this.keys[e.key] = false; });
   }
 
   update(delta) {
-    // Basic physics update
-    if (this.rigidBody) {
-      const position = this.rigidBody.translation();
-      this.model.position.set(position.x, position.y, position.z);
+    this.isMoving = false;
+
+    if (this.keys['a'] || this.keys['ArrowLeft']) {
+      this.rotationY += this.rotationSpeed * delta;
+    }
+    if (this.keys['d'] || this.keys['ArrowRight']) {
+      this.rotationY -= this.rotationSpeed * delta;
     }
 
-    // Control logic with movement detection and rotation
-    this.isMoving = false;
-    let rotationSpeed = 5 * delta;
+    if (this.model) {
+      this.model.rotation.y = this.rotationY;
+    }
 
     if (this.rigidBody) {
+      const forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), this.rotationY);
+
       if (this.keys['w'] || this.keys['ArrowUp']) {
-        this.rigidBody.applyImpulse({ x: 0, y: 0, z: this.moveRate }, true);
+        this.rigidBody.applyImpulse({ x: forward.x * this.moveRate, y: 0, z: forward.z * this.moveRate }, true);
         this.isMoving = true;
-        this.targetRotation = 0;
       }
       if (this.keys['s'] || this.keys['ArrowDown']) {
-        this.rigidBody.applyImpulse({ x: 0, y: 0, z: -this.moveRate }, true);
+        this.rigidBody.applyImpulse({ x: -forward.x * this.moveRate, y: 0, z: -forward.z * this.moveRate }, true);
         this.isMoving = true;
-        this.targetRotation = Math.PI;
-      }
-      if (this.keys['a'] || this.keys['ArrowLeft']) {
-        this.rigidBody.applyImpulse({ x: this.moveRate, y: 0, z: 0 }, true);
-        this.isMoving = true;
-        this.targetRotation = Math.PI / 2;
-      }
-      if (this.keys['d'] || this.keys['ArrowRight']) {
-        this.rigidBody.applyImpulse({ x: -this.moveRate, y: 0, z: 0 }, true);
-        this.isMoving = true;
-        this.targetRotation = -Math.PI / 2;
       }
 
       // Stop gliding when no keys are pressed
@@ -107,14 +102,12 @@ export default class Character {
           this.rigidBody.setLinvel({ x: 0, y: linvel.y, z: 0 }, true); // Stop completely if near zero
         }
       }
+    }
 
-      // Smoothly interpolate rotation
-      if (this.model) {
-        const currentRotation = this.model.rotation.y;
-        const difference = this.targetRotation - currentRotation;
-        const shortestAngle = ((difference + Math.PI) % (2 * Math.PI)) - Math.PI;
-        this.model.rotation.y += shortestAngle * rotationSpeed;
-      }
+    // Sync model with physics
+    if (this.rigidBody && this.model) {
+      const pos = this.rigidBody.translation();
+      this.model.position.set(pos.x, pos.y - 1, pos.z); // Adjust y if needed for model offset
     }
 
     // Animation logic with improved transitions

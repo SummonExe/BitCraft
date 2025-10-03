@@ -3,6 +3,7 @@ import RAPIER from '@dimforge/rapier3d-compat';
 import Character from '../../assets/character/undercover_cop/character.js';
 
 let clock = new Clock();
+let isFirstPerson = false;
 
 async function init() {
   await RAPIER.init();
@@ -20,7 +21,7 @@ async function init() {
     console.error('Texture loading failed:', error);
   });
   const groundMaterial = new MeshStandardMaterial({ map: groundTexture, side: DoubleSide });
-  const groundGeometry = new PlaneGeometry(250, 250);
+  const groundGeometry = new PlaneGeometry(10000, 10000);
   const ground = new Mesh(groundGeometry, groundMaterial);
   ground.rotation.x = Math.PI / 2;
   scene.add(ground);
@@ -33,25 +34,15 @@ async function init() {
   const character = new Character(world, scene, { x: 0, y: 2, z: 0 });
 
   // Move offset to a higher scope
-  const offset = new Vector3(0, 3, -5);
+  const thirdPersonOffset = new Vector3(0, 3, -5);
+  const firstPersonOffset = new Vector3(0, 1.5, 1.5); // Eye-level offset
 
-  // Wait for model to load before setting up camera
-  function setupCamera() {
-    camera.position.copy(character.model.position).add(offset);
-    camera.lookAt(character.model.position);
-  }
-  if (character.model) {
-    setupCamera();
-  } else {
-    const checkModel = setInterval(() => {
-      if (character.model) {
-        setupCamera();
-        clearInterval(checkModel);
-      }
-    }, 100); // Check every 100ms
-  }
-
-  camera.position.set(0, 10, 50);
+  // Toggle camera view with 'V' key
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'v' || event.key === 'V') {
+      isFirstPerson = !isFirstPerson;
+    }
+  });
 
   function animate() {
     const delta = clock.getDelta();
@@ -59,7 +50,9 @@ async function init() {
     character.update(delta);
 
     if (character.model) {
-      const targetPosition = character.model.position.clone().add(offset);
+      const offset = isFirstPerson ? firstPersonOffset : thirdPersonOffset;
+      const rotatedOffset = offset.clone().applyAxisAngle(new Vector3(0, 1, 0), character.model.rotation.y);
+      const targetPosition = character.model.position.clone().add(rotatedOffset);
       camera.position.lerp(targetPosition, 0.07);
       camera.lookAt(character.model.position);
     }
