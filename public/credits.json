@@ -5,7 +5,7 @@
 			"name": "Lebo Kharafu"
 		},
 		{
-			"stuNum": "DevTeamMember1StudentNumber",
+			"stuNum": "26",
 			"name": "DevTeamMember1Name"
 		},
 		{
@@ -13,8 +13,8 @@
 			"name": "DevTeamMember2Name"
 		},
 		{
-			"stuNum": "DevTeamMember2StudentNumber",
-			"name": "DevTeamMember2Name"
+			"stuNum": "2678460",
+			"name": "DIMPHO MATEA"
 		}
 	],
 	"credits": [
@@ -59,6 +59,12 @@
 			"link": "https://www.mixamo.com/#/?page=1&query=magic&type=Motion%2CMotionPack",
 			"credit": "\"Standing 2H Magic Attack\" Copyright © 2025 Adobe Systems Incorporated. All rights reserved",
 			"file": ["Standing 2H Magic Area Attack 02.fbx"]
+		},
+		{
+			"resource": "Stylized Pirate Coin",
+			"link": "https://sketchfab.com/3d-models/stylized-pirate-coin-9135d081eaa74842a121fc3c81291aa3#download",
+			"credit": "by DaveNiam under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/",
+			"file": ["coin.point.glb"]
 		}
 	]
 }
