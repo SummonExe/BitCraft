@@ -1,12 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>BitCraft</title>
-		<link rel="stylesheet" href="style.css" />
-	</head>
-	<body>
-		<script type="module" src="src/main.js"></script>
-	</body>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enchanted Town - Menu</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+    #menuContent {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 1;
+      color: white;
+    }
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div id="menuContent">
+    <h1>Main Menu</h1>
+    <a href="src/pages/stage1/stage1.html" style="display: block; margin: 20px auto; text-align: center; color: white; text-decoration: none; font-size: 1.5em;">Start Stage 1</a>
+    <a href="src/pages/stage2/stage2.html" style="display: block; margin: 20px auto; text-align: center; color: white; text-decoration: none; font-size: 1.5em;">Start Stage 2</a>
+    <a href="src/pages/stage3/stage3.html" style="display: block; margin: 20px auto; text-align: center; color: white; text-decoration: none; font-size: 1.5em;">Start Stage 3</a>
+	<a href="src/pages/credits/credits.html" style="display: block; margin: 20px auto; text-align: center; color: white; text-decoration: none; font-size: 1.5em;">See Credits</a>
+</div>
+  <script type="module" src="src/main.js"></script>
+</body>
 </html>
