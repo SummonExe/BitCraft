@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enchanted Town - Credits</title>
+  <link rel="stylesheet" href="../style.css">
+  <style>
+    #canvasContainer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+    }
+    #creditsContent {
+      position: relative;
+      z-index: 1;
+      padding: 40px;
+      max-width: 90%;
+      margin: 0 auto;
+      background: rgba(0, 0, 0, 0.85);
+      border-radius: 15px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div id="canvasContainer"><canvas id="bgCanvas"></canvas></div>
+  <div id="creditsContent"></div>
+  <script type="module" src="credits.js"></script>
+</body>
+</html>
