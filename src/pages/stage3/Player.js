@@ -3,9 +3,8 @@ import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { Projectile } from './Projectile.js';
 
-
 export class Player {
-  constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation }) {
+  constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles }) {
     this.moveForce = moveForce;
     this.modelPath = modelPath;
     this.isMoving = false;
@@ -13,6 +12,11 @@ export class Player {
     this.actions = { idle: null, walk: null, attack: null };
     this.currentAction = null;
     this.world = world;
+    this.scene = scene; // Store scene
+    this.projectiles = projectiles; // Store projectiles array
+    this.targetRotation = 0; // Target rotation in radians
+    this.currentRotation = 0; // Current rotation in radians
+    this.rotationSpeed = 0.05; // Rotation smoothing speed
     
     // Yuka entity
     this.entity = new YUKA.Vehicle();
@@ -114,12 +118,17 @@ export class Player {
   
   handleInput(keys, delta) {
     const velocity = new THREE.Vector3();
-    if (keys.ArrowUp) velocity.z = -1;
-    if (keys.ArrowDown) velocity.z = 1;
-    if (keys.ArrowLeft) velocity.x = -1;
-    if (keys.ArrowRight) velocity.x = 1;
+    let rotationInput = 0;
     
-    this.isMoving = velocity.length() > 0;
+    // Movement: Up/Down for forward/back relative to facing
+    if (keys.ArrowUp) velocity.z = 1; // Up backward
+    if (keys.ArrowDown) velocity.z = -1; // Down forward
+    
+    // Rotation: Left/Right for turning
+    if (keys.ArrowLeft) rotationInput += 1; // Rotate left
+    if (keys.ArrowRight) rotationInput -= 1; // Rotate right
+    
+    this.isMoving = velocity.length() > 0 || rotationInput !== 0;
     
     if (keys.p && this.actions.attack && this.currentAction !== this.actions.attack) {
       if (this.currentAction) {
@@ -133,19 +142,32 @@ export class Player {
       const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.entity.rotation);
       forward.y = 0;
       forward.normalize();
-      const projectile = new Projectile({ position: startPosition, direction: forward }, { world: this.world });
-      projectiles.push(projectile);
+      try {
+        const projectile = new Projectile({ position: startPosition, direction: forward }, { world: this.world, scene: this.scene });
+        this.projectiles.push(projectile);
+      } catch (error) {
+        console.error('Failed to create projectile:', error);
+      }
     }
     
-    if (this.isMoving) {
+    // Handle rotation
+    if (rotationInput !== 0) {
+      this.targetRotation += rotationInput * delta * 4; // Rotation speed from inline
+    }
+    
+    // Smooth rotation
+    const rotationDiff = this.targetRotation - this.currentRotation;
+    const normalizedDiff = ((rotationDiff + Math.PI) % (2 * Math.PI)) - Math.PI;
+    this.currentRotation += normalizedDiff * this.rotationSpeed;
+    
+    // Apply rotation to entity
+    this.entity.rotation.fromEuler(0, this.currentRotation, 0);
+    
+    // Handle movement relative to facing direction
+    if (velocity.length() > 0) {
+      velocity.applyQuaternion(this.entity.rotation);
       velocity.normalize().multiplyScalar(this.moveForce);
       this.rigidBody.applyImpulse({ x: velocity.x, y: 0, z: velocity.z }, true);
-      
-      const physicsPos = this.rigidBody.translation();
-      this.entity.position.set(physicsPos.x, physicsPos.y, physicsPos.z);
-      
-      const targetRotation = Math.atan2(velocity.x, velocity.z);
-      this.entity.rotation.fromEuler(0, targetRotation, 0);
     } else {
       const linvel = this.rigidBody.linvel();
       if (Math.abs(linvel.x) > 0.01 || Math.abs(linvel.z) > 0.01) {
@@ -153,8 +175,9 @@ export class Player {
       } else {
         this.rigidBody.setLinvel({ x: 0, y: linvel.y, z: 0 }, true);
       }
-      const physicsPos = this.rigidBody.translation();
-      this.entity.position.set(physicsPos.x, physicsPos.y, physicsPos.z);
     }
+    
+    const physicsPos = this.rigidBody.translation();
+    this.entity.position.set(physicsPos.x, physicsPos.y, physicsPos.z);
   }
 }
