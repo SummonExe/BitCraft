@@ -135,29 +135,23 @@ const projectiles = [];
 async function loadModel(path, scale = 1, rotation = new THREE.Euler(0, Math.PI, 0), position = new THREE.Vector3(0, 0, 0)) {
   return new Promise((resolve, reject) => {
     const loader = new FBXLoader();
-    // console.log(`Loading model: ${path}`);
-    loader.load(
-      path,
-      (object) => {
-        // console.log(`Model loaded successfully: ${path}`);
-        object.scale.copy(scale instanceof THREE.Vector3 ? scale : new THREE.Vector3(scale, scale, scale));
-        object.rotation.copy(rotation);
-        object.position.copy(position);
-        object.traverse((child) => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        });
-        scene.add(object);
-        resolve(object);
-      },
-      undefined,
-      (error) => {
-        console.error(`Failed to load model: ${path}`, error);
-        reject(error);
-      }
-    );
+    loader.load(path, (object) => {
+      // Apply initial transformations
+      object.scale.copy(scale instanceof THREE.Vector3 ? scale : new THREE.Vector3(scale, scale, scale));
+      object.rotation.copy(rotation);
+      object.position.copy(position);
+      
+      // Enable shadows
+      object.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      
+      scene.add(object);
+      resolve(object);
+    }, undefined, reject);
   });
 }
 
@@ -165,27 +159,19 @@ async function loadModel(path, scale = 1, rotation = new THREE.Euler(0, Math.PI,
 async function loadAnimation(path) {
   return new Promise((resolve, reject) => {
     const loader = new FBXLoader();
-    // console.log(`Loading animation: ${path}`);
-    loader.load(
-      path,
-      (object) => {
-        const clips = object.animations;
-        if (clips.length > 0) {
-          // console.log(`Animation loaded successfully: ${path}`);
-          resolve(clips[0]);
-        } else {
-          // console.error(`No animations found in: ${path}`);
-          reject(new Error('No animations found in file'));
-        }
-      },
-      undefined,
-      (error) => {
-        console.error(`Failed to load animation: ${path}`, error);
-        reject(error);
+    loader.load(path, (object) => {
+      const clips = object.animations;
+      if (clips.length > 0) {
+        resolve(clips[0]); // Return the first animation clip
+      } else {
+        reject(new Error('No animations found in file'));
       }
-    );
+    }, undefined, reject);
   });
 }
+
+// Debug terrain height at witch position
+console.log('Terrain height at witch position (20, 20):', getTerrainHeight(20, 20));
 
 // Create entities
 const player = new Player({
@@ -199,7 +185,7 @@ const player = new Player({
   entityManager,
   loadModel,
   loadAnimation,
-  projectiles // Pass projectiles array
+  projectiles
 });
 
 const npc1 = new FollowerNPC({
@@ -218,10 +204,10 @@ const npc1 = new FollowerNPC({
 });
 
 const npc2 = new ChaserNPC({
-  position: { x: 20, y: 9, z: 20 },
+  position: { x: 20, y: getTerrainHeight(20, 20) + 7.5, z: 20 },
   modelPath: './models/witch/witch_Idle.fbx',
-  maxSpeed: 15,
-  stopDistance: 25,
+  maxSpeed: 20,
+  stopDistance: 40,
   target: player,
   world,
   scene,
@@ -267,6 +253,9 @@ function animate() {
   
   const delta = time.update().getDelta();
   
+  // Update Yuka entities first
+  entityManager.update(delta);
+  
   // Update player
   player.handleInput(keys, delta);
   player.update(delta);
@@ -283,9 +272,6 @@ function animate() {
       projectiles.splice(i, 1);
     }
   }
-  
-  // Update Yuka
-  entityManager.update(delta);
   
   // Step physics simulation
   world.step();
@@ -323,8 +309,6 @@ function animate() {
   const lookAtTarget = new THREE.Vector3(playerPos.x, playerPos.y + 3, playerPos.z);
   camera.lookAt(lookAtTarget);
   
-  // Debug rendering
-  // console.log('Rendering frame - Scene children:', scene.children.length, 'Camera pos:', camera.position);
   renderer.render(scene, camera);
 }
 

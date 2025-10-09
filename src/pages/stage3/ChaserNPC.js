@@ -9,6 +9,8 @@ export class ChaserNPC {
     this.model = null;
     this.mixer = null;
     this.world = world;
+    this.actions = { idle: null, walk: null };
+    this.currentAction = null;
     
     // Direction indicator
     const indicatorGeometry = new THREE.SphereGeometry(0.2, 16, 16);
@@ -28,8 +30,8 @@ export class ChaserNPC {
     // Physics setup
     const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
       .setTranslation(position.x, position.y, position.z)
-      .setLinearDamping(8.0)
-      .setAngularDamping(10.0);
+      .setLinearDamping(0.0) // Lowered to 0 to test physics
+      .setAngularDamping(0.0);
     this.rigidBody = world.createRigidBody(bodyDesc);
     
     const colliderDesc = RAPIER.ColliderDesc.cuboid(2, 7.5, 2);
@@ -38,15 +40,30 @@ export class ChaserNPC {
     
     entityManager.add(this.entity);
     
-    // Load model asynchronously
-    this.loadModel(position, loadModel, scene);
+    // Load model and animations asynchronously
+    this.loadModel(position, loadModel, loadAnimation, scene, mixers);
   }
   
-  async loadModel(initialPosition, loadModel, scene) {
+  async loadModel(initialPosition, loadModel, loadAnimation, scene, mixers) {
     try {
       const scale = 10;
       const rotation = new THREE.Euler(0, Math.PI, 0);
       this.model = await loadModel('./models/witch/witch_Idle.fbx', scale, rotation, new THREE.Vector3(initialPosition.x, initialPosition.y, initialPosition.z));
+      
+      this.mixer = new THREE.AnimationMixer(this.model);
+      mixers.push(this.mixer);
+      
+      const idleClips = this.model.animations;
+      if (idleClips.length > 0) {
+        const idleClip = idleClips.find(clip => clip.name.toLowerCase().includes('idle')) || idleClips[0];
+        this.actions.idle = this.mixer.clipAction(idleClip);
+        this.actions.idle.play();
+        this.currentAction = this.actions.idle;
+      }
+      
+      const walkClip = await loadAnimation('./models/witch/Mutant Walking.fbx');
+      this.actions.walk = this.mixer.clipAction(walkClip);
+      this.actions.walk.timeScale = 0.6;
       
       this.model.traverse((child) => {
         if (child.isMesh) {
@@ -57,7 +74,7 @@ export class ChaserNPC {
       
       this.entity.setRenderComponent(this.model, this.sync);
     } catch (error) {
-      console.error('Failed to load chaser model:', error);
+      console.error('Failed to load chaser model or animations:', error);
       this.createFallbackBox(0xff0000, scene);
     }
   }
@@ -87,10 +104,16 @@ export class ChaserNPC {
     const physicsPos = this.rigidBody.translation();
     this.entity.position.set(physicsPos.x, physicsPos.y, physicsPos.z);
     
+    // Update seek target to current player position
+    this.entity.steering.behaviors[0].target.copy(this.target.entity.position);
+    
     const distanceToTarget = this.entity.position.distanceTo(this.target.entity.position);
     const velocity = this.entity.velocity;
     const currentVel = this.rigidBody.linvel();
     const maxSpeed = 7;
+    
+    // Debug logs to diagnose static distance
+    console.log('ChaserNPC - Witch Pos:', this.entity.position, 'Player Pos:', this.target.entity.position, 'Distance:', distanceToTarget, 'Velocity:', velocity, 'CurrentVel:', currentVel);
     
     if (distanceToTarget > this.stopDistance && velocity.length() > 0) {
       const desiredVel = { x: velocity.x, y: currentVel.y, z: velocity.z };
@@ -108,10 +131,36 @@ export class ChaserNPC {
         newVel.z *= scale;
       }
       
+      // console.log('ChaserNPC - Applying velocity:', newVel);
       this.rigidBody.setLinvel(newVel, true);
-    } else if (distanceToTarget <= this.stopDistance) {
+      
+      // Rotate to face movement direction
+      if (velocity.length() > 0) {
+        const targetRotation = Math.atan2(velocity.x, velocity.z);
+        this.entity.rotation.fromEuler(0, targetRotation, 0);
+      }
+      
+      // Play walk animation
+      if (this.mixer && this.actions.idle && this.actions.walk && this.currentAction !== this.actions.walk) {
+        this.actions.idle.fadeOut(0.2);
+        this.actions.walk.reset().fadeIn(0.2).play();
+        this.currentAction = this.actions.walk;
+      }
+    } else {
       const stopVel = { x: currentVel.x * 0.8, y: currentVel.y, z: currentVel.z * 0.8 };
+      // console.log('ChaserNPC - Stopping, velocity:', stopVel);
       this.rigidBody.setLinvel(stopVel, true);
+      
+      // Play idle animation
+      if (this.mixer && this.actions.idle && this.actions.walk && this.currentAction !== this.actions.idle) {
+        this.actions.walk.fadeOut(0.2);
+        this.actions.idle.reset().fadeIn(0.2).play();
+        this.currentAction = this.actions.idle;
+      }
+    }
+    
+    if (this.mixer) {
+      this.mixer.update(delta);
     }
   }
 }
