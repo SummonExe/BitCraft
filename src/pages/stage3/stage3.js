@@ -171,11 +171,11 @@ async function loadAnimation(path) {
 }
 
 // Debug terrain height at witch position
-console.log('Terrain height at witch position (20, 20):', getTerrainHeight(20, 20));
+// console.log('Terrain height at witch position (20, 20):', getTerrainHeight(20, 20));
 
 // Create entities
 const player = new Player({
-  position: { x: 0, y: 8, z: 0 },
+  position: { x: 0, y: 2, z: 0 },
   modelPath: './models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx',
   maxSpeed: 8,
   moveForce: 30,
@@ -189,11 +189,11 @@ const player = new Player({
 });
 
 const npc1 = new FollowerNPC({
-  position: { x: -10, y: 8, z: 10 },
+  position: { x: -25, y: 6.58, z: -25 },
   modelPath: './models/kid2/Idle.fbx',
   maxSpeed: 20,
   followDistance: 10,
-  stopThreshold: 12,
+  stopThreshold: 10,
   target: player,
   world,
   scene,
@@ -204,10 +204,10 @@ const npc1 = new FollowerNPC({
 });
 
 const npc2 = new ChaserNPC({
-  position: { x: 20, y: getTerrainHeight(20, 20) + 7.5, z: 20 },
+  position: { x: 20, y: getTerrainHeight(20, 20) +4.9, z: 20 },
   modelPath: './models/witch/witch_Idle.fbx',
   maxSpeed: 20,
-  stopDistance: 40,
+  stopDistance: 30,
   target: player,
   world,
   scene,
@@ -277,9 +277,9 @@ function animate() {
   world.step();
   
   // Update mesh positions from physics
-  player.model.position.copy(player.rigidBody.translation());
-  npc1.model.position.copy(npc1.rigidBody.translation());
-  npc2.model.position.copy(npc2.rigidBody.translation());
+  if(player.model) {player.model.position.copy(player.rigidBody.translation());}
+  if(npc1.model) {npc1.model.position.copy(npc1.rigidBody.translation());}
+  if(npc2.model) {npc2.model.position.copy(npc2.rigidBody.translation());}
   
   // Update animations
   mixers.forEach(mixer => mixer.update(delta));

@@ -63,6 +63,13 @@ export class FollowerNPC {
       this.actions.walk = this.mixer.clipAction(walkClip);
       this.actions.walk.timeScale = 0.6;
       
+      this.model.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      
       this.entity.setRenderComponent(this.model, this.sync);
     } catch (error) {
       console.error('Failed to load follower model or animations:', error);
@@ -102,7 +109,23 @@ export class FollowerNPC {
     this.entity.position.set(physicsPos.x, physicsPos.y, physicsPos.z);
     
     const distanceToTarget = this.entity.position.distanceTo(this.target.entity.position);
-    if (distanceToTarget <= this.stopThreshold) {
+    
+    // Check if NPC is behind player
+    const playerForward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.target.entity.rotation);
+    playerForward.y = 0;
+    playerForward.normalize();
+    
+    const toNPC = new THREE.Vector3().subVectors(this.entity.position, this.target.entity.position);
+    toNPC.y = 0;
+    toNPC.normalize();
+    
+    const dotProduct = playerForward.dot(toNPC);
+    const isBehind = dotProduct < 0; // Negative dot product means NPC is behind player
+    
+    // Debug logs
+    // console.log('FollowerNPC - Distance:', distanceToTarget, 'IsBehind:', isBehind, 'NPC Pos:', this.entity.position, 'Player Pos:', this.target.entity.position);
+    
+    if (distanceToTarget <= this.stopThreshold && isBehind) {
       this.entity.steering.behaviors.forEach(behavior => behavior.active = false);
       this.rigidBody.setLinvel({ x: 0, y: this.rigidBody.linvel().y, z: 0 }, true);
       this.isStopped = true;
@@ -118,6 +141,10 @@ export class FollowerNPC {
       const currentVel = this.rigidBody.linvel();
       if (velocity.length() > 0) {
         this.rigidBody.setLinvel({ x: velocity.x, y: currentVel.y, z: velocity.z }, true);
+        
+        // Rotate to face movement direction
+        const targetRotation = Math.atan2(velocity.x, velocity.z);
+        this.entity.rotation.fromEuler(0, targetRotation, 0);
       }
       this.isStopped = false;
     }
