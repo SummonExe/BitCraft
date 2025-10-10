@@ -113,7 +113,7 @@ export class ChaserNPC {
     const maxSpeed = 7;
     
     // Debug logs to diagnose static distance
-    console.log('ChaserNPC - Witch Pos:', this.entity.position, 'Player Pos:', this.target.entity.position, 'Distance:', distanceToTarget, 'Velocity:', velocity, 'CurrentVel:', currentVel);
+    // console.log('ChaserNPC - Witch Pos:', this.entity.position, 'Player Pos:', this.target.entity.position, 'Distance:', distanceToTarget, 'Velocity:', velocity, 'CurrentVel:', currentVel);
     
     if (distanceToTarget > this.stopDistance && velocity.length() > 0) {
       const desiredVel = { x: velocity.x, y: currentVel.y, z: velocity.z };
