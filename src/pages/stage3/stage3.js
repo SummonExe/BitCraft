@@ -6,6 +6,10 @@ import { Player } from './Player.js';
 import { FollowerNPC } from './FollowerNPC.js';
 import { ChaserNPC } from './ChaserNPC.js';
 
+import hero from "../../../src/assets/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
+import kid from "../../../src/assets/models/kid2/Idle.fbx";
+import witch from "../../../src/assets/models/witch/witch_Idle.fbx";
+
 // Initialize Rapier physics
 let world, physicsReady = false;
 
@@ -176,7 +180,7 @@ async function loadAnimation(path) {
 // Create entities
 const player = new Player({
   position: { x: 0, y: 2, z: 0 },
-  modelPath: '../../../src/assets/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx',
+  modelPath: hero,
   maxSpeed: 8,
   moveForce: 30,
   world,
@@ -190,7 +194,7 @@ const player = new Player({
 
 const npc1 = new FollowerNPC({
   position: { x: -25, y: 6.58, z: -25 },
-  modelPath: '../../../src/assets/models/kid2/Idle.fbx',
+  modelPath: kid,
   maxSpeed: 20,
   followDistance: 10,
   stopThreshold: 10,
@@ -205,7 +209,7 @@ const npc1 = new FollowerNPC({
 
 const npc2 = new ChaserNPC({
   position: { x: 20, y: getTerrainHeight(20, 20) +4.9, z: 20 },
-  modelPath: '../../../src/assets/models/witch/witch_Idle.fbx',
+  modelPath: witch,
   maxSpeed: 20,
   stopDistance: 30,
   target: player,

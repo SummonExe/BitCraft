@@ -2,6 +2,9 @@ import * as THREE from 'three';
 import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
 
+import kidWalk from "../../../src/assets/models/kid2/Female Walk.fbx";
+import kidIdle from "../../../src/assets/models/kid2/Idle.fbx";
+
 export class FollowerNPC {
   constructor({ position, modelPath, maxSpeed, followDistance, stopThreshold, target, world, scene, mixers, entityManager, loadModel, loadAnimation }) {
     this.followDistance = followDistance;
@@ -59,7 +62,7 @@ export class FollowerNPC {
         this.currentAction = this.actions.idle;
       }
       
-      const walkClip = await loadAnimation('../../../src/assets/models/kid2/Female Walk.fbx');
+      const walkClip = await loadAnimation(kidWalk);
       this.actions.walk = this.mixer.clipAction(walkClip);
       this.actions.walk.timeScale = 0.6;
       

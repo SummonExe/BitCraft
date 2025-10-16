@@ -7,6 +7,7 @@ export default defineConfig({
 	publicDir: "./public",
 	base: "",
 	build: {
+		chunkSizeWarningLimit: 1024,
 		rollupOptions: {
 			input: {
 				main: "./index.html",
