@@ -3,6 +3,14 @@ import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { Projectile } from './Projectile.js';
 
+import hero from "../../../src/assets/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
+import heroWalk from "../../../src/assets/models/cop/Magic Spell Pack/Walking.fbx";
+import heroRun from "../../../src/assets/models/cop/Magic Spell Pack/Unarmed Run Forward.fbx";
+import heroIdle from "../../../src/assets/models/cop/Magic Spell Pack/Unarmed Idle.fbx";
+import heroHit1 from "../../../src/assets/models/cop/Magic Spell Pack/Standing 2H Magic Attack 01.fbx";
+import heroHit2 from "../../../src/assets/models/cop/Magic Spell Pack/Standing 2H Magic Area Attack 02.fbx";
+import heroHit3 from "../../../src/assets/models/cop/Magic Spell Pack/Standing 2H Magic Area Attack 01.fbx";
+
 export class Player {
   constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles }) {
     this.moveForce = moveForce;
@@ -50,16 +58,16 @@ export class Player {
       this.mixer = new THREE.AnimationMixer(this.model);
       mixers.push(this.mixer);
       
-      const idleClip = await loadAnimation('../../../src/assets/models/cop/Magic Spell Pack/Unarmed Idle.fbx');
+      const idleClip = await loadAnimation(heroIdle);
       this.actions.idle = this.mixer.clipAction(idleClip);
       this.actions.idle.play();
       this.currentAction = this.actions.idle;
       
-      const walkClip = await loadAnimation('../../../src/assets/models/cop/Magic Spell Pack/Walking.fbx');
+      const walkClip = await loadAnimation(heroWalk);
       this.actions.walk = this.mixer.clipAction(walkClip);
       this.actions.walk.timeScale = 0.6;
       
-      const attackClip = await loadAnimation('../../../src/assets/models/cop/Magic Spell Pack/Standing 1H Magic Attack 03.fbx');
+      const attackClip = await loadAnimation(heroHit1);
       this.actions.attack = this.mixer.clipAction(attackClip);
       this.actions.attack.setLoop(THREE.LoopOnce);
       this.actions.attack.clampWhenFinished = true;
