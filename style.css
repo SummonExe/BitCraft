@@ -1,11 +1,278 @@
-html,body {
-	margin: 0;
-	padding: 0;
-	overflow: hidden; /* Prevents scrollbars */
+@font-face {
+    font-family: 'DK Okiku';
+    src: url('./public/fonts/DKOkiku/DK Okiku.otf') format('opentype');
+}
+
+@font-face {
+    font-family: 'Dudu Calligraphy';
+    src: url('./public/fonts/Dudu_Calligraphy.ttf') format('truetype');
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 25%, #2d1b1b 50%, #1a1a1a 75%, #0a0a0a 100%);
+    height: 100%;
+    font-family: 'Dudu Calligraphy', cursive;
+}
+
+#menuContent {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    z-index: 1;
+    color: #8b0000;
+    text-shadow: 0 0 10px rgba(139, 0, 0, 0.5);
+    background: rgba(10, 10, 10, 0.7);
+    padding: 50px;
+    border-radius: 5px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(139, 0, 0, 0.3);
+    box-shadow: 0 0 30px rgba(139, 0, 0, 0.2),
+                inset 0 0 20px rgba(0, 0, 0, 0.5);
+}
+
+h1 {
+    font-family: 'DK Okiku', sans-serif;
+    font-size: 4em;
+    margin-bottom: 50px;
+    color: #8b0000;
+    text-transform: uppercase;
+    letter-spacing: 4px;
+    animation: bloodPulse 3s ease-in-out infinite alternate;
+    position: relative;
+}
+
+.menu-link {
+    display: block;
+    margin: 30px auto;
+    text-align: center;
+    color: #660000;
+    text-decoration: none;
+    font-size: 1.8em;
+    font-family: 'Dudu Calligraphy', cursive;
+    padding: 15px 40px;
+    border: 1px solid transparent;
+    transition: all 0.4s ease;
+    position: relative;
+    overflow: hidden;
+    background: rgba(20, 20, 20, 0.6);
+    border-radius: 3px;
+}
+
+.menu-link::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(139, 0, 0, 0.3), transparent);
+    transition: left 0.6s;
+}
+
+.menu-link:hover {
+    color: #ff0000;
+    border: 1px solid rgba(139, 0, 0, 0.8);
+    background: rgba(30, 0, 0, 0.8);
+    transform: translateX(15px);
+    text-shadow: 0 0 15px rgba(255, 0, 0, 0.7);
+    box-shadow: 0 0 20px rgba(139, 0, 0, 0.4);
+}
+
+.menu-link:hover::before {
+    left: 100%;
+}
+
+.menu-link::after {
+    content: '†';
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    color: #8b0000;
+}
+
+.menu-link:hover::after {
+    opacity: 1;
 }
 
 canvas {
-  display: block;
-  height: 100% !important; /* Ensure canvas fills viewport height */
+    display: block;
+    height: 100% !important;
 }
 
+/* Grim glitch effect */
+.glitch {
+    position: relative;
+}
+
+.glitch::before,
+.glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 10, 10, 0.9);
+}
+
+.glitch::before {
+    left: 3px;
+    text-shadow: -3px 0 #FF2828;
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim 7s infinite linear alternate-reverse;
+    opacity: 0.7;
+}
+
+.glitch::after {
+    left: -3px;
+    text-shadow: -3px 0 #8b0000;
+    clip: rect(44px, 450px, 56px, 0);
+    animation: glitch-anim2 7s infinite linear alternate-reverse;
+    opacity: 0.7;
+}
+
+@keyframes glitch-anim {
+    0% { clip: rect(42px, 9999px, 44px, 0); }
+    5% { clip: rect(12px, 9999px, 59px, 0); }
+    10% { clip: rect(48px, 9999px, 29px, 0); }
+    15% { clip: rect(42px, 9999px, 73px, 0); }
+    20% { clip: rect(63px, 9999px, 27px, 0); }
+    25% { clip: rect(34px, 9999px, 55px, 0); }
+    30% { clip: rect(86px, 9999px, 73px, 0); }
+    35% { clip: rect(20px, 9999px, 20px, 0); }
+    40% { clip: rect(26px, 9999px, 60px, 0); }
+    45% { clip: rect(25px, 9999px, 66px, 0); }
+    50% { clip: rect(57px, 9999px, 98px, 0); }
+    55% { clip: rect(5px, 9999px, 46px, 0); }
+    60% { clip: rect(82px, 9999px, 31px, 0); }
+    65% { clip: rect(54px, 9999px, 27px, 0); }
+    70% { clip: rect(28px, 9999px, 99px, 0); }
+    75% { clip: rect(45px, 9999px, 69px, 0); }
+    80% { clip: rect(23px, 9999px, 85px, 0); }
+    85% { clip: rect(54px, 9999px, 84px, 0); }
+    90% { clip: rect(45px, 9999px, 47px, 0); }
+    95% { clip: rect(37px, 9999px, 20px, 0); }
+    100% { clip: rect(4px, 9999px, 91px, 0); }
+}
+
+@keyframes glitch-anim2 {
+    0% { clip: rect(65px, 9999px, 100px, 0); }
+    5% { clip: rect(52px, 9999px, 74px, 0); }
+    10% { clip: rect(79px, 9999px, 85px, 0); }
+    15% { clip: rect(75px, 9999px, 5px, 0); }
+    20% { clip: rect(67px, 9999px, 61px, 0); }
+    25% { clip: rect(14px, 9999px, 79px, 0); }
+    30% { clip: rect(1px, 9999px, 66px, 0); }
+    35% { clip: rect(86px, 9999px, 30px, 0); }
+    40% { clip: rect(23px, 9999px, 98px, 0); }
+    45% { clip: rect(85px, 9999px, 72px, 0); }
+    50% { clip: rect(71px, 9999px, 75px, 0); }
+    55% { clip: rect(2px, 9999px, 48px, 0); }
+    60% { clip: rect(30px, 9999px, 16px, 0); }
+    65% { clip: rect(59px, 9999px, 50px, 0); }
+    70% { clip: rect(41px, 9999px, 62px, 0); }
+    75% { clip: rect(2px, 9999px, 82px, 0); }
+    80% { clip: rect(47px, 9999px, 73px, 0); }
+    85% { clip: rect(3px, 9999px, 27px, 0); }
+    90% { clip: rect(26px, 9999px, 55px, 0); }
+    95% { clip: rect(42px, 9999px, 97px, 0); }
+    100% { clip: rect(38px, 9999px, 49px, 0); }
+}
+
+@keyframes bloodPulse {
+    from {
+        text-shadow: 0 0 5px #8b0000, 0 0 10px #8b0000, 0 0 15px #8b0000;
+        transform: scale(1);
+    }
+    to {
+        text-shadow: 0 0 15px #8b0000, 0 0 25px #8b0000, 0 0 35px #8b0000, 0 0 45px #8b0000;
+        transform: scale(1.02);
+    }
+}
+
+/* Enhanced grim noise overlay */
+.noise-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(circle at 20% 50%, rgba(139, 0, 0, 0.03) 1%, transparent 10%),
+        radial-gradient(circle at 80% 20%, rgba(139, 0, 0, 0.03) 1%, transparent 10%),
+        radial-gradient(circle at 40% 80%, rgba(139, 0, 0, 0.03) 1%, transparent 10%),
+        url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.15'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 2;
+    animation: grimNoise 0.1s infinite;
+    mix-blend-mode: overlay;
+}
+
+@keyframes grimNoise {
+    0%, 100% { transform: translate(0, 0) rotate(0deg); }
+    10% { transform: translate(-1%, -1%) rotate(-0.2deg); }
+    20% { transform: translate(-1%, 1%) rotate(0.1deg); }
+    30% { transform: translate(1%, 1%) rotate(0.3deg); }
+    40% { transform: translate(1%, -1%) rotate(-0.1deg); }
+    50% { transform: translate(-1%, -1%) rotate(0.2deg); }
+    60% { transform: translate(-1%, 1%) rotate(-0.3deg); }
+    70% { transform: translate(1%, 1%) rotate(0.1deg); }
+    80% { transform: translate(1%, -1%) rotate(-0.2deg); }
+    90% { transform: translate(-1%, -1%) rotate(0.3deg); }
+}
+
+/* Vignette effect */
+.vignette {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0, 0, 0, 0.8) 100%);
+    pointer-events: none;
+    z-index: 3;
+}
+
+/* Blood drips effect */
+.blood-drips {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+    opacity: 0.1;
+}
+
+.blood-drip {
+    position: absolute;
+    top: -100px;
+    width: 2px;
+    height: 100px;
+    background: linear-gradient(to bottom, transparent, #8b0000);
+    animation: drip 15s infinite linear;
+}
+
+.blood-drip:nth-child(1) { left: 10%; animation-delay: 0s; }
+.blood-drip:nth-child(2) { left: 20%; animation-delay: 3s; }
+.blood-drip:nth-child(3) { left: 35%; animation-delay: 7s; }
+.blood-drip:nth-child(4) { left: 50%; animation-delay: 11s; }
+.blood-drip:nth-child(5) { left: 65%; animation-delay: 5s; }
+.blood-drip:nth-child(6) { left: 80%; animation-delay: 9s; }
+.blood-drip:nth-child(7) { left: 90%; animation-delay: 13s; }
+
+@keyframes drip {
+    0% { top: -100px; opacity: 0; }
+    10% { opacity: 0.5; }
+    90% { opacity: 0.5; }
+    100% { top: 100vh; opacity: 0; }
+}
