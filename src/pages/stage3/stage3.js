@@ -176,7 +176,7 @@ async function loadAnimation(path) {
 // Create entities
 const player = new Player({
   position: { x: 0, y: 2, z: 0 },
-  modelPath: './models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx',
+  modelPath: '../../../src/assets/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx',
   maxSpeed: 8,
   moveForce: 30,
   world,
@@ -190,7 +190,7 @@ const player = new Player({
 
 const npc1 = new FollowerNPC({
   position: { x: -25, y: 6.58, z: -25 },
-  modelPath: './models/kid2/Idle.fbx',
+  modelPath: '../../../src/assets/models/kid2/Idle.fbx',
   maxSpeed: 20,
   followDistance: 10,
   stopThreshold: 10,
@@ -205,7 +205,7 @@ const npc1 = new FollowerNPC({
 
 const npc2 = new ChaserNPC({
   position: { x: 20, y: getTerrainHeight(20, 20) +4.9, z: 20 },
-  modelPath: './models/witch/witch_Idle.fbx',
+  modelPath: '../../../src/assets/models/witch/witch_Idle.fbx',
   maxSpeed: 20,
   stopDistance: 30,
   target: player,

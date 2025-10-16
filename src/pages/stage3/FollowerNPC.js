@@ -59,7 +59,7 @@ export class FollowerNPC {
         this.currentAction = this.actions.idle;
       }
       
-      const walkClip = await loadAnimation('./models/kid2/Female Walk.fbx');
+      const walkClip = await loadAnimation('../../../src/assets/models/kid2/Female Walk.fbx');
       this.actions.walk = this.mixer.clipAction(walkClip);
       this.actions.walk.timeScale = 0.6;
       
