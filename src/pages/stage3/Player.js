@@ -50,16 +50,16 @@ export class Player {
       this.mixer = new THREE.AnimationMixer(this.model);
       mixers.push(this.mixer);
       
-      const idleClip = await loadAnimation('./models/cop/Magic Spell Pack/Unarmed Idle.fbx');
+      const idleClip = await loadAnimation('../../../src/assets/models/cop/Magic Spell Pack/Unarmed Idle.fbx');
       this.actions.idle = this.mixer.clipAction(idleClip);
       this.actions.idle.play();
       this.currentAction = this.actions.idle;
       
-      const walkClip = await loadAnimation('./models/cop/Magic Spell Pack/Walking.fbx');
+      const walkClip = await loadAnimation('../../../src/assets/models/cop/Magic Spell Pack/Walking.fbx');
       this.actions.walk = this.mixer.clipAction(walkClip);
       this.actions.walk.timeScale = 0.6;
       
-      const attackClip = await loadAnimation('./models/cop/Magic Spell Pack/Standing 1H Magic Attack 03.fbx');
+      const attackClip = await loadAnimation('../../../src/assets/models/cop/Magic Spell Pack/Standing 1H Magic Attack 03.fbx');
       this.actions.attack = this.mixer.clipAction(attackClip);
       this.actions.attack.setLoop(THREE.LoopOnce);
       this.actions.attack.clampWhenFinished = true;

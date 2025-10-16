@@ -48,7 +48,7 @@ export class ChaserNPC {
     try {
       const scale = 10;
       const rotation = new THREE.Euler(0, Math.PI, 0);
-      this.model = await loadModel('./models/witch/witch_Idle.fbx', scale, rotation, new THREE.Vector3(initialPosition.x, initialPosition.y, initialPosition.z));
+      this.model = await loadModel('../../../src/assets/models/witch/witch_Idle.fbx', scale, rotation, new THREE.Vector3(initialPosition.x, initialPosition.y, initialPosition.z));
       
       this.mixer = new THREE.AnimationMixer(this.model);
       mixers.push(this.mixer);
@@ -61,7 +61,7 @@ export class ChaserNPC {
         this.currentAction = this.actions.idle;
       }
       
-      const walkClip = await loadAnimation('./models/witch/Mutant Walking.fbx');
+      const walkClip = await loadAnimation('../../../src/assets/models/witch/Mutant Walking.fbx');
       this.actions.walk = this.mixer.clipAction(walkClip);
       this.actions.walk.timeScale = 0.6;
       
