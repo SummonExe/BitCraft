@@ -1,0 +1,11 @@
+Model Information:
+* title:	PSX Abandoned Church
+* source:	https://sketchfab.com/3d-models/psx-abandoned-church-4947e2994961439a914550a436b7d9b0
+* author:	IIShazlyII (https://sketchfab.com/iishazlyii)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "PSX Abandoned Church" (https://sketchfab.com/3d-models/psx-abandoned-church-4947e2994961439a914550a436b7d9b0) by IIShazlyII (https://sketchfab.com/iishazlyii) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
