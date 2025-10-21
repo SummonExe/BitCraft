@@ -130,7 +130,7 @@ setupPhysics();
 //load src\assets\scene\church\psx_abandoned_church\scene.gltf
 const loader = new GLTFLoader();
 loader.load(
-  "../../assets/models/final_church/final_church.glb",
+  "/models/final_church.glb",
   (gltf) => {
     const church = gltf.scene || gltf.scenes?.[0];
     if (!church) {
@@ -159,7 +159,7 @@ loader.load(
 
 const gasStationPosition = new THREE.Vector3(100, 5, 252);
 loader.load(
-  "../../assets/models/gas_station/gas_station.glb",
+  "/models/gas_station.glb",
   (gltf) => {
     const gasStation = gltf.scene || gltf.scenes?.[0];
     if (!gasStation) {
@@ -188,7 +188,7 @@ loader.load(
 
 const biblePosition = new THREE.Vector3(120, 10, 240);
 loader.load(
-  "../../assets/models/bible/bible.glb",
+  "/models/bible.glb",
   (gltf) => {
     const bible = gltf.scene || gltf.scenes?.[0];
     if (!bible) {
