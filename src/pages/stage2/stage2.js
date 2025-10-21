@@ -426,16 +426,16 @@ async function init() {
   // INITIAL LOAD
   // --------------------------
   async function loadInitialScene() {
-    mazeSize = await loadBuilding('/models/maze_room.glb', new Vector3(0, -50, 0), "maze_room");
+    mazeSize = await loadBuilding('models/maze_room.glb', new Vector3(0, -50, 0), "maze_room");
   }
 
-  loadFlashingModel('/models/arrow.glb', new Vector3(-45.78, 0.60, -46.07));
-  loadFlashingModel('/models/arrow.glb', new Vector3(-45.78, 0.60, 30.00));
-  loadDoorModel('/models/door_wood.glb', new Vector3(-28.28, -48.51, -74.33));
-  loadCoin('/models/holy_water.glb', new Vector3(-35, -21, -145));
-  loadCoin('/models/holy_water.glb', new Vector3(-45, 2, -65));
-  loadCoin('/models/holy_water.glb', new Vector3(-30, 2, 25));
-  loadCoin('/models/holy_water.glb', new Vector3(24, 2, 25));
+  loadFlashingModel('models/arrow.glb', new Vector3(-45.78, 0.60, -46.07));
+  loadFlashingModel('models/arrow.glb', new Vector3(-45.78, 0.60, 30.00));
+  loadDoorModel('models/door_wood.glb', new Vector3(-28.28, -48.51, -74.33));
+  loadCoin('models/holy_water.glb', new Vector3(-35, -21, -145));
+  loadCoin('models/holy_water.glb', new Vector3(-45, 2, -65));
+  loadCoin('models/holy_water.glb', new Vector3(-30, 2, 25));
+  loadCoin('models/holy_water.glb', new Vector3(24, 2, 25));
 
   await loadInitialScene();
   initMiniMap();
@@ -494,7 +494,7 @@ async function init() {
         const dist = Math.sqrt(dy * dy + dz * dz);
         if (dist < 10) {
           currentScene = "bedroom";
-          switchScene("/models/hill_room.glb", "bedroom");
+          switchScene("models/hill_room.glb", "bedroom");
         }
       }
     }

@@ -21,7 +21,7 @@ export default class Character {
 
     const loader = new GLTFLoader();
     loader.load(
-      '/models/undercover_cop_-_animated.glb',
+      'models/undercover_cop_-_animated.glb',
       (gltf) => {
         this.model = gltf.scene;
         this.model.position.copy(position);
