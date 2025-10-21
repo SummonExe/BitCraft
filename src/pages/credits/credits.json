@@ -1,0 +1,113 @@
+{
+	"authors": [
+		{
+			"stuNum": "2577390",
+			"name": "Lebo Kharafu"
+		},
+		{
+			"stuNum": "2672254",
+			"name": "Sinethemba Khumalo"
+		},
+		{
+			"stuNum": "2678460",
+			"name": "Dimpho Matea"
+		},
+		{
+			"stuNum": "2586421",
+			"name": "Amahle Ngubane"
+		}
+	],
+	"credits": [
+		{
+			"resource": "Church Of St Peter Stourton",
+			"link": "https://skfb.ly/oGNzU",
+			"credit": "\"Church Of St Peter Stourton\" (https://skfb.ly/oGNzU) by artfletch is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["church_of_st_peter_stourton.glb"]
+		},
+		{
+			"resource": "Beast Hunter Character Model",
+			"link": "https://skfb.ly/ooJIJ",
+			"credit": "\"Beast Hunter Character Model\" (https://skfb.ly/ooJIJ) by RedDevon is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["beast_hunter_character_model.glb"]
+		},
+		{
+			"resource": "Jack Of Blade",
+			"link": "https://skfb.ly/oxyq9",
+			"credit": "\"Jack Of Blades\" (https://skfb.ly/oxyq9) by FrancisLam. is licensed under CC Attribution-NonCommercial-ShareAlike (http://creativecommons.org/licenses/by-nc-sa/4.0/).",
+			"file": ["jack_of_blades.glb", "jack-of-blades.zip"]
+		},
+		{
+			"resource": "Undercover Cop - Animated",
+			"link": "https://skfb.ly/o87Uu",
+			"credit": "\"Undercover Cop - Animated\" (https://skfb.ly/o87Uu) by tonyflanagan is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["undercover_cop_-_animated.glb", "undercover_cop_-_animated.zip"]
+		},
+		{
+			"resource": "Stone Pavement Ground Tile",
+			"link": "https://opengameart.org/content/stone-pavement-ground-tile",
+			"credit": "\"Stone Pavement Ground Tile\" (https://opengameart.org/content/stone-pavement-ground-tile) by Saroman is licensed under  Creative Commons Attribution 3.0 Unported license (https://creativecommons.org/licenses/by/3.0/).",
+			"file": ["Cobblestone.png"]
+		},
+		{
+			"resource": "Standing 2H Magic Attack",
+			"link": "https://www.mixamo.com/#/?page=1&query=magic&type=Motion%2CMotionPack",
+			"credit": "\"Standing 2H Magic Attack\" Copyright © 2025 Adobe Systems Incorporated. All rights reserved",
+			"file": ["Standing 2H Magic Attack 01.fbx"]
+		},
+		{
+			"resource": "Standing 2H Magic Area Attack 02",
+			"link": "https://www.mixamo.com/#/?page=1&query=magic&type=Motion%2CMotionPack",
+			"credit": "\"Standing 2H Magic Attack\" Copyright © 2025 Adobe Systems Incorporated. All rights reserved",
+			"file": ["Standing 2H Magic Area Attack 02.fbx"]
+		},
+		{
+			"resource": "Church Of St Peter Stourton",
+			"link": "https://skfb.ly/oGNzU",
+			"credit": "\"Church Of St Peter Stourton\" (https://skfb.ly/oGNzU) by artfletch is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["church_of_st_peter_stourton.glb"]
+		},
+		{
+			"resource": "Horror corridor 3",
+			"link": "https://sketchfab.com/3d-models/horror-corridor-3-e03a192de67d442ebdf42f43a8a2d37a",
+			"credit": "\"Horror corridor 3\" (https://sketchfab.com/3d-models/horror-corridor-3-e03a192de67d442ebdf42f43a8a2d37a) by Katydid is licensed under Free Standard",
+			"file": ["horror_corridor_3.glb"]
+		},
+		{
+			"resource": "Horror corridor for game developers",
+			"link": "https://skfb.ly/pAQCE",
+			"credit": "\"Horror corridor for game developers\" (https://skfb.ly/pAQCE) by Katydid is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["horror_corridor_for_game_developers.glb"]
+		}
+		,
+		{
+			"resource": "little-girl-stylised",
+			"link": "https://www.cgtrader.com/free-3d-models/character/child/little-girl-stylised",
+			"credit": "\"little-girl-stylised\" (https://www.cgtrader.com/free-3d-models/character/child/little-girl-stylised) ...",
+			"file": ["uploads_files_5589376_Little_Girl_OBJ (2).zip"]
+		},
+		{
+			"resource": "Witch",
+			"link": "https://skfb.ly/oAHKM",
+			"credit": "\"Witch\" (https://skfb.ly/oAHKM) by LxNazarov is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["witch.zip"]
+		},
+		{
+			"resource": "Dudu Calligraphy Font",
+			"link": "https://fontmeme.com/fonts/dudu-calligraphy-font/",
+			"credit": "\"Dudu Calligraphy Font\" (https://fontmeme.com/fonts/dudu-calligraphy-font/) by Adderou is licensed under Free.",
+			"file": ["Dudu_Calligraphy.ttf"]
+		},
+		{
+			"resource": "HelvetiHand Font",
+			"link": "https://fontmeme.com/fonts/helvetihand-font/",
+			"credit": "\"HelvetiHand Font\" (https://fontmeme.com/fonts/helvetihand-font/) by Billy Snyder is licensed under Free.",
+			"file": ["HelvetiHand.ttf"]
+		},
+		{
+			"resource": "DKOkiku font",
+			"link": "https://www.whatfontis.com/FF_DKOkiku.font",
+			"credit": "\"DKOkiku font\" (https://www.whatfontis.com/FF_DKOkiku.font) DKOkiku by Copyright (c) 2014 by David Kerkhoff. All rights reserved.",
+			"file": ["DK Okiku.otf"]
+		}
+	]
+}
