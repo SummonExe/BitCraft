@@ -5,14 +5,15 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import RAPIER from '@dimforge/rapier3d-compat';
-import Character from '../../assets/character/undercover_cop/character.js';
-import MiniMap from "../../MiniMAp.js";
+import Character from '../../assets/character/undercover_cop/character_2.js';
+import MiniMap from "../../MiniMap.js";
 
 let clock = new Clock();
 let world;
 let currentScene = "maze";
 let mazeSize = null;
 let isSwitching = false;
+let groundCollider = null; // To track the current ground collider
 
 async function init() {
   await RAPIER.init();
@@ -25,28 +26,11 @@ async function init() {
   renderer.setAnimationLoop(animate);
   document.body.appendChild(renderer.domElement);
 
-  // ground
-  const textureLoader = new TextureLoader();
-  const groundTexture = textureLoader.load('/src/assets/textures/Cobblestone.png');
-  const groundMaterial = new MeshStandardMaterial({ map: groundTexture, side: DoubleSide });
-  const groundGeometry = new PlaneGeometry(250, 250);
-  const ground = new Mesh(groundGeometry, groundMaterial);
-  ground.rotation.x = -Math.PI / 2;
-  scene.add(ground);
-
   const light = new AmbientLight(0xffffff, 1);
   scene.add(light);
 
   // physics world
   world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
-
-  // ground collider
-  {
-    const groundDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(0, 0, 0);
-    const groundBody = world.createRigidBody(groundDesc);
-    const groundCollider = RAPIER.ColliderDesc.cuboid(125, 0.1, 125);
-    world.createCollider(groundCollider, groundBody);
-  }
 
   // character
   const character = new Character(world, scene, { x: 0, y: 2, z: 0 });
@@ -65,6 +49,19 @@ async function init() {
   const loader = new GLTFLoader();
 
   // --------------------------
+  // GROUND COLLIDER
+  // --------------------------
+  function createGroundCollider(yPosition) {
+    if (groundCollider) {
+      world.removeCollider(groundCollider, true);
+      groundCollider = null;
+    }
+    const groundDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(0, yPosition, 0);
+    const groundBody = world.createRigidBody(groundDesc);
+    groundCollider = world.createCollider(RAPIER.ColliderDesc.cuboid(125, 0.1, 125), groundBody);
+  }
+
+  // --------------------------
   // BUILDING LOADER
   // --------------------------
   function loadBuilding(url, positionOffset, name = "", targetScale = null) {
@@ -77,9 +74,11 @@ async function init() {
         if (name === "bedroom") {
           building.position.y = 0;
           building.scale.set(0.5, 0.5, 0.5);
+          createGroundCollider(0); // Floor at y=0 for bedroom
         } else {
           building.position.y = -50;
           building.scale.set(1, 1, 1);
+          createGroundCollider(-50); // Floor at y=-50 for maze
         }
         if (targetScale) building.scale.copy(targetScale);
 
@@ -120,6 +119,36 @@ async function init() {
         resolve(new Vector3(1, 1, 1));
       });
     });
+  }
+
+  // --------------------------
+  // SNAP TO GROUND
+  // --------------------------
+  function snapToGround(character, controller, delta) {
+    if (!character.rigidBody || !controller) return;
+
+    // Cast a ray downward to detect the ground
+    const ray = new RAPIER.Ray(
+      { x: character.rigidBody.translation().x, y: character.rigidBody.translation().y, z: character.rigidBody.translation().z },
+      { x: 0, y: -1, z: 0 }
+    );
+    const maxToi = 0.5; // Max distance to check for ground (adjust based on character height)
+    const hit = world.castRay(ray, maxToi, true);
+
+    if (hit && hit.toi < maxToi) {
+      const groundY = character.rigidBody.translation().y - hit.toi;
+      const currentY = character.rigidBody.translation().y;
+      if (Math.abs(currentY - groundY) < 0.5) { // Snap if close to ground
+        character.rigidBody.setTranslation(
+          {
+            x: character.rigidBody.translation().x,
+            y: groundY + 0.1, // Small offset to prevent sinking
+            z: character.rigidBody.translation().z
+          },
+          true
+        );
+      }
+    }
   }
 
   // --------------------------
@@ -212,14 +241,14 @@ async function init() {
   scoreElement.style.background = "rgba(0,0,0,0.45)";
   scoreElement.style.padding = "6px 8px";
   scoreElement.style.borderRadius = "6px";
-  scoreElement.innerText = "Score: 0";
+  scoreElement.innerText = "Holy Water: 0";
   document.body.appendChild(scoreElement);
 
   function loadCoin(url, position) {
     loader.load(url, (gltf) => {
       const coin = gltf.scene.clone();
       coin.position.copy(position);
-      coin.scale.set(0.2, 0.2, 0.2);
+      coin.scale.set(0.005, 0.005, 0.005);
       coin.rotation.y = 0;
       coin.userData = coin.userData || {};
       coin.userData.pulseTime = Math.random() * Math.PI * 2;
@@ -254,7 +283,7 @@ async function init() {
         scene.remove(coin);
         coins.splice(i, 1);
         score += 5;
-        scoreElement.innerText = "Score: " + score;
+        scoreElement.innerText = "Holy Water: " + score;
       }
     }
   }
@@ -293,21 +322,103 @@ async function init() {
   }
 
   // --------------------------
+  // DIALOGUE SYSTEM
+  // --------------------------
+  const dialogueBox = document.createElement("div");
+  dialogueBox.id = "dialogue-box";
+  dialogueBox.style.position = "absolute";
+  dialogueBox.style.bottom = "60px";
+  dialogueBox.style.left = "50%";
+  dialogueBox.style.transform = "translateX(-50%)";
+  dialogueBox.style.minWidth = "600px";
+  dialogueBox.style.maxWidth = "80%";
+  dialogueBox.style.padding = "16px 24px";
+  dialogueBox.style.border = "2px solid #6c5ce7";
+  dialogueBox.style.borderRadius = "12px";
+  dialogueBox.style.background = "rgba(0, 0, 0, 0.85)";
+  dialogueBox.style.color = "#fff";
+  dialogueBox.style.fontFamily = "monospace";
+  dialogueBox.style.fontSize = "18px";
+  dialogueBox.style.display = "none";
+  dialogueBox.style.zIndex = "999";
+  document.body.appendChild(dialogueBox);
+
+  const DIALOGUE = [
+    { speaker: "Man", text: "You're safe now. I found you just in time.Come on, let's get you out of here. There are people waiting for you." },
+  ];
+
+  function showDialogueSequence(lines, typingSpeed = 28, onFinish = null) {
+    let index = 0;
+
+    function typeLine(line, cb) {
+      let charIndex = 0;
+      dialogueBox.innerHTML = `<strong style="color:#74b9ff;">${line.speaker}</strong><br><span id="dialogue-text"></span>
+      <div style="font-size:14px; color:#888; text-align:right;">Click to continue →</div>`;
+      dialogueBox.style.display = "block";
+
+      const dialogueText = document.getElementById("dialogue-text");
+      dialogueText.textContent = "";
+
+      let typingInterval = setInterval(() => {
+        dialogueText.textContent += line.text.charAt(charIndex);
+        charIndex++;
+        if (charIndex >= line.text.length) {
+          clearInterval(typingInterval);
+        }
+      }, typingSpeed);
+
+      const clickHandler = () => {
+        clearInterval(typingInterval);
+        dialogueText.textContent = line.text;
+        dialogueBox.removeEventListener("click", clickHandler);
+        cb();
+      };
+
+      dialogueBox.addEventListener("click", clickHandler);
+    }
+
+    function nextDialogue() {
+      if (index >= lines.length) {
+        dialogueBox.style.display = "none";
+        if (onFinish) onFinish();
+        return;
+      }
+      typeLine(lines[index], () => {
+        index++;
+        dialogueBox.addEventListener("click", nextDialogue, { once: true });
+      });
+    }
+
+    nextDialogue();
+  }
+
+  // --------------------------
   // SCENE SWITCHING
   // --------------------------
   async function switchScene(filePath, name = "") {
     console.log("Switching scene to:", name);
     isSwitching = true;
     unloadActiveBuilding();
+
     const targetScale = name === "bedroom" ? new Vector3(0.5, 0.5, 0.5) : new Vector3(1, 1, 1);
     mazeSize = await loadBuilding(filePath, new Vector3(0, name === "bedroom" ? 0 : -50, 0), name, targetScale);
 
     character.rigidBody.setTranslation({ x: 0, y: 2, z: 0 }, true);
-    character.model.scale.set(1.5, 1.5, 1.5);
+    if (character.model) character.model.scale.set(1.8, 1.8, 1.8);
     character.rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
     character.rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
     character.update(0);
     updateCamera(0);
+
+    if (name === "bedroom") {
+      character.canMove = () => false;
+      showDialogueSequence(DIALOGUE, 28, () => {
+        character.canMove = () => true;
+      });
+    } else {
+      character.canMove = () => true;
+    }
+
     isSwitching = false;
   }
 
@@ -318,17 +429,25 @@ async function init() {
     mazeSize = await loadBuilding('../../assets/models/maze_room.glb', new Vector3(0, -50, 0), "maze_room");
   }
 
-  loadFlashingModel('../../assets/models/arrow.glb', new Vector3(-45.78, 0.60, -76.07));
+  loadFlashingModel('../../assets/models/arrow.glb', new Vector3(-45.78, 0.60, -46.07));
   loadFlashingModel('../../assets/models/arrow.glb', new Vector3(-45.78, 0.60, 30.00));
   loadDoorModel('../../assets/models/door_wood.glb', new Vector3(-28.28, -48.51, -74.33));
-  loadCoin('../../assets/models/coin_point.glb', new Vector3(-35, -21, -145));
-  loadCoin('../../assets/models/coin_point.glb', new Vector3(-45, 2, -105));
-  loadCoin('../../assets/models/coin_point.glb', new Vector3(-45, 2, -25));
-  loadCoin('../../assets/models/coin_point.glb', new Vector3(-30, 2, 25));
-  loadCoin('../../assets/models/coin_point.glb', new Vector3(24, 2, 25));
+  loadCoin('../../assets/models/holy_water.glb', new Vector3(-35, -21, -145));
+  loadCoin('../../assets/models/holy_water.glb', new Vector3(-45, 2, -65));
+  //loadCoin('../../assets/models/holy_water.glb', new Vector3(-45, 2, -25));
+  loadCoin('../../assets/models/holy_water.glb', new Vector3(-30, 2, 25));
+  loadCoin('../../assets/models/holy_water.glb', new Vector3(24, 2, 25));
 
   await loadInitialScene();
   initMiniMap();
+
+  // --------------------------
+  // MUSIC
+  // --------------------------
+  const bgMusic = new Audio("https://play.rosebud.ai/assets/windy_day_ambience_01.wav?gq3B");
+  bgMusic.loop = true;
+  bgMusic.volume = 0.5;
+  bgMusic.play();
 
   function updateCamera(delta) {
     if (!character.model) return;
@@ -337,7 +456,7 @@ async function init() {
       character.model.rotation.y
     );
     const desiredPos = character.model.position.clone().add(rotatedOffset);
-    camera.position.lerp(desiredPos, 5 * delta);
+    camera.position.lerp(desiredPos, 2.5 * delta);
     const lookTarget = character.model.position.clone().add(lookAtOffset);
     camera.lookAt(lookTarget);
   }
@@ -346,7 +465,15 @@ async function init() {
     const delta = clock.getDelta();
     if (!isSwitching) {
       world.step();
+      // Update character controller with stair-stepping parameters
+      if (character.controller) {
+        character.controller.enableSnapToGround(0.5); // Snap to ground within 0.5 units
+        character.controller.setMaxSlopeClimbAngle(Math.PI / 4); // Allow climbing slopes up to 45 degrees
+        character.controller.setMinSlideAngle(Math.PI / 6); // Slide on slopes steeper than 30 degrees
+        character.controller.setStepOffset(0.5); // Allow stepping up to 0.5 units (adjust for stair height)
+      }
       character.update(delta);
+      snapToGround(character, character.controller, delta); // Snap to ground
       updateFlashing(delta);
       updateDoors(delta);
     }
@@ -357,6 +484,7 @@ async function init() {
     renderer.render(scene, camera);
 
     if (character.model) {
+      character.model.scale.set(1.5, 1.5, 1.5);
       const pos = character.model.position;
       if (miniMap) miniMap.update(pos);
       updateCoins(delta, pos);
