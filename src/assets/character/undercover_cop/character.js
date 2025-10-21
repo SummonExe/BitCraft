@@ -14,8 +14,8 @@ export default class Character {
     this.animations = {};
     this.currentAction = null;
 
-    this.rotationY = 0; // Track facing rotation
-    this.rotationSpeed = Math.PI; // radians per second
+    this.rotationY = 0;
+    this.rotationSpeed = Math.PI;
 
     const loader = new GLTFLoader();
     loader.load('/src/assets/character/undercover_cop/undercover_cop_-_animated.glb', (gltf) => {
@@ -40,7 +40,7 @@ export default class Character {
       const groundBodyDesc = new RAPIER.RigidBodyDesc(RAPIER.RigidBodyType.Fixed)
         .setTranslation(0, 0, 0);
       const groundBody = world.createRigidBody(groundBodyDesc);
-      const groundColliderDesc = RAPIER.ColliderDesc.cuboid(125, 0.1, 125);
+      const groundColliderDesc = RAPIER.ColliderDesc.cuboid(5000, 0.1, 5000);
       world.createCollider(groundColliderDesc, groundBody);
 
       // Animation setup
@@ -62,14 +62,13 @@ export default class Character {
 
     // Input handling
     this.keys = {};
-    document.addEventListener('keydown', (e) => this.keys[e.key] = true);
-    document.addEventListener('keyup', (e) => this.keys[e.key] = false);
+    document.addEventListener('keydown', (e) => { this.keys[e.key] = true; });
+    document.addEventListener('keyup', (e) => { this.keys[e.key] = false; });
   }
 
   update(delta) {
     this.isMoving = false;
 
-    // --- ROTATION ---
     if (this.keys['a'] || this.keys['ArrowLeft']) {
       this.rotationY += this.rotationSpeed * delta;
     }
@@ -81,36 +80,36 @@ export default class Character {
       this.model.rotation.y = this.rotationY;
     }
 
-    // --- MOVEMENT ---
     if (this.rigidBody) {
-      let forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), this.rotationY);
+      const forward = new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), this.rotationY);
 
-
-    if (this.keys['w'] || this.keys['ArrowUp']) {
-        this.rigidBody.applyImpulse({
-            x: forward.x * this.moveRate,
-            y: 0,
-            z: forward.z * this.moveRate
-        }, true);
+      if (this.keys['w'] || this.keys['ArrowUp']) {
+        this.rigidBody.applyImpulse({ x: forward.x * this.moveRate, y: 0, z: forward.z * this.moveRate }, true);
         this.isMoving = true;
-    }
-    if (this.keys['s'] || this.keys['ArrowDown']) {
-        this.rigidBody.applyImpulse({
-            x: -forward.x * this.moveRate,
-            y: 0,
-            z: -forward.z * this.moveRate
-        }, true);
+      }
+      if (this.keys['s'] || this.keys['ArrowDown']) {
+        this.rigidBody.applyImpulse({ x: -forward.x * this.moveRate, y: 0, z: -forward.z * this.moveRate }, true);
         this.isMoving = true;
-    }
+      }
+
+      // Stop gliding when no keys are pressed
+      if (!this.isMoving && this.rigidBody) {
+        const linvel = this.rigidBody.linvel();
+        if (Math.abs(linvel.x) > 0.01 || Math.abs(linvel.z) > 0.01) {
+          this.rigidBody.setLinvel({ x: linvel.x * 0.9, y: linvel.y, z: linvel.z * 0.9 }, true); // Dampen velocity
+        } else {
+          this.rigidBody.setLinvel({ x: 0, y: linvel.y, z: 0 }, true); // Stop completely if near zero
+        }
+      }
     }
 
-    // Sync model position with physics
-    if (this.rigidBody) {
+    // Sync model with physics
+    if (this.rigidBody && this.model) {
       const pos = this.rigidBody.translation();
-      this.model.position.set(pos.x, pos.y, pos.z);
+      this.model.position.set(pos.x, pos.y - 1, pos.z); // Adjust y if needed for model offset
     }
 
-    // --- ANIMATIONS ---
+    // Animation logic with improved transitions
     if (this.mixer) {
       if (this.isMoving && this.animations['walking']) {
         if (!this.currentAction || this.currentAction.getClip().name !== 'walking') {
