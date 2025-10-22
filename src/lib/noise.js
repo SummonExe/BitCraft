@@ -34,5 +34,5 @@ export function getTerrainHeight(x, z) {
     frequency *= 2;
   }
   
-  return height;
+  return 0;//height;
 }

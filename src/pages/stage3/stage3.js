@@ -9,7 +9,6 @@ import { ChaserNPC } from './ChaserNPC.js';
 import hero from "../../../src/assets/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
 import kid from "../../../src/assets/models/kid2/Idle.fbx";
 import witch from "../../../src/assets/models/witch/witch_Idle.fbx";
-import { noise, getTerrainHeight } from "../../lib/noise.js";
 
 // === LOADING SCREEN ===
 const loadingScreen = document.getElementById('loadingScreen');
@@ -27,8 +26,8 @@ await RAPIER.init();
 
 // === SCENE SETUP ===
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x87ceeb);
-scene.fog = new THREE.Fog(0x87ceeb, 50, 200);
+scene.background = new THREE.Color(0x070e17);
+scene.fog = new THREE.FogExp2(0x0e1c2e,0.005);
 
 const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 15, 25);
@@ -53,34 +52,31 @@ directionalLight.shadow.camera.top = 50;
 directionalLight.shadow.camera.bottom = -50;
 scene.add(directionalLight);
 
-// === TERRAIN ===
-const terrainSize = 1000;
-const terrainSegments = 100;
-const terrainGeometry = new THREE.PlaneGeometry(terrainSize, terrainSize, terrainSegments, terrainSegments);
-terrainGeometry.rotateX(-Math.PI / 2);
+// === FLAT GROUND ===
+const groundSize = 1000;
+const groundGeometry = new THREE.PlaneGeometry(groundSize, groundSize);
+groundGeometry.rotateX(-Math.PI / 2);
 
-const vertices = terrainGeometry.attributes.position.array;
-for (let i = 0; i < vertices.length; i += 3) {
-  const x = vertices[i];
-  const z = vertices[i + 2];
-  vertices[i + 1] = getTerrainHeight(x, z);
-}
-terrainGeometry.computeVertexNormals();
+const groundMaterial = new THREE.MeshStandardMaterial({
+  color: 0x252525,
+  roughness: 0.9,
+  metalness: 0.1
+});
 
-const terrainMaterial = new THREE.MeshStandardMaterial({ color: 0x3a7d44, flatShading: true });
-const terrain = new THREE.Mesh(terrainGeometry, terrainMaterial);
-terrain.receiveShadow = true;
-scene.add(terrain);
+const ground = new THREE.Mesh(groundGeometry, groundMaterial);
+ground.receiveShadow = true;
+ground.position.y = 0;
+scene.add(ground);
 
 // === PHYSICS SETUP ===
 function setupPhysics() {
   const gravity = { x: 0.0, y: -9.81, z: 0.0 };
   world = new RAPIER.World(gravity);
   
-  const vertices = terrainGeometry.attributes.position.array;
-  const indices = terrainGeometry.index ? terrainGeometry.index.array : null;
-  const terrainDesc = RAPIER.ColliderDesc.trimesh(vertices, indices);
-  world.createCollider(terrainDesc);
+  // Flat ground collider (large thin box)
+  const groundColliderDesc = RAPIER.ColliderDesc.cuboid(groundSize / 2, 0.1, groundSize / 2)
+    .setTranslation(0, -0.1, 0);
+  world.createCollider(groundColliderDesc);
   
   physicsReady = true;
 }
@@ -164,7 +160,7 @@ async function initGame() {
   try {
     // Create entities — they start loading immediately
     player = new Player({
-      position: { x: 0, y: 2, z: 0 },
+      position: { x: 0, y: 0, z: 0 },
       modelPath: hero,
       maxSpeed: 8,
       moveForce: 30,
@@ -178,11 +174,11 @@ async function initGame() {
     });
 
     npc1 = new FollowerNPC({
-      position: { x: -25, y: 6.58, z: -25 },
+      position: { x: -5, y: 0, z: -8 },
       modelPath: kid,
       maxSpeed: 20,
-      followDistance: 10,
-      stopThreshold: 10,
+      followDistance: 30,
+      stopThreshold: 40,
       target: player,
       world,
       scene,
@@ -193,10 +189,10 @@ async function initGame() {
     });
 
     npc2 = new ChaserNPC({
-      position: { x: 20, y: getTerrainHeight(20, 20) + 4.9, z: 20 },
+      position: { x: -10, y: 0, z: 100 },
       modelPath: witch,
       maxSpeed: 20,
-      stopDistance: 30,
+      stopDistance: 60,
       target: player,
       world,
       scene,
