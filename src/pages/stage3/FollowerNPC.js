@@ -17,18 +17,15 @@ export class FollowerNPC {
     this.currentAction = null;
     this.world = world;
     
-    // Yuka entity
     this.entity = new YUKA.Vehicle();
     this.entity.maxSpeed = maxSpeed;
     this.entity.position.set(position.x, position.y, position.z);
     this.entity.setRenderComponent(null, this.sync);
     
-    // Steering behaviors
     this.offsetBehavior = new YUKA.OffsetPursuitBehavior(target.entity, new YUKA.Vector3(0, 0, followDistance));
     this.entity.steering.add(this.offsetBehavior);
     this.entity.steering.add(new YUKA.ObstacleAvoidanceBehavior([target.entity]));
     
-    // Physics setup
     const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
       .setTranslation(position.x, position.y, position.z)
       .setLinearDamping(2.0)
@@ -41,14 +38,14 @@ export class FollowerNPC {
     
     entityManager.add(this.entity);
     
-    // Load model and animations asynchronously
-    this.loadModel(position, loadModel, loadAnimation, scene, mixers);
+    // EXPOSE LOAD PROMISE
+    this.loadPromise = this.loadModel(position, loadModel, loadAnimation, scene, mixers);
   }
   
   async loadModel(initialPosition, loadModel, loadAnimation, scene, mixers) {
     try {
-      const scale = 0.1; // Mixamo models are in cm, scale to meters
-      const rotation = new THREE.Euler(0, Math.PI, 0); // Face positive Z
+      const scale = 0.1;
+      const rotation = new THREE.Euler(0, Math.PI, 0);
       this.model = await loadModel(this.modelPath, scale, rotation, new THREE.Vector3(initialPosition.x, initialPosition.y, initialPosition.z));
       
       this.mixer = new THREE.AnimationMixer(this.model);
@@ -75,8 +72,9 @@ export class FollowerNPC {
       
       this.entity.setRenderComponent(this.model, this.sync);
     } catch (error) {
-      console.error('Failed to load follower model or animations:', error);
+      console.error('FollowerNPC load failed:', error);
       this.createFallbackBox(0x00ff00, scene);
+      throw error;
     }
   }
   
@@ -112,21 +110,14 @@ export class FollowerNPC {
     this.entity.position.set(physicsPos.x, physicsPos.y, physicsPos.z);
     
     const distanceToTarget = this.entity.position.distanceTo(this.target.entity.position);
-    
-    // Check if NPC is behind player
     const playerForward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.target.entity.rotation);
-    playerForward.y = 0;
-    playerForward.normalize();
+    playerForward.y = 0; playerForward.normalize();
     
     const toNPC = new THREE.Vector3().subVectors(this.entity.position, this.target.entity.position);
-    toNPC.y = 0;
-    toNPC.normalize();
+    toNPC.y = 0; toNPC.normalize();
     
     const dotProduct = playerForward.dot(toNPC);
-    const isBehind = dotProduct < 0; // Negative dot product means NPC is behind player
-    
-    // Debug logs
-    // console.log('FollowerNPC - Distance:', distanceToTarget, 'IsBehind:', isBehind, 'NPC Pos:', this.entity.position, 'Player Pos:', this.target.entity.position);
+    const isBehind = dotProduct < 0;
     
     if (distanceToTarget <= this.stopThreshold && isBehind) {
       this.entity.steering.behaviors.forEach(behavior => behavior.active = false);
@@ -136,16 +127,13 @@ export class FollowerNPC {
       this.entity.steering.behaviors.forEach(behavior => behavior.active = true);
       
       const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.target.entity.rotation);
-      forward.y = 0;
-      forward.normalize().multiplyScalar(-this.followDistance);
+      forward.y = 0; forward.normalize().multiplyScalar(-this.followDistance);
       this.offsetBehavior.offset.set(forward.x, forward.y, forward.z);
       
       const velocity = this.entity.velocity;
       const currentVel = this.rigidBody.linvel();
       if (velocity.length() > 0) {
         this.rigidBody.setLinvel({ x: velocity.x, y: currentVel.y, z: velocity.z }, true);
-        
-        // Rotate to face movement direction
         const targetRotation = Math.atan2(velocity.x, velocity.z);
         this.entity.rotation.fromEuler(0, targetRotation, 0);
       }
