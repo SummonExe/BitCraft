@@ -243,7 +243,7 @@ async function init() {
   scoreElement.style.top = "10px";
   scoreElement.style.left = "150px";
   scoreElement.style.color = "white";
-  scoreElement.style.fontFamily = "Arial, sans-serif";
+  // scoreElement.style.fontFamily = "Arial, sans-serif";
   scoreElement.style.fontSize = "18px";
   scoreElement.style.fontWeight = "700";
   scoreElement.style.background = "rgba(0,0,0,0.45)";
@@ -345,7 +345,7 @@ async function init() {
   dialogueBox.style.borderRadius = "12px";
   dialogueBox.style.background = "rgba(0, 0, 0, 0.85)";
   dialogueBox.style.color = "#fff";
-  dialogueBox.style.fontFamily = "monospace";
+  // dialogueBox.style.fontFamily = "monospace";
   dialogueBox.style.fontSize = "18px";
   dialogueBox.style.display = "none";
   dialogueBox.style.zIndex = "999";
