@@ -4,7 +4,7 @@ import RAPIER from '@dimforge/rapier3d-compat';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { Player } from '../stage3/Player.js';
 import { FollowerNPC } from '../stage3/FollowerNPC.js';
-import { ChaserNPC } from '../stage3/ChaserNPC.js';
+import { ChaserNPC } from './ChaserNPC.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 import hero from "../../../src/assets/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
