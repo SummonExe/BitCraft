@@ -8,8 +8,6 @@ import heroWalk from "../../../src/assets/models/cop/Magic Spell Pack/Walking.fb
 import heroRun from "../../../src/assets/models/cop/Magic Spell Pack/Unarmed Run Forward.fbx";
 import heroIdle from "../../../src/assets/models/cop/Magic Spell Pack/Unarmed Idle.fbx";
 import heroHit1 from "../../../src/assets/models/cop/Magic Spell Pack/Standing 2H Magic Attack 01.fbx";
-import heroHit2 from "../../../src/assets/models/cop/Magic Spell Pack/Standing 2H Magic Area Attack 02.fbx";
-import heroHit3 from "../../../src/assets/models/cop/Magic Spell Pack/Standing 2H Magic Area Attack 01.fbx";
 
 export class Player {
   constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles }) {
@@ -20,11 +18,11 @@ export class Player {
     this.actions = { idle: null, walk: null, attack: null };
     this.currentAction = null;
     this.world = world;
-    this.scene = scene; // Store scene
-    this.projectiles = projectiles; // Store projectiles array
-    this.targetRotation = 0; // Target rotation in radians
-    this.currentRotation = 0; // Current rotation in radians
-    this.rotationSpeed = 0.05; // Rotation smoothing speed
+    this.scene = scene;
+    this.projectiles = projectiles;
+    this.targetRotation = 0;
+    this.currentRotation = 0;
+    this.rotationSpeed = 0.05;
     
     // Yuka entity
     this.entity = new YUKA.Vehicle();
@@ -45,14 +43,14 @@ export class Player {
     
     entityManager.add(this.entity);
     
-    // Load model and animations asynchronously
-    this.loadModel(position, loadModel, loadAnimation, scene, mixers);
+    // EXPOSE LOAD PROMISE
+    this.loadPromise = this.loadModel(position, loadModel, loadAnimation, scene, mixers);
   }
   
   async loadModel(initialPosition, loadModel, loadAnimation, scene, mixers) {
     try {
-      const scale = 0.05; // Mixamo models are in cm, scale to meters
-      const rotation = new THREE.Euler(0, Math.PI, 0); // Face positive Z
+      const scale = 0.05;
+      const rotation = new THREE.Euler(0, Math.PI, 0);
       this.model = await loadModel(this.modelPath, scale, rotation, new THREE.Vector3(initialPosition.x, initialPosition.y, initialPosition.z));
       
       this.mixer = new THREE.AnimationMixer(this.model);
@@ -74,32 +72,17 @@ export class Player {
       
       this.mixer.addEventListener('finished', (e) => {
         if (e.action === this.actions.attack) {
-          if (this.isMoving && this.currentAction !== this.actions.walk) {
-            this.actions.attack.fadeOut(0.3);
-            this.actions.walk.reset().fadeIn(0.3).play();
-            this.currentAction = this.actions.walk;
-          } else if (!this.isMoving && this.currentAction !== this.actions.idle) {
-            this.actions.attack.fadeOut(0.3);
-            this.actions.idle.reset().fadeIn(0.3).play();
-            this.currentAction = this.actions.idle;
-          }
+          this.actions.attack.fadeOut(0.3);
+          this.actions.idle.reset().fadeIn(0.3).play();
+          this.currentAction = this.actions.idle;
         }
       });
       
       this.entity.setRenderComponent(this.model, this.sync);
     } catch (error) {
-      console.error('Failed to load player model or animations:', error);
-      this.createFallbackBox(0x0000ff, scene);
+      console.error('Player model load failed:', error);
+      throw error;
     }
-  }
-  
-  createFallbackBox(color, scene) {
-    const geometry = new THREE.BoxGeometry(2, 4, 2);
-    const material = new THREE.MeshStandardMaterial({ color });
-    this.model = new THREE.Mesh(geometry, material);
-    this.model.castShadow = true;
-    scene.add(this.model);
-    this.entity.setRenderComponent(this.model, this.sync);
   }
   
   sync(entity, renderComponent) {
@@ -128,50 +111,36 @@ export class Player {
     const velocity = new THREE.Vector3();
     let rotationInput = 0;
     
-    // Movement: Up/Down for forward/back relative to facing
-    if (keys.ArrowUp) velocity.z = 1; // Up backward
-    if (keys.ArrowDown) velocity.z = -1; // Down forward
-    
-    // Rotation: Left/Right for turning
-    if (keys.ArrowLeft) rotationInput += 1; // Rotate left
-    if (keys.ArrowRight) rotationInput -= 1; // Rotate right
+    if (keys.ArrowUp) velocity.z = 1;
+    if (keys.ArrowDown) velocity.z = -1;
+    if (keys.ArrowLeft) rotationInput += 1;
+    if (keys.ArrowRight) rotationInput -= 1;
     
     this.isMoving = velocity.length() > 0 || rotationInput !== 0;
     
     if (keys.p && this.actions.attack && this.currentAction !== this.actions.attack) {
-      if (this.currentAction) {
-        this.currentAction.fadeOut(0.3);
-      }
+      if (this.currentAction) this.currentAction.fadeOut(0.3);
       this.actions.attack.reset().fadeIn(0.3).play();
       this.currentAction = this.actions.attack;
       
       const physicsPos = this.rigidBody.translation();
       const startPosition = new THREE.Vector3(physicsPos.x, physicsPos.y + 15, physicsPos.z);
       const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.entity.rotation);
-      forward.y = 0;
-      forward.normalize();
-      try {
-        const projectile = new Projectile({ position: startPosition, direction: forward }, { world: this.world, scene: this.scene });
-        this.projectiles.push(projectile);
-      } catch (error) {
-        console.error('Failed to create projectile:', error);
-      }
+      forward.y = 0; forward.normalize();
+      
+      const projectile = new Projectile({ position: startPosition, direction: forward }, { world: this.world, scene: this.scene });
+      this.projectiles.push(projectile);
     }
     
-    // Handle rotation
     if (rotationInput !== 0) {
-      this.targetRotation += rotationInput * delta * 4; // Rotation speed from inline
+      this.targetRotation += rotationInput * delta * 4;
     }
     
-    // Smooth rotation
     const rotationDiff = this.targetRotation - this.currentRotation;
     const normalizedDiff = ((rotationDiff + Math.PI) % (2 * Math.PI)) - Math.PI;
     this.currentRotation += normalizedDiff * this.rotationSpeed;
-    
-    // Apply rotation to entity
     this.entity.rotation.fromEuler(0, this.currentRotation, 0);
     
-    // Handle movement relative to facing direction
     if (velocity.length() > 0) {
       velocity.applyQuaternion(this.entity.rotation);
       velocity.normalize().multiplyScalar(this.moveForce);
