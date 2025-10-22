@@ -9,6 +9,7 @@ import { ChaserNPC } from './ChaserNPC.js';
 import hero from "../../../src/assets/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
 import kid from "../../../src/assets/models/kid2/Idle.fbx";
 import witch from "../../../src/assets/models/witch/witch_Idle.fbx";
+import { noise, getTerrainHeight  } from "../../lib/noise.js";
 
 // Initialize Rapier physics
 let world, physicsReady = false;
@@ -44,44 +45,6 @@ directionalLight.shadow.camera.bottom = -50;
 scene.add(directionalLight);
 
 // Simple noise function (Perlin-like)
-function noise(x, y) {
-  const X = Math.floor(x) & 255;
-  const Y = Math.floor(y) & 255;
-  const xf = x - Math.floor(x);
-  const yf = y - Math.floor(y);
-  
-  const fade = t => t * t * t * (t * (t * 6 - 15) + 10);
-  const lerp = (t, a, b) => a + t * (b - a);
-  
-  const hash = (x, y) => {
-    const h = (x * 374761393 + y * 668265263) & 0x7fffffff;
-    return (h ^ (h >> 13)) / 0x7fffffff;
-  };
-  
-  const u = fade(xf);
-  const v = fade(yf);
-  
-  const a = hash(X, Y);
-  const b = hash(X + 1, Y);
-  const c = hash(X, Y + 1);
-  const d = hash(X + 1, Y + 1);
-  
-  return lerp(v, lerp(u, a, b), lerp(u, c, d));
-}
-
-function getTerrainHeight(x, z) {
-  let height = 0;
-  let amplitude = 4;
-  let frequency = 0.05;
-  
-  for (let i = 0; i < 4; i++) {
-    height += noise(x * frequency, z * frequency) * amplitude;
-    amplitude *= 0.5;
-    frequency *= 2;
-  }
-  
-  return height;
-}
 
 // Create terrain
 const terrainSize = 1000;
@@ -175,6 +138,7 @@ async function loadAnimation(path) {
 }
 
 // Debug terrain height at witch position
+
 // console.log('Terrain height at witch position (20, 20):', getTerrainHeight(20, 20));
 
 // Create entities
