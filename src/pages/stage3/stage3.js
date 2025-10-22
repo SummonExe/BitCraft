@@ -2,13 +2,14 @@ import * as THREE from 'three';
 import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
-import { Player } from './Player.js';
 import { FollowerNPC } from './FollowerNPC.js';
 import { ChaserNPC } from './ChaserNPC.js';
+// import { Building } from './Building.js';
+import { Player } from './Player.js';
 
 import hero from "../../../src/assets/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
-import kid from "../../../src/assets/models/kid2/Idle.fbx";
 import witch from "../../../src/assets/models/witch/witch_Idle.fbx";
+import kid from "../../../src/assets/models/kid2/Idle.fbx";
 
 // === LOADING SCREEN ===
 const loadingScreen = document.getElementById('loadingScreen');
@@ -19,6 +20,7 @@ if (!loadingScreen) {
 // === GLOBAL STATE ===
 let world, physicsReady = false;
 let player, npc1, npc2;
+// let building;
 let loadingComplete = false;
 
 // === INITIALIZE RAPIER ===
@@ -158,6 +160,15 @@ window.addEventListener('resize', () => {
 // === GAME INITIALIZATION ===
 async function initGame() {
   try {
+
+    // building = new Building({
+    //   position: { x: 50, y: 0, z: 50 }, // Example position - adjust as needed
+    //   scale: 1, // Adjust scale to fit scene
+    //   world,
+    //   scene,
+    //   loadModel
+    // });
+
     // Create entities — they start loading immediately
     player = new Player({
       position: { x: 0, y: 0, z: 0 },
@@ -206,7 +217,8 @@ async function initGame() {
     await Promise.all([
       player.loadPromise,
       npc1.loadPromise,
-      npc2.loadPromise
+      npc2.loadPromise,
+      // building.loadPromise
     ]);
 
     console.log("All models loaded. Starting game...");
@@ -239,6 +251,7 @@ function animate() {
   npc1.update(delta);
   npc2.update(delta);
   npc2.updateIndicator();
+  // building.update();
 
   // Update projectiles
   for (let i = projectiles.length - 1; i >= 0; i--) {
@@ -252,6 +265,7 @@ function animate() {
   world.step();
 
   // Sync physics → visuals
+  // if (building.model) building.model.position.copy(building.rigidBody.translation());
   if (player.model) player.model.position.copy(player.rigidBody.translation());
   if (npc1.model) npc1.model.position.copy(npc1.rigidBody.translation());
   if (npc2.model) npc2.model.position.copy(npc2.rigidBody.translation());
