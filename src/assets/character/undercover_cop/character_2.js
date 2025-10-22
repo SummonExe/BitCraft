@@ -2,6 +2,8 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import RAPIER from '@dimforge/rapier3d-compat';
 import * as THREE from 'three';
 
+import copModel from "../../character/undercover_cop/undercover_cop_-_animated.glb";
+
 export default class Character {
   constructor(world, scene, position) {
     this.scene = scene;
@@ -21,7 +23,7 @@ export default class Character {
 
     const loader = new GLTFLoader();
     loader.load(
-      'models/undercover_cop_-_animated.glb',
+      copModel,
       (gltf) => {
         this.model = gltf.scene;
         this.model.position.copy(position);
