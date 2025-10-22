@@ -7,6 +7,7 @@ export default class Character {
     this.scene = scene;
     this.position = position;
     this.world = world;
+
     this.isMoving = false;
     this.mixer = null;
     this.moveRate = 0.25;
@@ -19,49 +20,47 @@ export default class Character {
     const loader = new GLTFLoader();
     loader.load('/src/assets/character/undercover_cop/undercover_cop_-_animated.glb', (gltf) => {
       this.model = gltf.scene;
-      // console.log('Loaded model:', this.model);
       this.model.position.copy(position);
+
       this.model.traverse((child) => {
         if (child.isMesh) child.castShadow = true;
       });
+
       scene.add(this.model);
 
       // Physics setup
-      const rigidBodyDesc = new RAPIER.RigidBodyDesc(RAPIER.RigidBodyType.Dynamic).setTranslation(0, 2, 0);
+      const rigidBodyDesc = new RAPIER.RigidBodyDesc(RAPIER.RigidBodyType.Dynamic)
+        .setTranslation(position.x, position.y, position.z);
       this.rigidBody = world.createRigidBody(rigidBodyDesc);
+
       const colliderDesc = RAPIER.ColliderDesc.cuboid(0.5, 1, 0.5);
       world.createCollider(colliderDesc, this.rigidBody);
 
       // Temporary ground collider
-      const groundBodyDesc = new RAPIER.RigidBodyDesc(RAPIER.RigidBodyType.Fixed).setTranslation(0, 0, 0);
+      const groundBodyDesc = new RAPIER.RigidBodyDesc(RAPIER.RigidBodyType.Fixed)
+        .setTranslation(0, 0, 0);
       const groundBody = world.createRigidBody(groundBodyDesc);
       const groundColliderDesc = RAPIER.ColliderDesc.cuboid(5000, 0.1, 5000);
       world.createCollider(groundColliderDesc, groundBody);
 
-      // Animation setup with debugging
+      // Animation setup
       this.mixer = new THREE.AnimationMixer(this.model);
       if (gltf.animations && gltf.animations.length > 0) {
         gltf.animations.forEach((clip) => {
           this.animations[clip.name] = clip;
-          // console.log('Available animation:', clip.name);
         });
-      } else {
-        console.warn('No animations found in GLTF file');
       }
 
-      // Start with Breathing Idle if available
       if (this.animations['Breathing Idle']) {
         this.currentAction = this.mixer.clipAction(this.animations['Breathing Idle']);
         this.currentAction.setLoop(THREE.LoopRepeat);
         this.currentAction.play();
-      } else {
-        console.warn('Breathing Idle animation not found');
       }
     }, undefined, (error) => {
       console.error('GLTF loading error:', error);
     });
 
-    // Controls setup
+    // Input handling
     this.keys = {};
     document.addEventListener('keydown', (e) => { this.keys[e.key] = true; });
     document.addEventListener('keyup', (e) => { this.keys[e.key] = false; });
