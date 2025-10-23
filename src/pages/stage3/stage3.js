@@ -33,8 +33,8 @@ await RAPIER.init();
 // === SCENE SETUP ===
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x070e17);
-// scene.fog = new THREE.FogExp2(0x0e1c2e,0.005);
-// scene.fog = new THREE.FogExp2(0x666666,0.003);
+scene.fog = new THREE.FogExp2(0x0e1c2e,0.0025);
+// scene.fog = new THREE.FogExp2(0x666666,0.0025);
 
 const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 15, 15);
@@ -51,7 +51,7 @@ const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
 scene.add(ambientLight);
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-directionalLight.position.set(50, 50, 25);
+directionalLight.position.set(80, 80, 30);
 directionalLight.castShadow = true;
 directionalLight.shadow.camera.left = -50;
 directionalLight.shadow.camera.right = 50;
@@ -239,8 +239,8 @@ async function initGame() {
     player = new Player({
       position: { x: 0, y: 0, z: 0 + offset },
       modelPath: hero,
-      maxSpeed: 8,
-      moveForce: 30,
+      maxSpeed: 4,
+      moveForce: 7,
       world,
       scene,
       mixers,
