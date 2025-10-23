@@ -2,14 +2,17 @@ import * as THREE from 'three';
 import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { FollowerNPC } from './FollowerNPC.js';
 import { ChaserNPC } from './ChaserNPC.js';
-// import { Building } from './Building.js';
+import { Building } from './Building.js';
 import { Player } from './Player.js';
 
 import hero from "../../../src/assets/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
 import witch from "../../../src/assets/models/witch/witch_Idle.fbx";
 import kid from "../../../src/assets/models/kid2/Idle.fbx";
+import groundTexture from "../../../public/2025-10-23 123028.png";
 
 // === LOADING SCREEN ===
 const loadingScreen = document.getElementById('loadingScreen');
@@ -20,7 +23,8 @@ if (!loadingScreen) {
 // === GLOBAL STATE ===
 let world, physicsReady = false;
 let player, npc1, npc2;
-// let building;
+let building;
+let offset = 40;
 let loadingComplete = false;
 
 // === INITIALIZE RAPIER ===
@@ -29,10 +33,11 @@ await RAPIER.init();
 // === SCENE SETUP ===
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x070e17);
-scene.fog = new THREE.FogExp2(0x0e1c2e,0.005);
+// scene.fog = new THREE.FogExp2(0x0e1c2e,0.005);
+// scene.fog = new THREE.FogExp2(0x666666,0.003);
 
 const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 15, 25);
+camera.position.set(0, 15, 15);
 camera.lookAt(0, 0, 0);
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -55,12 +60,21 @@ directionalLight.shadow.camera.bottom = -50;
 scene.add(directionalLight);
 
 // === FLAT GROUND ===
-const groundSize = 1000;
+const groundSize = 5000;
 const groundGeometry = new THREE.PlaneGeometry(groundSize, groundSize);
 groundGeometry.rotateX(-Math.PI / 2);
 
+// Load your texture
+const textureLoader = new THREE.TextureLoader();
+const colorMap = textureLoader.load(groundTexture); 
+colorMap.repeat.set(200, 200);
+
+// Optionally, set the texture wrapping mode to repeat
+colorMap.wrapS = THREE.RepeatWrapping;  // Repeat horizontally (S axis)
+colorMap.wrapT = THREE.RepeatWrapping;  // Repeat vertically (T axis)
+
 const groundMaterial = new THREE.MeshStandardMaterial({
-  color: 0x252525,
+  map: colorMap,
   roughness: 0.9,
   metalness: 0.1
 });
@@ -72,7 +86,7 @@ scene.add(ground);
 
 // === PHYSICS SETUP ===
 function setupPhysics() {
-  const gravity = { x: 0.0, y: -9.81, z: 0.0 };
+  const gravity = { x: 0.0, y: -10, z: 0.0 };
   world = new RAPIER.World(gravity);
   
   // Flat ground collider (large thin box)
@@ -90,49 +104,101 @@ const time = new YUKA.Time();
 const mixers = [];
 const projectiles = [];
 
-// === ASSET LOADER ===
+// === ASSET LOADERS ===
 const fbxLoader = new FBXLoader();
+const gltfLoader = new GLTFLoader();
+const objLoader = new OBJLoader();
+
+// Helper function to detect file type from path
+function getFileExtension(path) {
+  return path.split('.').pop().toLowerCase();
+}
 
 async function loadModel(path, scale = 1, rotation = new THREE.Euler(0, Math.PI, 0), position = new THREE.Vector3(0, 0, 0)) {
   return new Promise((resolve, reject) => {
-    fbxLoader.load(
-      path,
-      (object) => {
-        object.scale.set(scale, scale, scale);
-        object.rotation.copy(rotation);
-        object.position.copy(position);
-        object.traverse((child) => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        });
-        scene.add(object);
-        resolve(object);
-      },
-      undefined,
-      (error) => {
-        console.error(`Failed to load model: ${path}`, error);
-        reject(error);
+    const extension = getFileExtension(path);
+    
+    const onLoad = (object) => {
+      // Handle GLTF/GLB format (has a scene property)
+      if (object.scene) {
+        object = object.scene;
       }
-    );
+      
+      object.scale.set(scale, scale, scale);
+      object.rotation.copy(rotation);
+      object.position.copy(position);
+      object.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      scene.add(object);
+      resolve(object);
+    };
+    
+    const onError = (error) => {
+      console.error(`Failed to load model: ${path}`, error);
+      reject(error);
+    };
+    
+    // Choose loader based on file extension
+    switch (extension) {
+      case 'fbx':
+        fbxLoader.load(path, onLoad, undefined, onError);
+        break;
+      case 'glb':
+      case 'gltf':
+        gltfLoader.load(path, onLoad, undefined, onError);
+        break;
+      case 'obj':
+        objLoader.load(path, onLoad, undefined, onError);
+        break;
+      default:
+        reject(new Error(`Unsupported file format: ${extension}`));
+    }
   });
 }
 
 async function loadAnimation(path) {
   return new Promise((resolve, reject) => {
-    fbxLoader.load(
-      path,
-      (object) => {
-        if (object.animations && object.animations.length > 0) {
-          resolve(object.animations[0]);
-        } else {
-          reject(new Error(`No animations in ${path}`));
-        }
-      },
-      undefined,
-      reject
-    );
+    const extension = getFileExtension(path);
+    
+    const onLoad = (object) => {
+      let animations = [];
+      
+      // Handle GLTF/GLB format
+      if (object.animations) {
+        animations = object.animations;
+      }
+      
+      if (animations && animations.length > 0) {
+        resolve(animations[0]);
+      } else {
+        reject(new Error(`No animations in ${path}`));
+      }
+    };
+    
+    const onError = (error) => {
+      console.error(`Failed to load animation: ${path}`, error);
+      reject(error);
+    };
+    
+    // Choose loader based on file extension
+    switch (extension) {
+      case 'fbx':
+        fbxLoader.load(path, onLoad, undefined, onError);
+        break;
+      case 'glb':
+      case 'gltf':
+        gltfLoader.load(path, onLoad, undefined, onError);
+        break;
+      case 'obj':
+        reject(new Error('OBJ files do not support animations'));
+        break;
+      default:
+        reject(new Error(`Unsupported file format for animations: ${extension}`));
+    }
   });
 }
 
@@ -161,17 +227,17 @@ window.addEventListener('resize', () => {
 async function initGame() {
   try {
 
-    // building = new Building({
-    //   position: { x: 50, y: 0, z: 50 }, // Example position - adjust as needed
-    //   scale: 1, // Adjust scale to fit scene
-    //   world,
-    //   scene,
-    //   loadModel
-    // });
+    building = new Building({
+      position: { x: -5, y: 13, z: 0 }, // Example position - adjust as needed
+      scale: 10, // Adjust scale to fit scene
+      world,
+      scene,
+      loadModel
+    });
 
-    // Create entities — they start loading immediately
+    // Create entities – they start loading immediately
     player = new Player({
-      position: { x: 0, y: 0, z: 0 },
+      position: { x: 0, y: 0, z: 0 + offset },
       modelPath: hero,
       maxSpeed: 8,
       moveForce: 30,
@@ -185,7 +251,7 @@ async function initGame() {
     });
 
     npc1 = new FollowerNPC({
-      position: { x: -5, y: 0, z: -8 },
+      position: { x: -5, y: 0, z: -8 + offset },
       modelPath: kid,
       maxSpeed: 20,
       followDistance: 30,
@@ -200,7 +266,7 @@ async function initGame() {
     });
 
     npc2 = new ChaserNPC({
-      position: { x: -10, y: 0, z: 100 },
+      position: { x: -10, y: 0, z: 100 + offset },
       modelPath: witch,
       maxSpeed: 20,
       stopDistance: 60,
@@ -218,7 +284,7 @@ async function initGame() {
       player.loadPromise,
       npc1.loadPromise,
       npc2.loadPromise,
-      // building.loadPromise
+      building.loadPromise
     ]);
 
     console.log("All models loaded. Starting game...");
@@ -265,7 +331,7 @@ function animate() {
   world.step();
 
   // Sync physics → visuals
-  // if (building.model) building.model.position.copy(building.rigidBody.translation());
+  if (building.model) building.model.position.copy(building.rigidBody.translation());
   if (player.model) player.model.position.copy(player.rigidBody.translation());
   if (npc1.model) npc1.model.position.copy(npc1.rigidBody.translation());
   if (npc2.model) npc2.model.position.copy(npc2.rigidBody.translation());
@@ -276,7 +342,7 @@ function animate() {
   // Camera follow
   const playerPos = player.rigidBody.translation();
   const playerForward = new THREE.Vector3(0, 0, 1).applyQuaternion(player.entity.rotation);
-  const cameraDistance = 25;
+  const cameraDistance = 20;
   const cameraHeight = 15;
 
   const desiredPosition = new THREE.Vector3(

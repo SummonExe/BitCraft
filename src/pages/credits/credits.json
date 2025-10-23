@@ -107,6 +107,12 @@
 			"link": "https://www.whatfontis.com/FF_DKOkiku.font",
 			"credit": "\"DKOkiku font\" (https://www.whatfontis.com/FF_DKOkiku.font) DKOkiku by Copyright (c) 2014 by David Kerkhoff. All rights reserved.",
 			"file": ["DK Okiku.otf"]
+		},
+		{
+			"resource": "The Mansion",
+			"link": "https://skfb.ly/oTtNr",
+			"credit": "\"The Mansion\" (https://skfb.ly/oTtNr) by Veterock is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["the_mansion.glb"]
 		}
 	]
 }

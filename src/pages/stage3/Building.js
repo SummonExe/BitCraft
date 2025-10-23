@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 
 // Placeholder import - replace with actual building model path
-import buildingModel from "../../../src/assets/models/building/Building.fbx"; // Adjust path as needed
+import buildingModel from "../../assets/models/theMansion/the_mansion.glb"; 
+
 
 export class Building {
   constructor({ position, modelPath = buildingModel, scale = 1, world, scene, loadModel }) {
