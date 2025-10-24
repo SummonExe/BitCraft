@@ -24,7 +24,9 @@ if (!loadingScreen) {
 let world, physicsReady = false;
 let player, npc1, npc2;
 let building;
-let offset = 40;
+let indoorOffset = -120;// (0,0,offset) 
+let outsideOffset = 50;
+let doorOffset = -15;
 let loadingComplete = false;
 
 // === INITIALIZE RAPIER ===
@@ -237,7 +239,7 @@ async function initGame() {
 
     // Create entities – they start loading immediately
     player = new Player({
-      position: { x: 0, y: 0, z: 0 + offset },
+      position: { x: 0, y: 0, z: 0 + indoorOffset },
       modelPath: hero,
       maxSpeed: 4,
       moveForce: 7,
@@ -251,7 +253,7 @@ async function initGame() {
     });
 
     npc1 = new FollowerNPC({
-      position: { x: -5, y: 0, z: -8 + offset },
+      position: { x: -5, y: 0, z: -8 + indoorOffset },
       modelPath: kid,
       maxSpeed: 20,
       followDistance: 30,
@@ -266,7 +268,7 @@ async function initGame() {
     });
 
     npc2 = new ChaserNPC({
-      position: { x: -10, y: 0, z: 100 + offset },
+      position: { x: -10, y: 0, z: 100 + indoorOffset },
       modelPath: witch,
       maxSpeed: 20,
       stopDistance: 60,
