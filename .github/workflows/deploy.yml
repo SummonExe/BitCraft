@@ -26,21 +26,17 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    steps:
     
-      # Install Git LFS
-      - name: Install Git LFS
-        run: |
-          git lfs install
-
+    steps:
       - name: Checkout
         uses: actions/checkout@v5
-
+        with:
+          lfs: true
 
       - name: Set up Node 22
         uses: actions/setup-node@v5
         with:
-          node-version: "22"
+          node-version: 22
           cache: "npm"
 
       - name: Install dependencies
