@@ -2,14 +2,18 @@ import * as THREE from 'three';
 import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
-import { Player } from '../stage3/Player.js';
-import { FollowerNPC } from '../stage3/FollowerNPC.js';
+import { Player } from './Player.js';
+import { FollowerNPC } from './FollowerNPC.js';
 import { ChaserNPC } from './ChaserNPC.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-import hero from "../../../src/assets/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
-import kid from "../../../src/assets/models/kid2/Idle.fbx";
-import witch from "../../../src/assets/models/witch/witch_Idle.fbx";
+import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
+import kid from "../../../public/models/kid2/Idle.fbx";
+import witch from "../../../public/models/witch/witch_Idle.fbx";
+import finalChurch from "../../../public/models/final_church/final_church.glb";
+import priest from "../../../public/models/priest/priest.glb";
+import garage from "../../../public/models/gas_station/gas_station.glb";
+import bibleModel from "../../../public/models/bible/bible.glb";
 
 // Initialize Rapier physics
 let world, physicsReady = false;
@@ -130,7 +134,7 @@ setupPhysics();
 //load src\assets\scene\church\psx_abandoned_church\scene.gltf
 const loader = new GLTFLoader();
 loader.load(
-  "/models/final_church.glb",
+  finalChurch,
   (gltf) => {
     const church = gltf.scene || gltf.scenes?.[0];
     if (!church) {
@@ -159,7 +163,7 @@ loader.load(
 
 const gasStationPosition = new THREE.Vector3(100, 5, 252);
 loader.load(
-  "/models/gas_station.glb",
+  garage,
   (gltf) => {
     const gasStation = gltf.scene || gltf.scenes?.[0];
     if (!gasStation) {
@@ -188,7 +192,7 @@ loader.load(
 
 const biblePosition = new THREE.Vector3(120, 10, 240);
 loader.load(
-  "/models/bible.glb",
+  bibleModel,
   (gltf) => {
     const bible = gltf.scene || gltf.scenes?.[0];
     if (!bible) {
