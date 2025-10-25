@@ -42,6 +42,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Downloading LFS files 
+        run: git lfs pull
+
       - name: Build
         run: npm run build
 
