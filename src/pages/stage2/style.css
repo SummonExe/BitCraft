@@ -1,11 +1,11 @@
 @font-face {
     font-family: 'DK Okiku';
-    src: url('../../../fonts/DKOkiku/DK Okiku.otf') format('opentype');
+    src: url('../../../public/fonts/DKOkiku/DK Okiku.otf') format('opentype');
 }
 
 @font-face {
     font-family: 'Dudu Calligraphy';
-    src: url('../../../fonts/Dudu_Calligraphy.ttf') format('truetype');
+    src: url('../../../public/fonts/Dudu_Calligraphy.ttf') format('truetype');
 }
 
 html,body {
