@@ -4,6 +4,8 @@ import topLevelAwait from "vite-plugin-top-level-await";
 
 export default defineConfig({
 	plugins: [wasm(),topLevelAwait()],
+	publicDir: "./public",
+	base: "",
 	build: {
 		chunkSizeWarningLimit: 1024,
 		rollupOptions: {
@@ -20,7 +22,7 @@ export default defineConfig({
 		"**/*.bin",
 		"**/*.glb",
 		"**/*.fbx",
-		"**/*.gltf"
+		"**/*.gltf",
 	],
 	server: {
 		fs: {
