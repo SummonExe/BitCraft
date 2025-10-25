@@ -27,14 +27,15 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-
-      - name: Checkout
-        uses: actions/checkout@v5
-
+    
       # Install Git LFS
       - name: Install Git LFS
         run: |
           git lfs install
+
+      - name: Checkout
+        uses: actions/checkout@v5
+
 
       - name: Set up Node 22
         uses: actions/setup-node@v5
