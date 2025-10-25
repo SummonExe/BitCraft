@@ -3,11 +3,11 @@ import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { Projectile } from './Projectile.js';
 
-import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx?url";
-import heroWalk from "../../../public/models/cop/Magic Spell Pack/Walking.fbx?url";
-import heroRun from "../../../public/models/cop/Magic Spell Pack/Unarmed Run Forward.fbx?url";
-import heroIdle from "../../../public/models/cop/Magic Spell Pack/Unarmed Idle.fbx?url";
-import heroHit1 from "../../../public/models/cop/Magic Spell Pack/Standing 2H Magic Attack 01.fbx?url";
+import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
+import heroWalk from "../../../public/models/cop/Magic Spell Pack/Walking.fbx";
+import heroRun from "../../../public/models/cop/Magic Spell Pack/Unarmed Run Forward.fbx";
+import heroIdle from "../../../public/models/cop/Magic Spell Pack/Unarmed Idle.fbx";
+import heroHit1 from "../../../public/models/cop/Magic Spell Pack/Standing 2H Magic Attack 01.fbx";
 // const hero = "../../../models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
 // const heroWalk = "../../../models/cop/Magic Spell Pack/Walking.fbx";
 // const heroRun = "../../../models/cop/Magic Spell Pack/Unarmed Run Forward.fbx";
