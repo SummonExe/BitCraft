@@ -5,16 +5,16 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import RAPIER from '@dimforge/rapier3d-compat';
-const Character = '../../../public/character/undercover_cop/character_2.js';
-const MiniMap = "../../MiniMap.js";
+import Character from '../../../public/character/undercover_cop/character_2.js';
+import MiniMap from "../../MiniMap.js";
 
-const FlashingModel = "../../../public/models/arrow.glb";
-const DoorModel = "../../../public/models/door_wood.glb";
-const Coin = "../../../public/models/holy_water.glb";
-const Building = "../../../public/models/maze_room.glb";
-const bedroom = "../../../public/models/hill_room.glb";
-// const {  } = "../../../public/models/";
-// const {  } = "../../../public/models/";
+import FlashingModel from "../../../public/models/arrow.glb";
+import DoorModel from "../../../public/models/door_wood.glb";
+import Coin from "../../../public/models/holy_water.glb";
+import Building from "../../../public/models/maze_room.glb";
+import bedroom from "../../../public/models/hill_room.glb";
+// import {  } from "../../../public/models/";
+// import {  } from "../../../public/models/";
 
 let clock = new Clock();
 let world;
