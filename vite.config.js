@@ -20,6 +20,7 @@ export default defineConfig({
 	},
 	assetsInclude: [
 		"**/*.ttf",
+		"**/*.bin",
 		"**/*.otf",
 		"**/*.glb",
 		"**/*.fbx",
