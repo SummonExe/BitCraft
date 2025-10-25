@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 
 // Placeholder import - replace with actual building model path
-import buildingModel from "../../../public/models/theMansion/the_mansion.glb"; 
+const buildingModel = "../../../models/theMansion/the_mansion.glb"; 
 
 
 export class Building {
