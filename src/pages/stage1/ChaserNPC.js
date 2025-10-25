@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
 
-import witchWalk from "../../../src/assets/models/witch/Mutant Walking.fbx";
-import witchIdle from "../../../src/assets/models/witch/witch_Idle.fbx";
+import witchWalk from "../../../public/models/witch/Mutant Walking.fbx";
+import witchIdle from "../../../public/models/witch/witch_Idle.fbx";
 
 export class ChaserNPC {
   constructor({ position, modelPath, maxSpeed, stopDistance, target, world, scene, mixers, entityManager, loadModel, loadAnimation, gameOver=()=>{} }) {

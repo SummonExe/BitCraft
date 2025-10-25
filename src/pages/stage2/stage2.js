@@ -5,16 +5,16 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import RAPIER from '@dimforge/rapier3d-compat';
-import Character from '../../assets/character/undercover_cop/character_2.js';
+import Character from '../../../public/character/undercover_cop/character_2.js';
 import MiniMap from "../../MiniMap.js";
 
-import FlashingModel from "../../assets/models/arrow.glb";
-import DoorModel from "../../assets/models/door_wood.glb";
-import Coin from "../../assets/models/holy_water.glb";
-import Building from "../../assets/models/maze_room.glb";
-import bedroom from "../../assets/models/hill_room.glb";
-// import {  } from "../../assets/models/";
-// import {  } from "../../assets/models/";
+import FlashingModel from "../../../public/models/arrow.glb";
+import DoorModel from "../../../public/models/door_wood.glb";
+import Coin from "../../../public/models/holy_water.glb";
+import Building from "../../../public/models/maze_room.glb";
+import bedroom from "../../../public/models/hill_room.glb";
+// import {  } from "../../../public/models/";
+// import {  } from "../../../public/models/";
 
 let clock = new Clock();
 let world;
