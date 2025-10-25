@@ -4,8 +4,6 @@ import topLevelAwait from "vite-plugin-top-level-await";
 
 export default defineConfig({
 	plugins: [wasm(),topLevelAwait()],
-	publicDir: "./public",
-	base: "",
 	build: {
 		chunkSizeWarningLimit: 1024,
 		rollupOptions: {
@@ -19,16 +17,10 @@ export default defineConfig({
 		},
 	},
 	assetsInclude: [
-		"**/*.ttf",
 		"**/*.bin",
-		"**/*.otf",
 		"**/*.glb",
 		"**/*.fbx",
-		"**/*.gltf",
-		"**/*.mp3",
-		"**/*.mp4",
-		"**/*.m4a",
-		"**/*.wav",
+		"**/*.gltf"
 	],
 	server: {
 		fs: {
