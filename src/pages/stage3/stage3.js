@@ -9,10 +9,10 @@ import { ChaserNPC } from './ChaserNPC.js';
 import { Building } from './Building.js';
 import { Player } from './Player.js';
 
-import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
-import witch from "../../../public/models/witch/witch_Idle.fbx";
-import kid from "../../../public/models/kid2/Idle.fbx";
-import groundTexture from "../../../public/2025-10-23 123028.png";
+import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx?url";
+import witch from "../../../public/models/witch/witch_Idle.fbx?url";
+import kid from "../../../public/models/kid2/Idle.fbx?url";
+import groundTexture from "../../../public/2025-10-23 123028.png?url";
 // const hero = "../../../models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
 // const witch = "../../../models/witch/witch_Idle.fbx";
 // const kid = "../../../models/kid2/Idle.fbx";
