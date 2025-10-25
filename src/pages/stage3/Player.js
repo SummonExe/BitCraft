@@ -3,16 +3,16 @@ import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { Projectile } from './Projectile.js';
 
-// import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
-// import heroWalk from "../../../public/models/cop/Magic Spell Pack/Walking.fbx";
-// import heroRun from "../../../public/models/cop/Magic Spell Pack/Unarmed Run Forward.fbx";
-// import heroIdle from "../../../public/models/cop/Magic Spell Pack/Unarmed Idle.fbx";
-// import heroHit1 from "../../../public/models/cop/Magic Spell Pack/Standing 2H Magic Attack 01.fbx";
-const hero = "../../../models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
-const heroWalk = "../../../models/cop/Magic Spell Pack/Walking.fbx";
-const heroRun = "../../../models/cop/Magic Spell Pack/Unarmed Run Forward.fbx";
-const heroIdle = "../../../models/cop/Magic Spell Pack/Unarmed Idle.fbx";
-const heroHit1 = "../../../models/cop/Magic Spell Pack/Standing 2H Magic Attack 01.fbx";
+import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
+import heroWalk from "../../../public/models/cop/Magic Spell Pack/Walking.fbx";
+import heroRun from "../../../public/models/cop/Magic Spell Pack/Unarmed Run Forward.fbx";
+import heroIdle from "../../../public/models/cop/Magic Spell Pack/Unarmed Idle.fbx";
+import heroHit1 from "../../../public/models/cop/Magic Spell Pack/Standing 2H Magic Attack 01.fbx";
+// const hero = "../../../models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
+// const heroWalk = "../../../models/cop/Magic Spell Pack/Walking.fbx";
+// const heroRun = "../../../models/cop/Magic Spell Pack/Unarmed Run Forward.fbx";
+// const heroIdle = "../../../models/cop/Magic Spell Pack/Unarmed Idle.fbx";
+// const heroHit1 = "../../../models/cop/Magic Spell Pack/Standing 2H Magic Attack 01.fbx";
 
 export class Player {
   constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles }) {
