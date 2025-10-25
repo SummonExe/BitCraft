@@ -2,8 +2,8 @@ import * as THREE from 'three';
 import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
 
-import kidWalk from "../../../public/models/kid2/Female Walk.fbx";
-import kidIdle from "../../../public/models/kid2/Idle.fbx";
+import kidWalk from "../../../public/models/kid2/Female Walk.fbx?url";
+import kidIdle from "../../../public/models/kid2/Idle.fbx?url";
 // const kidWalk = "../../../models/kid2/Female Walk.fbx";
 // const kidIdle = "../../../models/kid2/Idle.fbx";
 
