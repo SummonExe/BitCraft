@@ -3,11 +3,25 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		 <link rel="icon" href="/icon.png" type="image/x-icon">
+		<link rel="icon" href="/icon.png" type="image/x-icon">
 		<title>Enchanted Town</title>
 		<link rel="stylesheet" href="./style.css" />
+		<style>
+			#info-text {
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				/* font-family: Arial, sans-serif; */
+				font-size: 24px;
+				color: #ffffff;
+				text-shadow: 2px 2px 4px #000000;
+				z-index: 1;
+			}
+		</style>
 	</head>
 	<body>
 		<script type="module" src="./stage1.js"></script>
+		<p id="info-text">Talk to the priest</p>
 	</body>
 </html>
