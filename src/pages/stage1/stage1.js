@@ -7,13 +7,13 @@ import { FollowerNPC } from './FollowerNPC.js';
 import { ChaserNPC } from './ChaserNPC.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
-const hero = "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
-const kid = "../../../public/models/kid2/Idle.fbx";
-const witch = "../../../public/models/witch/witch_Idle.fbx";
-const finalChurch = "../../../public/models/final_church/final_church.glb";
-const priest = "../../../public/models/priest/priest.glb";
-const garage = "../../../public/models/gas_station/gas_station.glb";
-const bibleModel = "../../../public/models/bible/bible.glb";
+import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
+import kid from "../../../public/models/kid2/Idle.fbx";
+import witch from "../../../public/models/witch/witch_Idle.fbx";
+import finalChurch from "../../../public/models/final_church/final_church.glb";
+import priest from "../../../public/models/priest/priest.glb";
+import garage from "../../../public/models/gas_station/gas_station.glb";
+import bibleModel from "../../../public/models/bible/bible.glb";
 
 // Initialize Rapier physics
 let world, physicsReady = false;
