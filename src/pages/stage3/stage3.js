@@ -4,6 +4,7 @@ import RAPIER from '@dimforge/rapier3d-compat';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { FollowerNPC } from './FollowerNPC.js';
 import { ChaserNPC } from './ChaserNPC.js';
 import { Building } from './Building.js';
@@ -16,7 +17,7 @@ import groundTexture from "../../../public/2025-10-23 123028.png";
 // const hero = "../../../models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
 // const witch = "../../../models/witch/witch_Idle.fbx";
 // const kid = "../../../models/kid2/Idle.fbx";
-// const groundTexture = "../../../2025-10-23 123028.png";
+// const groundTexture = "../../../public/2025-10-23 123028.png";
 
 // === LOADING SCREEN ===
 const loadingScreen = document.getElementById('loadingScreen');
@@ -114,6 +115,11 @@ const projectiles = [];
 const fbxLoader = new FBXLoader();
 const gltfLoader = new GLTFLoader();
 const objLoader = new OBJLoader();
+
+// Setup Draco loader for compressed GLTF/GLB models
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+gltfLoader.setDRACOLoader(dracoLoader);
 
 // Helper function to detect file type from path
 function getFileExtension(path) {
