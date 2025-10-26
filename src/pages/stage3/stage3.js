@@ -249,7 +249,7 @@ async function initGame() {
 
     // Create entities – they start loading immediately
     player = new Player({
-      position: { x: 0, y: 0, z: 0 + indoorOffset },
+      position: { x: 0, y: 0, z: 0 + outsideOffset },
       modelPath: hero,
       maxSpeed: 4,
       moveForce: 7,
@@ -263,7 +263,7 @@ async function initGame() {
     });
 
     npc1 = new FollowerNPC({
-      position: { x: -5, y: 0, z: -8 + indoorOffset },
+      position: { x: -5, y: 0, z: -8 + outsideOffset },
       modelPath: kid,
       maxSpeed: 20,
       followDistance: 30,
@@ -278,7 +278,7 @@ async function initGame() {
     });
 
     npc2 = new ChaserNPC({
-      position: { x: -10, y: 0, z: 100 + indoorOffset },
+      position: { x: -10, y: 0, z: 100 + outsideOffset },
       modelPath: witch,
       maxSpeed: 20,
       stopDistance: 60,
