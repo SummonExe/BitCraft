@@ -220,7 +220,13 @@ const keys = {
   ArrowDown: false,
   ArrowLeft: false,
   ArrowRight: false,
-  p: false
+  Shift: false,
+  i: false,
+  j: false,
+  k: false,
+  o: false,
+  p: false,
+  l: false
 };
 
 window.addEventListener('keydown', (e) => {

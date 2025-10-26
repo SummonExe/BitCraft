@@ -7,20 +7,23 @@ import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_A
 import heroWalk from "../../../public/models/cop/Magic Spell Pack/Walking.fbx";
 import heroRun from "../../../public/models/cop/Magic Spell Pack/Unarmed Run Forward.fbx";
 import heroIdle from "../../../public/models/cop/Magic Spell Pack/Unarmed Idle.fbx";
-import heroHit1 from "../../../public/models/cop/Magic Spell Pack/Standing 2H Magic Attack 01.fbx";
-// const hero = "../../../models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
-// const heroWalk = "../../../models/cop/Magic Spell Pack/Walking.fbx";
-// const heroRun = "../../../models/cop/Magic Spell Pack/Unarmed Run Forward.fbx";
-// const heroIdle = "../../../models/cop/Magic Spell Pack/Unarmed Idle.fbx";
-// const heroHit1 = "../../../models/cop/Magic Spell Pack/Standing 2H Magic Attack 01.fbx";
+import heroHitP from "../../../public/models/cop/Magic Spell Pack/Standing 2H Magic Attack 01.fbx";
+import heroHitL from "../../../public/models/cop/Magic Spell Pack/Standing 2H Magic Area Attack 01.fbx";
+import heroHitO from "../../../public/models/cop/Magic Spell Pack/Standing 2H Magic Attack 03.fbx";
+import heroHitK from "../../../public/models/cop/Magic Spell Pack/Standing 2H Magic Attack 04.fbx";
+import heroHitI from "../../../public/models/cop/Magic Spell Pack/Standing 2H Magic Attack 05.fbx";
+import heroHitJ from "../../../public/models/cop/Magic Spell Pack/Standing 1H Magic Attack 03.fbx";
 
 export class Player {
   constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles }) {
+    this.baseMoveForce = moveForce;
     this.moveForce = moveForce;
     this.modelPath = modelPath;
     this.isMoving = false;
+    this.isRunning = false;
     this.mixer = null;
-    this.actions = { idle: null, walk: null, attack: null };
+    this.actions = { idle: null, walk: null, run: null };
+    this.attacks = {}; // Will hold: p, l, o, k, i, j
     this.currentAction = null;
     this.world = world;
     this.scene = scene;
@@ -48,7 +51,6 @@ export class Player {
     
     entityManager.add(this.entity);
     
-    // EXPOSE LOAD PROMISE
     this.loadPromise = this.loadModel(position, loadModel, loadAnimation, scene, mixers);
   }
   
@@ -61,6 +63,7 @@ export class Player {
       this.mixer = new THREE.AnimationMixer(this.model);
       mixers.push(this.mixer);
       
+      // === Load Base Animations ===
       const idleClip = await loadAnimation(heroIdle);
       this.actions.idle = this.mixer.clipAction(idleClip);
       this.actions.idle.play();
@@ -70,14 +73,33 @@ export class Player {
       this.actions.walk = this.mixer.clipAction(walkClip);
       this.actions.walk.timeScale = 0.6;
       
-      const attackClip = await loadAnimation(heroHit1);
-      this.actions.attack = this.mixer.clipAction(attackClip);
-      this.actions.attack.setLoop(THREE.LoopOnce);
-      this.actions.attack.clampWhenFinished = true;
+      const runClip = await loadAnimation(heroRun);
+      this.actions.run = this.mixer.clipAction(runClip);
+      this.actions.run.timeScale = 0.6;
       
+      // === Load All Attack Animations ===
+      const attackMap = {
+        p: heroHitP,
+        l: heroHitL,
+        o: heroHitO,
+        k: heroHitK,
+        i: heroHitI,
+        j: heroHitJ
+      };
+
+      for (const [key, path] of Object.entries(attackMap)) {
+        const clip = await loadAnimation(path);
+        const action = this.mixer.clipAction(clip);
+        action.setLoop(THREE.LoopOnce);
+        action.clampWhenFinished = true;
+        this.attacks[key] = action;
+      }
+
+      // === Animation Finish Handler ===
       this.mixer.addEventListener('finished', (e) => {
-        if (e.action === this.actions.attack) {
-          this.actions.attack.fadeOut(0.3);
+        const finishedAction = e.action;
+        if (Object.values(this.attacks).includes(finishedAction)) {
+          finishedAction.fadeOut(0.3);
           this.actions.idle.reset().fadeIn(0.3).play();
           this.currentAction = this.actions.idle;
         }
@@ -96,14 +118,19 @@ export class Player {
   }
   
   update(delta) {
-    if (this.mixer && this.actions.idle && this.actions.walk && this.actions.attack) {
-      if (this.currentAction !== this.actions.attack) {
-        if (this.isMoving && this.currentAction !== this.actions.walk) {
-          this.actions.idle.fadeOut(0.3);
-          this.actions.walk.reset().fadeIn(0.3).play();
-          this.currentAction = this.actions.walk;
-        } else if (!this.isMoving && this.currentAction !== this.actions.idle) {
-          this.actions.walk.fadeOut(0.3);
+    if (this.mixer && this.actions.idle && this.actions.walk && this.actions.run) {
+      const isAttacking = this.currentAction && Object.values(this.attacks).includes(this.currentAction);
+      
+      if (!isAttacking) {
+        if (this.isMoving) {
+          const targetAction = this.isRunning ? this.actions.run : this.actions.walk;
+          if (this.currentAction !== targetAction) {
+            if (this.currentAction) this.currentAction.fadeOut(0.3);
+            targetAction.reset().fadeIn(0.3).play();
+            this.currentAction = targetAction;
+          }
+        } else if (this.currentAction !== this.actions.idle) {
+          if (this.currentAction) this.currentAction.fadeOut(0.3);
           this.actions.idle.reset().fadeIn(0.3).play();
           this.currentAction = this.actions.idle;
         }
@@ -122,12 +149,26 @@ export class Player {
     if (keys.ArrowRight) rotationInput -= 1;
     
     this.isMoving = velocity.length() > 0 || rotationInput !== 0;
+    this.isRunning = keys.Shift && this.isMoving;
+    this.moveForce = this.isRunning ? this.baseMoveForce + 10 : this.baseMoveForce;
     
-    if (keys.p && this.actions.attack && this.currentAction !== this.actions.attack) {
+    // === Handle Attack Keys ===
+    const attackKeyMap = { 'p': 'p', 'l': 'l', 'o': 'o', 'k': 'k', 'i': 'i', 'j': 'j' };
+    let triggeredAttack = null;
+
+    for (const [inputKey, attackKey] of Object.entries(attackKeyMap)) {
+      if (keys[inputKey] && this.attacks[attackKey]) {
+        triggeredAttack = this.attacks[attackKey];
+        break; // First pressed key wins
+      }
+    }
+
+    if (triggeredAttack && this.currentAction !== triggeredAttack) {
       if (this.currentAction) this.currentAction.fadeOut(0.3);
-      this.actions.attack.reset().fadeIn(0.3).play();
-      this.currentAction = this.actions.attack;
+      triggeredAttack.reset().fadeIn(0.3).play();
+      this.currentAction = triggeredAttack;
       
+      // Fire projectile
       const physicsPos = this.rigidBody.translation();
       const startPosition = new THREE.Vector3(physicsPos.x, physicsPos.y + 15, physicsPos.z);
       const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.entity.rotation);
@@ -137,6 +178,7 @@ export class Player {
       this.projectiles.push(projectile);
     }
     
+    // === Rotation ===
     if (rotationInput !== 0) {
       this.targetRotation += rotationInput * delta * 4;
     }
@@ -146,6 +188,7 @@ export class Player {
     this.currentRotation += normalizedDiff * this.rotationSpeed;
     this.entity.rotation.fromEuler(0, this.currentRotation, 0);
     
+    // === Movement ===
     if (velocity.length() > 0) {
       velocity.applyQuaternion(this.entity.rotation);
       velocity.normalize().multiplyScalar(this.moveForce);
