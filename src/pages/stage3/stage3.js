@@ -4,6 +4,7 @@ import RAPIER from '@dimforge/rapier3d-compat';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { FollowerNPC } from './FollowerNPC.js';
 import { ChaserNPC } from './ChaserNPC.js';
 import { Building } from './Building.js';
@@ -16,7 +17,7 @@ import groundTexture from "../../../public/2025-10-23 123028.png";
 // const hero = "../../../models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
 // const witch = "../../../models/witch/witch_Idle.fbx";
 // const kid = "../../../models/kid2/Idle.fbx";
-// const groundTexture = "../../../2025-10-23 123028.png";
+// const groundTexture = "../../../public/2025-10-23 123028.png";
 
 // === LOADING SCREEN ===
 const loadingScreen = document.getElementById('loadingScreen');
@@ -114,6 +115,11 @@ const projectiles = [];
 const fbxLoader = new FBXLoader();
 const gltfLoader = new GLTFLoader();
 const objLoader = new OBJLoader();
+
+// Setup Draco loader for compressed GLTF/GLB models
+const dracoLoader = new DRACOLoader();
+dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+gltfLoader.setDRACOLoader(dracoLoader);
 
 // Helper function to detect file type from path
 function getFileExtension(path) {
@@ -214,7 +220,13 @@ const keys = {
   ArrowDown: false,
   ArrowLeft: false,
   ArrowRight: false,
-  p: false
+  Shift: false,
+  i: false,
+  j: false,
+  k: false,
+  o: false,
+  p: false,
+  l: false
 };
 
 window.addEventListener('keydown', (e) => {
@@ -243,7 +255,7 @@ async function initGame() {
 
     // Create entities – they start loading immediately
     player = new Player({
-      position: { x: 0, y: 0, z: 0 + indoorOffset },
+      position: { x: 0, y: 0, z: 0 + outsideOffset },
       modelPath: hero,
       maxSpeed: 4,
       moveForce: 7,
@@ -257,7 +269,7 @@ async function initGame() {
     });
 
     npc1 = new FollowerNPC({
-      position: { x: -5, y: 0, z: -8 + indoorOffset },
+      position: { x: -5, y: 0, z: -8 + outsideOffset },
       modelPath: kid,
       maxSpeed: 20,
       followDistance: 30,
@@ -272,7 +284,7 @@ async function initGame() {
     });
 
     npc2 = new ChaserNPC({
-      position: { x: -10, y: 0, z: 100 + indoorOffset },
+      position: { x: -10, y: 0, z: 100 + outsideOffset },
       modelPath: witch,
       maxSpeed: 20,
       stopDistance: 60,

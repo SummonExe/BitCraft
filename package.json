@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "win:build": "rmdir /s /q dist && vite build",
+    "lin:build": "rm -r -f ./dist && vite build",
     "build": "vite build",
     "preview": "vite preview",
     "deploy": "gh-pages -d ./dist"
