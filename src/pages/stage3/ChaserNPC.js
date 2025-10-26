@@ -4,6 +4,8 @@ import RAPIER from '@dimforge/rapier3d-compat';
 
 import witchWalk from "../../../public/models/witch/Mutant Walking.fbx";
 import witchIdle from "../../../public/models/witch/witch_Idle.fbx";
+import witchAttack from "../../../public/models/witch/Zombie Attack.fbx";
+import witchPosionAttack from "../../../public/models/witch/Sword And Shield Casting.fbx";
 // const witchWalk = "../../../models/witch/Mutant Walking.fbx";
 // const witchIdle = "../../../models/witch/witch_Idle.fbx";
 
@@ -15,7 +17,10 @@ export class ChaserNPC {
     this.mixer = null;
     this.world = world;
     this.actions = { idle: null, walk: null };
+    this.attacks = { attack: null, poison: null };
     this.currentAction = null;
+    this.attackCooldown = 0;
+    this.cooldownDuration = 0.5; // 5 seconds
     
     // Debug indicator (optional - can be removed later)
     const indicatorGeometry = new THREE.SphereGeometry(0.2, 16, 16);
@@ -75,6 +80,28 @@ export class ChaserNPC {
       this.actions.walk = this.mixer.clipAction(walkClip);
       this.actions.walk.timeScale = 0.8; // Faster for witch
       
+      // Load attack animations
+      const attackClip = await loadAnimation(witchAttack);
+      this.attacks.attack = this.mixer.clipAction(attackClip);
+      this.attacks.attack.setLoop(THREE.LoopOnce);
+      this.attacks.attack.clampWhenFinished = true;
+
+      const poisonClip = await loadAnimation(witchPosionAttack);
+      this.attacks.poison = this.mixer.clipAction(poisonClip);
+      this.attacks.poison.setLoop(THREE.LoopOnce);
+      this.attacks.poison.clampWhenFinished = true;
+      
+      // Animation finish handler for attacks
+      this.mixer.addEventListener('finished', (e) => {
+        const finishedAction = e.action;
+        if (Object.values(this.attacks).includes(finishedAction)) {
+          finishedAction.fadeOut(0.2);
+          this.actions.idle.reset().fadeIn(0.2).play();
+          this.currentAction = this.actions.idle;
+          this.attackCooldown = this.cooldownDuration; // Start cooldown after attack
+        }
+      });
+      
       // Enable shadows
       this.model.traverse((child) => {
         if (child.isMesh) {
@@ -106,10 +133,9 @@ export class ChaserNPC {
     this.indicator.position.y = physicsPos.y + 3.5;
   }
   
-  update(delta) {
+update(delta) {
   const physicsPos = this.rigidBody.translation();
   this.entity.position.set(physicsPos.x, physicsPos.y, physicsPos.z);
-
   this.seekBehavior.target.copy(this.target.entity.position);
 
   const distanceToTarget = this.entity.position.distanceTo(this.target.entity.position);
@@ -117,6 +143,7 @@ export class ChaserNPC {
   const currentVel = this.rigidBody.linvel();
 
   if (distanceToTarget > this.stopDistance && velocity.length() > 0) {
+    // === CHASING BEHAVIOR (unchanged) ===
     const lerpFactor = 0.4;
     const newVel = {
       x: currentVel.x + (velocity.x - currentVel.x) * lerpFactor,
@@ -134,10 +161,9 @@ export class ChaserNPC {
 
     this.rigidBody.setLinvel(newVel, true);
 
-    // === FIX: Only rotate on Y-axis ===
     if (velocity.length() > 0) {
       const targetYRotation = Math.atan2(velocity.x, velocity.z);
-      this.entity.rotation.set(0, targetYRotation, 0); // Upright only
+      this.entity.rotation.set(0, targetYRotation, 0);
     }
 
     if (this.mixer && this.actions.walk && this.currentAction !== this.actions.walk) {
@@ -146,10 +172,30 @@ export class ChaserNPC {
       this.currentAction = this.actions.walk;
     }
   } else {
+    // === IN RANGE: COMBAT BEHAVIOR ===
     const stopVel = { x: currentVel.x * 0.85, y: currentVel.y, z: currentVel.z * 0.85 };
     this.rigidBody.setLinvel(stopVel, true);
 
-    if (this.mixer && this.actions.idle && this.currentAction !== this.actions.idle) {
+    this.attackCooldown -= delta;
+    const isAttacking = this.currentAction && Object.values(this.attacks).includes(this.currentAction);
+
+    // === TRIGGER NEXT ATTACK ===
+    if (this.attackCooldown <= 0 && !isAttacking) {
+      const selectedAction = Math.random() < 0.5
+        ? this.attacks.attack
+        : this.attacks.poison;
+
+      if (this.currentAction !== selectedAction) {
+        if (this.currentAction) this.currentAction.fadeOut(0.2);
+        selectedAction.reset().fadeIn(0.2).play();
+        this.currentAction = selectedAction;
+      }
+
+      // Fixed 0.3-second cooldown
+      this.attackCooldown = 0;
+    }
+    // === RETURN TO IDLE IF NOT ATTACKING ===
+    else if (!isAttacking && this.currentAction !== this.actions.idle) {
       if (this.actions.walk) this.actions.walk.fadeOut(0.2);
       this.actions.idle.reset().fadeIn(0.2).play();
       this.currentAction = this.actions.idle;
@@ -158,12 +204,12 @@ export class ChaserNPC {
 
   if (this.mixer) this.mixer.update(delta);
 
-  // === DEBUG INDICATOR: Ensure visible and attached ===
+  // === DEBUG INDICATOR ===
   if (this.indicator && this.model) {
     const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.entity.rotation);
     const headPos = new THREE.Vector3();
     this.model.getWorldPosition(headPos);
-    headPos.y += 4; // Above witch head
+    headPos.y += 4;
     this.indicator.position.copy(headPos).add(forward.multiplyScalar(1));
     this.indicator.visible = true;
   }
