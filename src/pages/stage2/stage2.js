@@ -4,6 +4,7 @@ import {
   AmbientLight, Vector3, Quaternion, Color, AnimationMixer, Box3
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import RAPIER from '@dimforge/rapier3d-compat';
 import Character from '../../../public/character/undercover_cop/character_2.js';
 import MiniMap from "../../MiniMap.js";
@@ -11,14 +12,16 @@ import MiniMap from "../../MiniMap.js";
 import FlashingModel from "../../../public/models/arrow.glb";
 import DoorModel from "../../../public/models/door_wood.glb";
 import Coin from "../../../public/models/holy_water.glb";
+import NPCModel from "../../../src/assets/models/creepy_teen_girl.glb";
+
+import Outside from "../../../public/models/theMansion/the_mansion.compressed.glb"; 
 import Building from "../../../public/models/maze_room.glb";
 import bedroom from "../../../public/models/hill_room.glb";
-// import {  } from "../../../public/models/";
-// import {  } from "../../../public/models/";
+
 
 let clock = new Clock();
 let world;
-let currentScene = "maze";
+let currentScene = "mansion";
 let mazeSize = null;
 let isSwitching = false;
 let groundCollider = null; // To track the current ground collider
@@ -40,8 +43,8 @@ async function init() {
   // physics world
   world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
 
-  // character
-  const character = new Character(world, scene, { x: 0, y: 2, z: 0 });
+  // character - will be positioned properly after scene loads
+  const character = new Character(world, scene, { x: 1, y: 2, z: 116 });
   const cameraOffset = new Vector3(0, 3, -6);
   const lookAtOffset = new Vector3(0, 1.5, 0);
 
@@ -51,22 +54,39 @@ async function init() {
   let flashingObjects = [];
   let doorMixers = [];
   let coins = [];
+  let npcs = [];
   let score = 0;
   let scoreElement;
 
   const loader = new GLTFLoader();
+  
+  // Setup Draco decoder for compressed models
+  const dracoLoader = new DRACOLoader();
+  dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+  dracoLoader.setDecoderConfig({ type: 'js' });
+  loader.setDRACOLoader(dracoLoader);
 
   // --------------------------
   // GROUND COLLIDER
   // --------------------------
   function createGroundCollider(yPosition) {
-    if (groundCollider) {
-      world.removeCollider(groundCollider, true);
-      groundCollider = null;
+    // Only create ground collider for maze scene
+    // Mansion and bedroom use their actual mesh geometry for ground
+    if (currentScene === "maze") {
+      if (groundCollider) {
+        world.removeCollider(groundCollider, true);
+        groundCollider = null;
+      }
+      const groundDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(0, yPosition, 0);
+      const groundBody = world.createRigidBody(groundDesc);
+      groundCollider = world.createCollider(RAPIER.ColliderDesc.cuboid(125, 0.1, 125), groundBody);
+    } else {
+      // Remove ground collider for mansion/bedroom
+      if (groundCollider) {
+        world.removeCollider(groundCollider, true);
+        groundCollider = null;
+      }
     }
-    const groundDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(0, yPosition, 0);
-    const groundBody = world.createRigidBody(groundDesc);
-    groundCollider = world.createCollider(RAPIER.ColliderDesc.cuboid(125, 0.1, 125), groundBody);
   }
 
   // --------------------------
@@ -82,13 +102,17 @@ async function init() {
         if (name === "bedroom") {
           building.position.y = 0;
           building.scale.set(0.5, 0.5, 0.5);
-          createGroundCollider(0); // Floor at y=0 for bedroom
+        } else if (name === "mansion") {
+          building.position.y = 2;
+          building.scale.set(3, 3, 3);
         } else {
           building.position.y = -50;
           building.scale.set(1, 1, 1);
-          createGroundCollider(-50); // Floor at y=-50 for maze
         }
         if (targetScale) building.scale.copy(targetScale);
+        
+        // Create ground collider after setting position
+        createGroundCollider(name === "maze_room" ? -50 : 0);
 
         scene.add(building);
         activeBuildingRoots.push(building);
@@ -100,23 +124,43 @@ async function init() {
 
         building.traverse((child) => {
           if (child.isMesh && child.geometry) {
+            // Skip physics for trees, grass, foliage, leaves, plants
+            const meshName = child.name.toLowerCase();
+            if (meshName.includes('outsideobjects') || 
+                meshName.includes('glass') || 
+                meshName.includes('yard_78_m_0') || 
+                meshName.includes('yard_56_m_0') ||
+                meshName.includes('yard_58_m_0')) {
+              // console.log("Skipping collider for vegetation:", child.name);
+              return;
+            }
+            
             try {
               const geometry = child.geometry.clone();
               geometry.applyMatrix4(child.matrixWorld);
               const posAttr = geometry.attributes.position;
-              if (!posAttr) return;
+              if (!posAttr) {
+                console.warn("No position attribute for mesh:", child.name);
+                return;
+              }
               const vertices = new Float32Array(posAttr.array.slice(0));
               const indices = geometry.index ? new Uint32Array(geometry.index.array.slice(0)) : null;
-              geometry.dispose?.();
-              if (!indices) return;
-
+              
+              if (!indices) {
+                console.warn("No indices for mesh:", child.name, "- skipping");
+                geometry.dispose?.();
+                return;
+              }
+              
               const colliderDesc = RAPIER.ColliderDesc.trimesh(vertices, indices);
               const rigidBodyDesc = RAPIER.RigidBodyDesc.fixed();
               const rigidBody = world.createRigidBody(rigidBodyDesc);
               const collider = world.createCollider(colliderDesc, rigidBody);
               activeColliders.push(collider);
+              // console.log("Created collider for:", child.name, "vertices:", vertices.length / 3, "triangles:", indices.length / 3);
+              geometry.dispose?.();
             } catch (err) {
-              console.warn("Failed to create collider for mesh:", child.name, err);
+              console.error("Failed to create collider for mesh:", child.name, err);
             }
           }
         });
@@ -135,28 +179,178 @@ async function init() {
   function snapToGround(character, controller, delta) {
     if (!character.rigidBody || !controller) return;
 
+    const currentPos = character.rigidBody.translation();
+    
     // Cast a ray downward to detect the ground
     const ray = new RAPIER.Ray(
-      { x: character.rigidBody.translation().x, y: character.rigidBody.translation().y, z: character.rigidBody.translation().z },
+      { x: currentPos.x, y: currentPos.y + 1, z: currentPos.z }, // Start ray from character center
       { x: 0, y: -1, z: 0 }
     );
-    const maxToi = 0.5; // Max distance to check for ground (adjust based on character height)
+    const maxToi = 10.0; // Check down
     const hit = world.castRay(ray, maxToi, true);
 
-    if (hit && hit.toi < maxToi) {
-      const groundY = character.rigidBody.translation().y - hit.toi;
-      const currentY = character.rigidBody.translation().y;
-      if (Math.abs(currentY - groundY) < 0.5) { // Snap if close to ground
+    if (hit) {
+      const groundY = (currentPos.y + 1) - hit.toi; // Calculate actual ground Y
+      const targetY = groundY + 0.1; // Small offset so feet are just above ground
+      
+      // Smoothly move character to ground
+      if (Math.abs(currentPos.y - targetY) > 0.05) {
+        const newY = currentPos.y + (targetY - currentPos.y) * Math.min(delta * 15, 1);
         character.rigidBody.setTranslation(
           {
-            x: character.rigidBody.translation().x,
-            y: groundY + 0.1, // Small offset to prevent sinking
-            z: character.rigidBody.translation().z
+            x: currentPos.x,
+            y: newY,
+            z: currentPos.z
           },
           true
         );
       }
+    } else {
+      // No ground detected, apply gravity
+      character.rigidBody.setTranslation(
+        {
+          x: currentPos.x,
+          y: currentPos.y - 9.81 * delta,
+          z: currentPos.z
+        },
+        true
+      );
     }
+  }
+
+  // --------------------------
+  // NPC SYSTEM
+  // --------------------------
+  function loadNPC(url, startPosition) {
+    loader.load(url, (gltf) => {
+      const npc = gltf.scene;
+      npc.position.copy(startPosition);
+      npc.scale.set(2.5, 2.5, 2.5);
+      npc.rotation.y = 0;
+      
+      scene.add(npc);
+      activeBuildingRoots.push(npc);
+      
+      // Setup animation if available
+      let mixer = null;
+      if (gltf.animations && gltf.animations.length > 0) {
+        mixer = new AnimationMixer(npc);
+        const action = mixer.clipAction(gltf.animations[0]);
+        action.play();
+      }
+      
+      const npcData = {
+        model: npc,
+        mixer: mixer,
+        speed: 3, // Chasing speed
+        detectionRadius: 50.0, // How far they can detect the player
+        active: false // Whether they're currently chasing
+      };
+      
+      npcs.push(npcData);
+      console.log("NPC loaded at position:", startPosition);
+    }, undefined, (err) => console.error("Failed to load NPC:", err));
+  }
+
+  function updateNPCs(delta, playerPos) {
+    if (!playerPos || currentScene !== "mansion") return;
+    
+    for (const npc of npcs) {
+      if (npc.mixer) {
+        npc.mixer.update(delta);
+      }
+      
+      // Calculate distance to player (2D distance, ignoring Y)
+      const dx = playerPos.x - npc.model.position.x;
+      const dz = playerPos.z - npc.model.position.z;
+      const distToPlayer = Math.sqrt(dx * dx + dz * dz);
+      
+      // Activate if player is within detection radius
+      if (distToPlayer < npc.detectionRadius) {
+        npc.active = true;
+      }
+      
+      // Chase the player if active
+      if (npc.active && distToPlayer > 1.0) {
+        // Normalize direction
+        const dirX = dx / distToPlayer;
+        const dirZ = dz / distToPlayer;
+        
+        // Move towards player
+        npc.model.position.x += dirX * npc.speed * delta;
+
+        npc.model.position.z += dirZ * npc.speed * delta;
+        
+        // Keep NPC at same Y level as player for ground following
+        npc.model.position.y = 2;
+        
+        // Rotate to face player
+        npc.model.rotation.y = Math.atan2(dx, dz);
+      }
+    }
+  }
+
+  // Check collision between character and NPCs
+  function checkNPCCollisions(characterPos) {
+    if (currentScene !== "mansion") return false;
+    
+    for (const npc of npcs) {
+      const dx = characterPos.x - npc.model.position.x;
+      const dz = characterPos.z - npc.model.position.z;
+      const dist = Math.sqrt(dx * dx + dz * dz);
+      
+      // Collision distance threshold
+      if (dist < 1.5) {
+        return true; // Collision detected
+      }
+    }
+    return false;
+  }
+
+  // --------------------------
+  // GAME OVER SYSTEM
+  // --------------------------
+  let isGameOver = false;
+  
+  function showGameOver() {
+    isGameOver = true;
+    character.canMove = () => false;
+    
+    // Create game over screen
+    const gameOverDiv = document.createElement("div");
+    gameOverDiv.style.position = "absolute";
+    gameOverDiv.style.top = "50%";
+    gameOverDiv.style.left = "50%";
+    gameOverDiv.style.transform = "translate(-50%, -50%)";
+    gameOverDiv.style.padding = "40px 60px";
+    gameOverDiv.style.background = "rgba(139, 0, 0, 0.95)";
+    gameOverDiv.style.border = "3px solid #ff0000";
+    gameOverDiv.style.borderRadius = "15px";
+    gameOverDiv.style.color = "#fff";
+    gameOverDiv.style.fontSize = "48px";
+    gameOverDiv.style.fontWeight = "bold";
+    gameOverDiv.style.textAlign = "center";
+    gameOverDiv.style.zIndex = "1000";
+    gameOverDiv.innerHTML = `
+      <div style="margin-bottom: 20px;">YOU DIED</div>
+      <div style="font-size: 20px; margin-bottom: 30px;">The creature caught you...</div>
+      <button id="restart-btn" style="
+        padding: 15px 40px;
+        font-size: 24px;
+        background: #ff0000;
+        color: white;
+        border: 2px solid #fff;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+      ">Restart</button>
+    `;
+    document.body.appendChild(gameOverDiv);
+    
+    // Add restart functionality
+    document.getElementById("restart-btn").addEventListener("click", () => {
+      location.reload();
+    });
   }
 
   // --------------------------
@@ -327,6 +521,7 @@ async function init() {
     activeBuildingRoots.length = 0;
     flashingObjects.length = 0;
     doorMixers.length = 0;
+    npcs.length = 0; // Clear NPCs when switching scenes
   }
 
   // --------------------------
@@ -409,9 +604,15 @@ async function init() {
     unloadActiveBuilding();
 
     const targetScale = name === "bedroom" ? new Vector3(0.5, 0.5, 0.5) : new Vector3(1, 1, 1);
-    mazeSize = await loadBuilding(filePath, new Vector3(0, name === "bedroom" ? 0 : -50, 0), name, targetScale);
+    const yPosition = (name === "bedroom" || name === "mansion") ? 0 : -50;
+    mazeSize = await loadBuilding(filePath, new Vector3(0, yPosition, 0), name, targetScale);
 
-    character.rigidBody.setTranslation({ x: 0, y: 2, z: 0 }, true);
+    // Set initial position - mansion spawns at (1, 2, 116)
+    let startX = 0;
+    let startY = 2;
+    let startZ = 0;
+    
+    character.rigidBody.setTranslation({ x: startX, y: startY, z: startZ }, true);
     if (character.model) character.model.scale.set(1.8, 1.8, 1.8);
     character.rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
     character.rigidBody.setAngvel({ x: 0, y: 0, z: 0 }, true);
@@ -434,18 +635,37 @@ async function init() {
   // INITIAL LOAD
   // --------------------------
   async function loadInitialScene() {
-    mazeSize = await loadBuilding(Building, new Vector3(0, -50, 0), "maze_room");
+    mazeSize = await loadBuilding(Outside, new Vector3(0, 0, 0), "mansion");
   }
 
-  loadFlashingModel(FlashingModel, new Vector3(-45.78, 0.60, -46.07));
-  loadFlashingModel(FlashingModel, new Vector3(-45.78, 0.60, 30.00));
-  loadDoorModel(DoorModel, new Vector3(-28.28, -48.51, -74.33));
-  loadCoin(Coin, new Vector3(-35, -21, -145));
-  loadCoin(Coin, new Vector3(-45, 2, -65));
-  loadCoin(Coin, new Vector3(-30, 2, 25));
-  loadCoin(Coin, new Vector3(24, 2, 25));
+  // Load mansion-specific objects (will be cleaned up when switching scenes)
+  async function loadMansionObjects() {
+    // Load 4 NPCs at different positions around the yard
+    const npcPositions = [
+      new Vector3(-8, 2, 10),
+      new Vector3(12, 2, 8),
+      new Vector3(5, 2, 20),
+      new Vector3(-3, 2, 15)
+    ];
+    
+    for (const pos of npcPositions) {
+      loadNPC(NPCModel, pos);
+    }
+  }
+
+  // Load maze-specific objects (will be loaded when switching to maze)
+  async function loadMazeObjects() {
+    loadFlashingModel(FlashingModel, new Vector3(-45.78, 0.60, -46.07));
+    loadFlashingModel(FlashingModel, new Vector3(-45.78, 0.60, 30.00));
+    loadDoorModel(DoorModel, new Vector3(-28.28, -48.51, -74.33));
+    loadCoin(Coin, new Vector3(-35, -21, -145));
+    loadCoin(Coin, new Vector3(-45, 2, -65));
+    loadCoin(Coin, new Vector3(-30, 2, 25));
+    loadCoin(Coin, new Vector3(24, 2, 25));
+  }
 
   await loadInitialScene();
+  await loadMansionObjects();
   initMiniMap();
 
   // --------------------------
@@ -470,19 +690,24 @@ async function init() {
 
   function animate() {
     const delta = clock.getDelta();
-    if (!isSwitching) {
+    if (!isSwitching && !isGameOver) {
       world.step();
       // Update character controller with stair-stepping parameters
       if (character.controller) {
-        character.controller.enableSnapToGround(0.5); // Snap to ground within 0.5 units
-        character.controller.setMaxSlopeClimbAngle(Math.PI / 4); // Allow climbing slopes up to 45 degrees
-        character.controller.setMinSlideAngle(Math.PI / 6); // Slide on slopes steeper than 30 degrees
-        character.controller.setStepOffset(0.5); // Allow stepping up to 0.5 units (adjust for stair height)
+        character.controller.enableSnapToGround(0.5);
+        character.controller.setMaxSlopeClimbAngle(Math.PI / 4);
+        character.controller.setMinSlideAngle(Math.PI / 6);
+        character.controller.setStepOffset(0.5);
       }
       character.update(delta);
-      snapToGround(character, character.controller, delta); // Snap to ground
+      snapToGround(character, character.controller, delta);
       updateFlashing(delta);
       updateDoors(delta);
+      
+      // Update NPCs with player position
+      if (character.model) {
+        updateNPCs(delta, character.model.position);
+      }
     }
     updateCamera(delta);
     renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
@@ -490,16 +715,34 @@ async function init() {
     renderer.setScissorTest(true);
     renderer.render(scene, camera);
 
-    if (character.model) {
+    if (character.model && !isGameOver) {
       character.model.scale.set(1.5, 1.5, 1.5);
       const pos = character.model.position;
+
+      // Check for NPC collisions first
+      if (checkNPCCollisions(pos)) {
+        showGameOver();
+        return;
+      }
+
       if (miniMap) miniMap.update(pos);
       updateCoins(delta, pos);
 
-      if (currentScene === "maze") {
-        const dy = pos.y - (-48.51);
+      if (currentScene === "mansion") {
+        // Trigger when character reaches door position
+        const dx = pos.x - (2.5);
+        const dz = pos.z - (3.5);
+        const dist = Math.sqrt(dx * dx + dz * dz);
+        if (dist < 2) {
+          currentScene = "maze";
+          switchScene(Building, "maze_room").then(() => {
+            loadMazeObjects();
+          });
+        }
+      } else if (currentScene === "maze") {
+        const dx = pos.x - (-25.45);
         const dz = pos.z - (-74.33);
-        const dist = Math.sqrt(dy * dy + dz * dz);
+        const dist = Math.sqrt(dx * dx + dz * dz);
         if (dist < 10) {
           currentScene = "bedroom";
           switchScene(bedroom, "bedroom");
@@ -510,6 +753,8 @@ async function init() {
 
   window.addEventListener('resize', () => {
     camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
   });
