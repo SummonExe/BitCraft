@@ -662,6 +662,9 @@ async function init() {
     loadCoin(Coin, new Vector3(-45, 2, -65));
     loadCoin(Coin, new Vector3(-30, 2, 25));
     loadCoin(Coin, new Vector3(24, 2, 25));
+
+    //loadNPC(NPCModel, new Vector3(112.25, 3, 35.38));
+    //loadNPC(NPCModel, new Vector3(110.25, 3, 30.38));
   }
 
   await loadInitialScene();
@@ -718,6 +721,8 @@ async function init() {
     if (character.model && !isGameOver) {
       character.model.scale.set(1.5, 1.5, 1.5);
       const pos = character.model.position;
+
+      // console.log(pos.x, pos.y, pos.z);
 
       // Check for NPC collisions first
       if (checkNPCCollisions(pos)) {
