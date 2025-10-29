@@ -115,8 +115,6 @@ timerElement.style.top = '20px';
 timerElement.style.left = '20px';
 timerElement.style.color = 'white';
 timerElement.style.fontSize = '32px';
-timerElement.style.fontFamily = 'Arial, sans-serif';
-timerElement.style.fontWeight = 'bold';
 timerElement.style.textShadow = '2px 2px 4px rgba(0,0,0,0.8)';
 timerElement.style.zIndex = '1000';
 document.body.appendChild(timerElement);
@@ -127,7 +125,6 @@ bibleBarElement.style.top = '70px';
 bibleBarElement.style.left = '20px';
 bibleBarElement.style.color = '#FFD700';
 bibleBarElement.style.fontSize = '20px';
-bibleBarElement.style.fontFamily = 'Arial, sans-serif';
 bibleBarElement.style.textShadow = '2px 2px 4px rgba(0,0,0,0.8)';
 bibleBarElement.style.display = 'none';
 bibleBarElement.style.zIndex = '1000';
@@ -149,7 +146,7 @@ pauseMenu.style.textAlign = 'center';
 pauseMenu.style.zIndex = '2000';
 pauseMenu.style.display = 'none';
 pauseMenu.innerHTML = `
-  <div style="font-size: 48px; font-weight: bold; margin-bottom: 30px;">PAUSED</div>
+  <div style="font-size: 48px; margin-bottom: 30px;">PAUSED</div>
   <button id="resume-btn" style="
     padding: 15px 40px;
     font-size: 24px;
@@ -158,7 +155,6 @@ pauseMenu.innerHTML = `
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-weight: bold;
     margin: 10px;
     width: 200px;
   ">Resume</button>
@@ -171,7 +167,6 @@ pauseMenu.innerHTML = `
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    font-weight: bold;
     margin: 10px;
     width: 200px;
   ">Main Menu</button>
@@ -215,7 +210,6 @@ function showGameOver(won = false) {
   gameOverDiv.style.borderRadius = "15px";
   gameOverDiv.style.color = "#fff";
   gameOverDiv.style.fontSize = "48px";
-  gameOverDiv.style.fontWeight = "bold";
   gameOverDiv.style.textAlign = "center";
   gameOverDiv.style.zIndex = "3000";
   
@@ -232,7 +226,6 @@ function showGameOver(won = false) {
         border: 2px solid #fff;
         border-radius: 8px;
         cursor: pointer;
-        font-weight: bold;
         margin: 10px;
       ">Next Stage ➜</button>
       <br>
@@ -244,7 +237,6 @@ function showGameOver(won = false) {
         border: 2px solid #fff;
         border-radius: 8px;
         cursor: pointer;
-        font-weight: bold;
         margin: 10px;
       ">Play Again</button>
       <br>
@@ -256,7 +248,6 @@ function showGameOver(won = false) {
         border: 2px solid #fff;
         border-radius: 8px;
         cursor: pointer;
-        font-weight: bold;
         margin: 10px;
       ">Main Menu</button>
     `;
@@ -272,7 +263,6 @@ function showGameOver(won = false) {
         border: 2px solid #fff;
         border-radius: 8px;
         cursor: pointer;
-        font-weight: bold;
         margin: 10px;
       ">Try Again</button>
       <br>
@@ -284,7 +274,6 @@ function showGameOver(won = false) {
         border: 2px solid #fff;
         border-radius: 8px;
         cursor: pointer;
-        font-weight: bold;
         margin: 10px;
       ">Main Menu</button>
     `;

@@ -8,6 +8,10 @@
     src: url('../../../public/fonts/Dudu_Calligraphy.ttf') format('truetype');
 }
 
+* {
+    font-family: 'Dudu Calligraphy', cursive;
+}
+
 html,body {
 	margin: 0;
 	padding: 0;
