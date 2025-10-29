@@ -61,6 +61,12 @@ scene.add(directionalLight);
 function setupPhysics() {
   const gravity = { x: 0.0, y: -9.81, z: 0.0 };
   world = new RAPIER.World(gravity);
+  
+  const groundSize = 50000;
+  const groundColliderDesc = RAPIER.ColliderDesc.cuboid(groundSize , 0.1, groundSize )
+    .setTranslation(0, 8, 0);
+  world.createCollider(groundColliderDesc);
+  
   physicsReady = true;
   console.log('Physics world initialized with gravity');
 }
