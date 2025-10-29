@@ -663,8 +663,9 @@ async function init() {
     loadCoin(Coin, new Vector3(-30, 2, 25));
     loadCoin(Coin, new Vector3(24, 2, 25));
 
-    //loadNPC(NPCModel, new Vector3(112.25, 3, 35.38));
-    //loadNPC(NPCModel, new Vector3(110.25, 3, 30.38));
+    loadNPC(NPCModel, new Vector3(-45.78, 3, -46.07));
+    loadNPC(NPCModel, new Vector3(-45.78, 0.60, 30.00));
+
   }
 
   await loadInitialScene();
