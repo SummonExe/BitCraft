@@ -3,7 +3,7 @@ import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
 
 export class Projectile {
-  constructor({ position, direction }, { world, scene, color = 0xff0000, modelPath = null, loadModel = null, scale = 1, speed = 20, maxDistance = 20, colliderRadius = 0.5, rotation = null }) {
+  constructor({ position, direction }, { world, scene, color = 0xff0000, modelPath = null, loadModel = null, scale = 1, speed = 20, maxDistance = 80, colliderRadius = 0.5, rotation = null, damage = 50, team = 'neutral' }) {
     this.world = world;
     this.scene = scene;
     this.mesh = null;
@@ -11,6 +11,9 @@ export class Projectile {
     this.maxDistance = maxDistance;
     this.speed = speed;
     this.direction = direction.clone().normalize();
+    this.damage = damage; // Damage dealt on hit
+    this.team = team; // 'player', 'enemy', or 'neutral'
+    this.hasHit = false; // Track if projectile has already hit something
     
     try {
       // Setup physics first
@@ -20,7 +23,7 @@ export class Projectile {
       this.rigidBody = world.createRigidBody(bodyDesc);
       
       const colliderDesc = RAPIER.ColliderDesc.ball(colliderRadius);
-      world.createCollider(colliderDesc, this.rigidBody);
+      this.collider = world.createCollider(colliderDesc, this.rigidBody);
       
       const impulse = { x: this.direction.x * speed, y: 0, z: this.direction.z * speed };
       this.rigidBody.applyImpulse(impulse, true);
@@ -87,8 +90,59 @@ export class Projectile {
     }
   }
   
-  update() {
+  checkCollision(player, enemies) {
+    if (this.hasHit) return false;
+    
+    const projectilePos = this.rigidBody.translation();
+    
+    // Check collision with player (if projectile is from enemy)
+    if (this.team === 'enemy' && player && !player.isDead) {
+      const playerPos = player.rigidBody.translation();
+      const distance = Math.sqrt(
+        Math.pow(projectilePos.x - playerPos.x, 2) +
+        Math.pow(projectilePos.y - playerPos.y, 2) +
+        Math.pow(projectilePos.z - playerPos.z, 2)
+      );
+      
+      // Collision radius (sum of both colliders)
+      if (distance < 3) { // Adjust this value based on your game scale
+        player.takeDamage(this.damage);
+        this.hasHit = true;
+        return true; // Signal to remove projectile
+      }
+    }
+    
+    // Check collision with enemies (if projectile is from player)
+    if (this.team === 'player' && enemies) {
+      for (const enemy of enemies) {
+        if (enemy.isDead) continue;
+        
+        const enemyPos = enemy.rigidBody.translation();
+        const distance = Math.sqrt(
+          Math.pow(projectilePos.x - enemyPos.x, 2) +
+          Math.pow(projectilePos.y - enemyPos.y, 2) +
+          Math.pow(projectilePos.z - enemyPos.z, 2)
+        );
+        
+        // Collision radius
+        if (distance < 5) { // Adjust based on enemy size
+          enemy.takeDamage(this.damage);
+          this.hasHit = true;
+          return true; // Signal to remove projectile
+        }
+      }
+    }
+    
+    return false;
+  }
+  
+  update(player = null, enemies = []) {
     try {
+      // Check for collisions
+      if (this.checkCollision(player, enemies)) {
+        return true; // Dispose projectile
+      }
+      
       // Only update position if model is loaded
       if (this.isModelLoaded && this.mesh) {
         const physicsPos = this.rigidBody.translation();

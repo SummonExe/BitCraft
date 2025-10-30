@@ -46,6 +46,12 @@ export class ChaserNPC {
     this.attackCooldown = 0;
     this.cooldownDuration = 0.7;
     
+    // HEALTH SYSTEM
+    this.maxHealth = 1000;
+    this.health = 1000;
+    this.isDead = false;
+    this.team = 'enemy'; // Used for collision detection
+    
     // Configure projectiles for each attack (6 attacks total)
     this.attackProjectileConfigs = attackProjectileConfigs || {
       0: { // Attack 1 - Single purple
@@ -53,7 +59,8 @@ export class ChaserNPC {
         color: 0x9d00ff,
         speed: 20,
         offsetY: 15,
-        scale: 1
+        scale: 1,
+        damage: 40
       },
       1: { // Attack 2 - Triple dark
         pattern: 'triple',
@@ -61,14 +68,16 @@ export class ChaserNPC {
         speed: 22,
         spreadAngle: 0.4,
         offsetY: 15,
-        scale: 1
+        scale: 1,
+        damage: 30
       },
       2: { // Attack 3 - Fast single
         pattern: 'single',
         color: 0xaa00ff,
         speed: 25,
         offsetY: 15,
-        scale: 1.2
+        scale: 1.2,
+        damage: 50
       },
       3: { // Attack 4 - Spread
         pattern: 'spread',
@@ -77,7 +86,8 @@ export class ChaserNPC {
         speed: 18,
         spreadAngle: 0.5,
         offsetY: 15,
-        scale: 1
+        scale: 1,
+        damage: 25
       },
       4: { // Attack 5 - Circle burst
         pattern: 'circle',
@@ -85,14 +95,16 @@ export class ChaserNPC {
         color: 0xbb00ff,
         speed: 20,
         offsetY: 15,
-        scale: 1
+        scale: 1,
+        damage: 20
       },
       5: { // Attack 6 - Powerful single
         pattern: 'single',
         color: 0xff00ff,
         speed: 30,
         offsetY: 15,
-        scale: 2
+        scale: 2,
+        damage: 80
       }
     };
     
@@ -120,7 +132,7 @@ export class ChaserNPC {
     this.rigidBody = world.createRigidBody(bodyDesc);
     
     const colliderDesc = RAPIER.ColliderDesc.cuboid(1.8, 3.5, 1.8);
-    world.createCollider(colliderDesc, this.rigidBody);
+    this.collider = world.createCollider(colliderDesc, this.rigidBody);
     this.rigidBody.setEnabledRotations(false, false, false, true);
     
     entityManager.add(this.entity);
@@ -204,6 +216,26 @@ export class ChaserNPC {
     renderComponent.quaternion.copy(entity.rotation);
   }
   
+  takeDamage(amount) {
+    if (this.isDead) return;
+    
+    this.health -= amount;
+    console.log(`Witch took ${amount} damage! Health: ${this.health}/${this.maxHealth}`);
+    
+    if (this.health <= 0) {
+      this.health = 0;
+      this.die();
+    }
+  }
+  
+  die() {
+    this.isDead = true;
+    console.log('Witch died!');
+    // Stop all movement
+    this.rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    // You can trigger death animation here if you have one
+  }
+  
   updateIndicator() {
     const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.entity.rotation);
     const physicsPos = this.rigidBody.translation();
@@ -244,7 +276,9 @@ export class ChaserNPC {
         world: this.world,
         scene: this.scene,
         color: config.color || 0x9d00ff,
-        speed: config.speed || 20
+        speed: config.speed || 20,
+        damage: config.damage || 40, // Pass damage to projectile
+        team: 'enemy' // Team identification
       };
       
       // Add model parameters if model path is provided
@@ -304,6 +338,8 @@ export class ChaserNPC {
   }
   
   update(delta) {
+    if (this.isDead) return;
+    
     const physicsPos = this.rigidBody.translation();
     this.entity.position.set(physicsPos.x, physicsPos.y, physicsPos.z);
     this.seekBehavior.target.copy(this.target.entity.position);

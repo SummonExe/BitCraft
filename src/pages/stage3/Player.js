@@ -37,6 +37,12 @@ export class Player {
     this.modelLoader = loadModel;
     this.animationLoader = loadAnimation;
     
+    // HEALTH SYSTEM
+    this.maxHealth = 1000;
+    this.health = 1000;
+    this.isDead = false;
+    this.team = 'player'; // Used for collision detection
+    
     // Configure projectiles for each attack key
     this.attackProjectileConfigs = attackProjectileConfigs || {
       'p': {
@@ -44,7 +50,8 @@ export class Player {
         color: 0xff0000,
         speed: 25,
         offsetY: 15,
-        scale: 1
+        scale: 1,
+        damage: 50 // Damage amount
       },
       'l': {
         pattern: 'triple',
@@ -52,14 +59,16 @@ export class Player {
         speed: 20,
         spreadAngle: 0.4,
         offsetY: 15,
-        scale: 1
+        scale: 1,
+        damage: 30
       },
       'o': {
         pattern: 'single',
         color: 0x0000ff,
         speed: 30,
         offsetY: 15,
-        scale: 1.5
+        scale: 1.5,
+        damage: 80
       },
       'k': {
         pattern: 'spread',
@@ -68,7 +77,8 @@ export class Player {
         speed: 22,
         spreadAngle: 0.5,
         offsetY: 15,
-        scale: 1
+        scale: 1,
+        damage: 25
       },
       'i': {
         pattern: 'circle',
@@ -76,14 +86,16 @@ export class Player {
         color: 0xff00ff,
         speed: 18,
         offsetY: 15,
-        scale: 1
+        scale: 1,
+        damage: 20
       },
       'j': {
         pattern: 'single',
         color: 0x00ffff,
         speed: 35,
         offsetY: 15,
-        scale: 2
+        scale: 2,
+        damage: 100
       }
     };
     
@@ -101,7 +113,7 @@ export class Player {
     this.rigidBody = world.createRigidBody(bodyDesc);
     
     const colliderDesc = RAPIER.ColliderDesc.cuboid(1, 2, 1);
-    world.createCollider(colliderDesc, this.rigidBody);
+    this.collider = world.createCollider(colliderDesc, this.rigidBody);
     this.rigidBody.setEnabledRotations(false, false, false, true);
     
     entityManager.add(this.entity);
@@ -172,6 +184,24 @@ export class Player {
     renderComponent.quaternion.copy(entity.rotation);
   }
   
+  takeDamage(amount) {
+    if (this.isDead) return;
+    
+    this.health -= amount;
+    console.log(`Player took ${amount} damage! Health: ${this.health}/${this.maxHealth}`);
+    
+    if (this.health <= 0) {
+      this.health = 0;
+      this.die();
+    }
+  }
+  
+  die() {
+    this.isDead = true;
+    console.log('Player died!');
+    // You can trigger death animation here if you have one
+  }
+  
   fireProjectiles(attackKey) {
     const config = this.attackProjectileConfigs[attackKey];
     if (!config) return;
@@ -202,7 +232,9 @@ export class Player {
         scene: this.scene,
         color: config.color || 0xff0000,
         speed: config.speed || 20,
-        scale: config.scale || 1
+        scale: config.scale || 1,
+        damage: config.damage || 50, // Pass damage to projectile
+        team: 'player' // Team identification
       };
       
       // Add model parameters if model path is provided
@@ -262,6 +294,8 @@ export class Player {
   }
   
   update(delta) {
+    if (this.isDead) return;
+    
     if (this.mixer && this.actions.idle && this.actions.walk && this.actions.run) {
       const isAttacking = this.currentAction && Object.values(this.attacks).includes(this.currentAction);
       
@@ -284,6 +318,8 @@ export class Player {
   }
   
   handleInput(keys, delta) {
+    if (this.isDead) return;
+    
     const velocity = new THREE.Vector3();
     let rotationInput = 0;
     

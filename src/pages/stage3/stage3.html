@@ -14,6 +14,25 @@
     <div class="loader"></div>
   </div>
 
+  <!-- Health UI -->
+  <div id="healthUI" style="display: none;">
+    <div class="health-bar-container player-health">
+      <div class="health-label">Player</div>
+      <div class="health-bar-bg">
+        <div id="playerHealthFill" class="health-bar-fill" style="width: 100%;"></div>
+        <div class="health-text" id="playerHealthText">1000 / 1000</div>
+      </div>
+    </div>
+    
+    <div class="health-bar-container witch-health">
+      <div class="health-label">Witch</div>
+      <div class="health-bar-bg">
+        <div id="witchHealthFill" class="health-bar-fill" style="width: 100%;"></div>
+        <div class="health-text" id="witchHealthText">1000 / 1000</div>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="./stage3.js" defer></script>
 </body>
 </html>

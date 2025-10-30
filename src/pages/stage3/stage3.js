@@ -14,16 +14,16 @@ import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_A
 import witch from "../../../public/models/witch/witch_Idle.fbx";
 import kid from "../../../public/models/kid2/Idle.fbx";
 import groundTexture from "../../../public/2025-10-23 123028.png";
-// const hero = "../../../models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
-// const witch = "../../../models/witch/witch_Idle.fbx";
-// const kid = "../../../models/kid2/Idle.fbx";
-// const groundTexture = "../../../public/2025-10-23 123028.png";
-// 
-// Import your projectile model at the top of stage3.js
 import fireball from "../../../public/models/projectiles/rasengan.glb";
 
-// === LOADING SCREEN ===
+// === LOADING SCREEN & UI ===
 const loadingScreen = document.getElementById('loadingScreen');
+const healthUI = document.getElementById('healthUI');
+const playerHealthFill = document.getElementById('playerHealthFill');
+const playerHealthText = document.getElementById('playerHealthText');
+const witchHealthFill = document.getElementById('witchHealthFill');
+const witchHealthText = document.getElementById('witchHealthText');
+
 if (!loadingScreen) {
   console.error("Loading screen element not found!");
 }
@@ -32,7 +32,7 @@ if (!loadingScreen) {
 let world, physicsReady = false;
 let player, npc1, npc2;
 let building;
-let indoorOffset = -120;// (0,0,offset) 
+let indoorOffset = -120;
 let outsideOffset = 50;
 let doorOffset = -15;
 let loadingComplete = false;
@@ -44,7 +44,6 @@ await RAPIER.init();
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x070e17);
 scene.fog = new THREE.FogExp2(0x0e1c2e,0.0025);
-// scene.fog = new THREE.FogExp2(0x666666,0.0025);
 
 const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 15, 15);
@@ -74,14 +73,11 @@ const groundSize = 5000;
 const groundGeometry = new THREE.PlaneGeometry(groundSize, groundSize);
 groundGeometry.rotateX(-Math.PI / 2);
 
-// Load your texture
 const textureLoader = new THREE.TextureLoader();
 const colorMap = textureLoader.load(groundTexture); 
 colorMap.repeat.set(200, 200);
-
-// Optionally, set the texture wrapping mode to repeat
-colorMap.wrapS = THREE.RepeatWrapping;  // Repeat horizontally (S axis)
-colorMap.wrapT = THREE.RepeatWrapping;  // Repeat vertically (T axis)
+colorMap.wrapS = THREE.RepeatWrapping;
+colorMap.wrapT = THREE.RepeatWrapping;
 
 const groundMaterial = new THREE.MeshStandardMaterial({
   map: colorMap,
@@ -99,7 +95,6 @@ function setupPhysics() {
   const gravity = { x: 0.0, y: -10, z: 0.0 };
   world = new RAPIER.World(gravity);
   
-  // Flat ground collider (large thin box)
   const groundColliderDesc = RAPIER.ColliderDesc.cuboid(groundSize / 2, 0.1, groundSize / 2)
     .setTranslation(0, -0.1, 0);
   world.createCollider(groundColliderDesc);
@@ -119,12 +114,10 @@ const fbxLoader = new FBXLoader();
 const gltfLoader = new GLTFLoader();
 const objLoader = new OBJLoader();
 
-// Setup Draco loader for compressed GLTF/GLB models
 const dracoLoader = new DRACOLoader();
 dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
 gltfLoader.setDRACOLoader(dracoLoader);
 
-// Helper function to detect file type from path
 function getFileExtension(path) {
   return path.split('.').pop().toLowerCase();
 }
@@ -134,7 +127,6 @@ async function loadModel(path, scale = 1, rotation = new THREE.Euler(0, Math.PI,
     const extension = getFileExtension(path);
     
     const onLoad = (object) => {
-      // Handle GLTF/GLB format (has a scene property)
       if (object.scene) {
         object = object.scene;
       }
@@ -157,7 +149,6 @@ async function loadModel(path, scale = 1, rotation = new THREE.Euler(0, Math.PI,
       reject(error);
     };
     
-    // Choose loader based on file extension
     switch (extension) {
       case 'fbx':
         fbxLoader.load(path, onLoad, undefined, onError);
@@ -182,7 +173,6 @@ async function loadAnimation(path) {
     const onLoad = (object) => {
       let animations = [];
       
-      // Handle GLTF/GLB format
       if (object.animations) {
         animations = object.animations;
       }
@@ -199,7 +189,6 @@ async function loadAnimation(path) {
       reject(error);
     };
     
-    // Choose loader based on file extension
     switch (extension) {
       case 'fbx':
         fbxLoader.load(path, onLoad, undefined, onError);
@@ -244,19 +233,46 @@ window.addEventListener('resize', () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+// === UPDATE HEALTH UI ===
+function updateHealthUI() {
+  if (!player || !npc2) return;
+  
+  // Update player health
+  const playerHealthPercent = (player.health / player.maxHealth) * 100;
+  playerHealthFill.style.width = playerHealthPercent + '%';
+  playerHealthText.textContent = `${Math.floor(player.health)} / ${player.maxHealth}`;
+  
+  // Add low health warning
+  if (playerHealthPercent < 30) {
+    playerHealthFill.parentElement.classList.add('health-low');
+  } else {
+    playerHealthFill.parentElement.classList.remove('health-low');
+  }
+  
+  // Update witch health
+  const witchHealthPercent = (npc2.health / npc2.maxHealth) * 100;
+  witchHealthFill.style.width = witchHealthPercent + '%';
+  witchHealthText.textContent = `${Math.floor(npc2.health)} / ${npc2.maxHealth}`;
+  
+  if (witchHealthPercent < 30) {
+    witchHealthFill.parentElement.classList.add('health-low');
+  } else {
+    witchHealthFill.parentElement.classList.remove('health-low');
+  }
+}
+
 // === GAME INITIALIZATION ===
 async function initGame() {
   try {
 
     building = new Building({
-      position: { x: -5, y: 13, z: 0 }, // Example position - adjust as needed
-      scale: 10, // Adjust scale to fit scene
+      position: { x: -5, y: 13, z: 0 },
+      scale: 10,
       world,
       scene,
       loadModel
     });
 
-    // Create entities – they start loading immediately
     player = new Player({
       position: { x: 0, y: 0, z: 0 + outsideOffset },
       modelPath: hero,
@@ -301,15 +317,14 @@ async function initGame() {
       projectiles,
       projectileConfig: {
         pattern: 'single',
-        modelPath: fireball,    // Use 3D model instead of sphere
-        loadModel: loadModel,   // IMPORTANT: Pass the loadModel function
-        scale: 10,               // Model scale
+        modelPath: fireball,
+        loadModel: loadModel,
+        scale: 10,
         speed: 25,
-        offsetY: 5             // Height offset from witch
+        offsetY: 5
       }
     });
 
-    // Wait for ALL models to finish loading
     await Promise.all([
       player.loadPromise,
       npc1.loadPromise,
@@ -320,8 +335,11 @@ async function initGame() {
     console.log("All models loaded. Starting game...");
     loadingComplete = true;
     loadingScreen.style.display = 'none';
+    healthUI.style.display = 'block';
+    
+    // Initial health UI update
+    updateHealthUI();
 
-    // Start animation loop
     animate();
 
   } catch (error) {
@@ -338,35 +356,34 @@ function animate() {
 
   const delta = time.update().getDelta();
 
-  // Update AI
   entityManager.update(delta);
 
-  // Update entities
   player.handleInput(keys, delta);
   player.update(delta);
   npc1.update(delta);
   npc2.update(delta);
   npc2.updateIndicator();
-  // building.update();
 
-  // Update projectiles
+  // Update projectiles with collision detection
   for (let i = projectiles.length - 1; i >= 0; i--) {
-    if (projectiles[i].update()) {
+    // Pass player and enemies array to check collisions
+    const enemies = [npc2]; // Add all enemy NPCs to this array
+    if (projectiles[i].update(player, enemies)) {
       projectiles[i].dispose();
       projectiles.splice(i, 1);
     }
   }
 
-  // Step physics
+  // Update health UI
+  updateHealthUI();
+
   world.step();
 
-  // Sync physics → visuals
   if (building.model) building.model.position.copy(building.rigidBody.translation());
   if (player.model) player.model.position.copy(player.rigidBody.translation());
   if (npc1.model) npc1.model.position.copy(npc1.rigidBody.translation());
   if (npc2.model) npc2.model.position.copy(npc2.rigidBody.translation());
 
-  // Update animations
   mixers.forEach(mixer => mixer.update(delta));
 
   // Camera follow
@@ -387,5 +404,4 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-// === START ===
 initGame();
