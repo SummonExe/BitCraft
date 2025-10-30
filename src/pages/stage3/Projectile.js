@@ -3,7 +3,7 @@ import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
 
 export class Projectile {
-  constructor({ position, direction }, { world, scene, color = 0xff0000, modelPath = null, loadModel = null, scale = 1, speed = 25, maxDistance = 80, colliderRadius = 0.6, rotation = null, damage = 50, team = 'neutral' }) {
+  constructor({ position, direction }, { world, scene, color = 0xff0000, modelPath = null, loadModel = null, scale = 1, speed = 25, maxDistance = 80, colliderRadius = 0.6, rotation = null, damage = 50, team = 'neutral', lifetime = 5.0 }) {
     this.world = world;
     this.scene = scene;
     this.mesh = null;
@@ -14,6 +14,8 @@ export class Projectile {
     this.damage = damage; // Damage dealt on hit
     this.team = team; // 'player', 'enemy', or 'neutral'
     this.hasHit = false; // Track if projectile has already hit something
+    this.spawnTime = performance.now(); // Track when projectile was created
+    this.lifetime = lifetime; // Seconds before auto-expiry (configurable per role)
     
     try {
       // Setup physics first
@@ -138,6 +140,11 @@ export class Projectile {
   
   update(player = null, enemies = []) {
     try {
+      // === EXPIRY CHECK (ROLE-BASED LIFETIME) ===
+      if (performance.now() - this.spawnTime > this.lifetime * 1000) {
+        return true; // Auto-remove after lifetime
+      }
+
       // Check for collisions
       if (this.checkCollision(player, enemies)) {
         return true; // Dispose projectile
