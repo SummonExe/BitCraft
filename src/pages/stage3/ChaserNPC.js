@@ -15,12 +15,12 @@ import witchHit from "../../../public/models/witch/Zombie Reaction Hit.fbx";
 import witchDying from "../../../public/models/witch/Zombie Dying.fbx";
 import witchPowerup from "../../../public/models/witch/Standing Taunt Battlecry.fbx";
 
-import power1 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
-import power2 from "../../../public/models/projectiles/blood_moon_grin.glb";
-import power3 from "../../../public/models/projectiles/packwar_blood_edition.glb";
-import power4 from "../../../public/models/projectiles/graveyard_fog_eyeball_-_blender_file.glb";
-import power5 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
-import power6 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
+import power0 from "../../../public/models/projectiles/hand_monster.glb";
+import power1 from "../../../public/models/projectiles/blood_moon_grin.glb";
+import power2 from "../../../public/models/projectiles/loading.glb";
+import power3 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
+import power4 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
+import power5 from "../../../public/models/projectiles/packwar_blood_edition.glb";
 
 export class ChaserNPC {
   constructor({ 
@@ -65,10 +65,10 @@ export class ChaserNPC {
       0: { // Attack 1 - Single purple
         pattern: 'single',
         color: 0x9d00ff,
-        speed: 20,
+        speed: 30,
         offsetY: 15,
         scale: 1,
-        damage: 40
+        damage: 50
       },
       1: { // Attack 2 - Triple dark
         pattern: 'triple',
@@ -82,34 +82,35 @@ export class ChaserNPC {
       2: { // Attack 3 - Fast single
         pattern: 'single',
         color: 0xaa00ff,
-        speed: 25,
+        speed: 50,
         offsetY: 15,
-        scale: 1.2,
-        damage: 50
+        scale: 2,
+        damage: 100
       },
       3: { // Attack 4 - Spread
         pattern: 'spread',
-        count: 5,
+        count: 6,
         color: 0x8800dd,
-        speed: 18,
-        spreadAngle: 0.5,
+        speed: 40,
+        spreadAngle: 0.2,
         offsetY: 15,
         scale: 1,
-        damage: 25
+        damage: 60
       },
       4: { // Attack 5 - Circle burst
-        pattern: 'circle',
-        count: 8,
+        pattern: 'spread',
+        count: 10,
         color: 0xbb00ff,
-        speed: 20,
+        speed: 80,
         offsetY: 15,
         scale: 1,
         damage: 20
       },
       5: { // Attack 6 - Powerful single
-        pattern: 'single',
+        pattern: 'triple',
         color: 0xff00ff,
-        speed: 30,
+        spreadAngle: 0.1,
+        speed: 35,
         offsetY: 15,
         scale: 2,
         damage: 80

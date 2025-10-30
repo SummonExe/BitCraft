@@ -17,12 +17,12 @@ import heroHitI from "../../../public/models/cop/Magic Spell Pack/Standing 2H Ma
 import heroHitJ from "../../../public/models/cop/Magic Spell Pack/Standing 1H Magic Attack 03.fbx";
 import heroBlock from "../../../public/models/cop/Magic Spell Pack/Standing Block React Large.fbx";
 
-import powerP from "../../../public/models/projectiles/rasengan.glb";
-import powerL from "../../../public/models/projectiles/monocyte.glb";
-import powerO from "../../../public/models/projectiles/magical_orb.glb";
-import powerK from "../../../public/models/projectiles/projectile_-_magma_ball.glb";
-import powerI from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
-import powerJ from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
+import powerP from "../../../public/models/projectiles/exoplanet_sg10446623.glb";
+import powerL from "../../../public/models/projectiles/appearance_effect_light_beam.glb";
+import powerO from "../../../public/models/projectiles/rasengan.glb";
+import powerK from "../../../public/models/projectiles/trail.glb";
+import powerI from "../../../public/models/projectiles/dotlings.glb";
+import powerJ from "../../../public/models/projectiles/magical_orb.glb";
 
 export class Player {
   constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles, attackProjectileConfigs = null }) {
@@ -61,7 +61,7 @@ export class Player {
       'p': {
         pattern: 'single',
         color: 0xff0000,
-        speed: 25,
+        speed: 35,
         offsetY: 15,
         scale: 1,
         damage: 50 // Damage amount
@@ -69,46 +69,47 @@ export class Player {
       'l': {
         pattern: 'triple',
         color: 0x00ff00,
-        speed: 20,
+        speed: 30,
         spreadAngle: 0.4,
         offsetY: 15,
         scale: 1,
-        damage: 30
+        damage: 40
       },
       'o': {
-        pattern: 'single',
+        pattern: 'triple',
         color: 0x0000ff,
         speed: 30,
         offsetY: 15,
         scale: 1.5,
-        damage: 80
+        damage: 60
       },
       'k': {
-        pattern: 'spread',
-        count: 5,
+        pattern: 'single',
         color: 0xffff00,
-        speed: 22,
-        spreadAngle: 0.5,
+        speed: 60,
         offsetY: 15,
         scale: 1,
-        damage: 25
+        damage: 80
       },
       'i': {
-        pattern: 'circle',
-        count: 8,
+        pattern: 'spread',
+        count: 6,
         color: 0xff00ff,
-        speed: 18,
+        spreadAngle: 0.3,
+        speed: 50,
         offsetY: 15,
         scale: 1,
-        damage: 20
+        damage: 100
       },
       'j': {
-        pattern: 'single',
+        pattern: 'spread',
+        count: 6,
         color: 0x00ffff,
+        spreadAngle: 0.5,
         speed: 35,
         offsetY: 15,
         scale: 2,
-        damage: 100
+        damage: 80
       }
     };
     
