@@ -18,6 +18,9 @@ import groundTexture from "../../../public/2025-10-23 123028.png";
 // const witch = "../../../models/witch/witch_Idle.fbx";
 // const kid = "../../../models/kid2/Idle.fbx";
 // const groundTexture = "../../../public/2025-10-23 123028.png";
+// 
+// Import your projectile model at the top of stage3.js
+import fireball from "../../../public/models/projectiles/rasengan.glb";
 
 // === LOADING SCREEN ===
 const loadingScreen = document.getElementById('loadingScreen');
@@ -295,7 +298,15 @@ async function initGame() {
       entityManager,
       loadModel,
       loadAnimation,
-        projectiles
+      projectiles,
+      projectileConfig: {
+        pattern: 'single',
+        modelPath: fireball,    // Use 3D model instead of sphere
+        loadModel: loadModel,   // IMPORTANT: Pass the loadModel function
+        scale: 10,               // Model scale
+        speed: 25,
+        offsetY: 5             // Height offset from witch
+      }
     });
 
     // Wait for ALL models to finish loading

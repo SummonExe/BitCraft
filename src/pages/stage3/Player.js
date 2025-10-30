@@ -18,7 +18,7 @@ import heroHitJ from "../../../public/models/cop/Magic Spell Pack/Standing 1H Ma
 import heroBlock from "../../../public/models/cop/Magic Spell Pack/Standing Block React Large.fbx";
 
 export class Player {
-  constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles }) {
+  constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles, attackProjectileConfigs = null }) {
     this.baseMoveForce = moveForce;
     this.moveForce = moveForce;
     this.modelPath = modelPath;
@@ -34,6 +34,58 @@ export class Player {
     this.targetRotation = 0;
     this.currentRotation = 0;
     this.rotationSpeed = 0.05;
+    this.modelLoader = loadModel;
+    this.animationLoader = loadAnimation;
+    
+    // Configure projectiles for each attack key
+    this.attackProjectileConfigs = attackProjectileConfigs || {
+      'p': {
+        pattern: 'single',
+        color: 0xff0000,
+        speed: 25,
+        offsetY: 15,
+        scale: 1
+      },
+      'l': {
+        pattern: 'triple',
+        color: 0x00ff00,
+        speed: 20,
+        spreadAngle: 0.4,
+        offsetY: 15,
+        scale: 1
+      },
+      'o': {
+        pattern: 'single',
+        color: 0x0000ff,
+        speed: 30,
+        offsetY: 15,
+        scale: 1.5
+      },
+      'k': {
+        pattern: 'spread',
+        count: 5,
+        color: 0xffff00,
+        speed: 22,
+        spreadAngle: 0.5,
+        offsetY: 15,
+        scale: 1
+      },
+      'i': {
+        pattern: 'circle',
+        count: 8,
+        color: 0xff00ff,
+        speed: 18,
+        offsetY: 15,
+        scale: 1
+      },
+      'j': {
+        pattern: 'single',
+        color: 0x00ffff,
+        speed: 35,
+        offsetY: 15,
+        scale: 2
+      }
+    };
     
     // Yuka entity
     this.entity = new YUKA.Vehicle();
@@ -54,29 +106,29 @@ export class Player {
     
     entityManager.add(this.entity);
     
-    this.loadPromise = this.loadModel(position, loadModel, loadAnimation, scene, mixers);
+    this.loadPromise = this.initModel(position, scene, mixers);
   }
   
-  async loadModel(initialPosition, loadModel, loadAnimation, scene, mixers) {
+  async initModel(initialPosition, scene, mixers) {
     try {
       const scale = 0.05;
       const rotation = new THREE.Euler(0, Math.PI, 0);
-      this.model = await loadModel(this.modelPath, scale, rotation, new THREE.Vector3(initialPosition.x, initialPosition.y, initialPosition.z));
+      this.model = await this.modelLoader(this.modelPath, scale, rotation, new THREE.Vector3(initialPosition.x, initialPosition.y, initialPosition.z));
       
       this.mixer = new THREE.AnimationMixer(this.model);
       mixers.push(this.mixer);
       
       // === Load Base Animations ===
-      const idleClip = await loadAnimation(heroIdle);
+      const idleClip = await this.animationLoader(heroIdle);
       this.actions.idle = this.mixer.clipAction(idleClip);
       this.actions.idle.play();
       this.currentAction = this.actions.idle;
       
-      const walkClip = await loadAnimation(heroWalk);
+      const walkClip = await this.animationLoader(heroWalk);
       this.actions.walk = this.mixer.clipAction(walkClip);
       this.actions.walk.timeScale = 0.6;
       
-      const runClip = await loadAnimation(heroRun);
+      const runClip = await this.animationLoader(heroRun);
       this.actions.run = this.mixer.clipAction(runClip);
       this.actions.run.timeScale = 0.6;
       
@@ -91,7 +143,7 @@ export class Player {
       };
 
       for (const [key, path] of Object.entries(attackMap)) {
-        const clip = await loadAnimation(path);
+        const clip = await this.animationLoader(path);
         const action = this.mixer.clipAction(clip);
         action.setLoop(THREE.LoopOnce);
         action.clampWhenFinished = true;
@@ -118,6 +170,95 @@ export class Player {
   sync(entity, renderComponent) {
     renderComponent.position.copy(entity.position);
     renderComponent.quaternion.copy(entity.rotation);
+  }
+  
+  fireProjectiles(attackKey) {
+    const config = this.attackProjectileConfigs[attackKey];
+    if (!config) return;
+    
+    const physicsPos = this.rigidBody.translation();
+    const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.entity.rotation);
+    forward.y = 0;
+    forward.normalize();
+    
+    // Custom pattern function
+    if (config.pattern === 'custom' && config.customPattern) {
+      config.customPattern(this, physicsPos, forward);
+      return;
+    }
+    
+    // Get projectile directions based on pattern
+    const projectileDirections = this.getProjectileDirections(forward, config.pattern, config.count || 1, config.spreadAngle || 0.3);
+    
+    projectileDirections.forEach(direction => {
+      const startPosition = new THREE.Vector3(
+        physicsPos.x,
+        physicsPos.y + (config.offsetY || 15),
+        physicsPos.z
+      );
+      
+      const projectileOptions = {
+        world: this.world,
+        scene: this.scene,
+        color: config.color || 0xff0000,
+        speed: config.speed || 20,
+        scale: config.scale || 1
+      };
+      
+      // Add model parameters if model path is provided
+      if (config.modelPath && config.loadModel) {
+        projectileOptions.modelPath = config.modelPath;
+        projectileOptions.loadModel = config.loadModel;
+        projectileOptions.scale = config.scale;
+      } else if (config.modelPath && this.modelLoader) {
+        projectileOptions.modelPath = config.modelPath;
+        projectileOptions.loadModel = this.modelLoader;
+        projectileOptions.scale = config.scale;
+      }
+      
+      const projectile = new Projectile(
+        { position: startPosition, direction: direction },
+        projectileOptions
+      );
+      this.projectiles.push(projectile);
+    });
+  }
+  
+  getProjectileDirections(baseDirection, pattern, count, spreadAngle) {
+    const directions = [];
+    
+    switch (pattern) {
+      case 'single':
+        directions.push(baseDirection.clone());
+        break;
+        
+      case 'triple':
+        directions.push(baseDirection.clone());
+        directions.push(baseDirection.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), spreadAngle));
+        directions.push(baseDirection.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -spreadAngle));
+        break;
+        
+      case 'spread':
+        const totalSpread = spreadAngle * 2;
+        for (let i = 0; i < count; i++) {
+          const angle = -spreadAngle + (totalSpread / (count - 1)) * i;
+          directions.push(baseDirection.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), angle));
+        }
+        break;
+        
+      case 'circle':
+        for (let i = 0; i < count; i++) {
+          const angle = (Math.PI * 2 / count) * i;
+          const direction = new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle));
+          directions.push(direction);
+        }
+        break;
+        
+      default:
+        directions.push(baseDirection.clone());
+    }
+    
+    return directions;
   }
   
   update(delta) {
@@ -158,10 +299,12 @@ export class Player {
     // === Handle Attack Keys ===
     const attackKeyMap = { 'p': 'p', 'l': 'l', 'o': 'o', 'k': 'k', 'i': 'i', 'j': 'j' };
     let triggeredAttack = null;
+    let attackKey = null;
 
-    for (const [inputKey, attackKey] of Object.entries(attackKeyMap)) {
-      if (keys[inputKey] && this.attacks[attackKey]) {
-        triggeredAttack = this.attacks[attackKey];
+    for (const [inputKey, key] of Object.entries(attackKeyMap)) {
+      if (keys[inputKey] && this.attacks[key]) {
+        triggeredAttack = this.attacks[key];
+        attackKey = key;
         break; // First pressed key wins
       }
     }
@@ -171,14 +314,8 @@ export class Player {
       triggeredAttack.reset().fadeIn(0.3).play();
       this.currentAction = triggeredAttack;
       
-      // Fire projectile
-      const physicsPos = this.rigidBody.translation();
-      const startPosition = new THREE.Vector3(physicsPos.x, physicsPos.y + 15, physicsPos.z);
-      const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.entity.rotation);
-      forward.y = 0; forward.normalize();
-      
-      const projectile = new Projectile({ position: startPosition, direction: forward }, { world: this.world, scene: this.scene });
-      this.projectiles.push(projectile);
+      // Fire projectiles immediately when attack starts
+      this.fireProjectiles(attackKey);
     }
     
     // === Rotation ===
