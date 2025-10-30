@@ -22,10 +22,10 @@ export class ChaserNPC {
     this.mixer = null;
     this.world = world;
     this.actions = { idle: null, walk: null };
-    this.attacks = { attack: null, poison: null };
+    this.attacks = []; // Array for 6 attacks
     this.currentAction = null;
     this.attackCooldown = 0;
-    this.cooldownDuration = 0.5; // 5 seconds
+    this.cooldownDuration = 0.7;
     
     // Debug indicator (optional - can be removed later)
     const indicatorGeometry = new THREE.SphereGeometry(0.2, 16, 16);
@@ -85,21 +85,28 @@ export class ChaserNPC {
       this.actions.walk = this.mixer.clipAction(walkClip);
       this.actions.walk.timeScale = 0.8; // Faster for witch
       
-      // Load attack animations
-      const attackClip = await loadAnimation(witchAttack1);
-      this.attacks.attack = this.mixer.clipAction(attackClip);
-      this.attacks.attack.setLoop(THREE.LoopOnce);
-      this.attacks.attack.clampWhenFinished = true;
+      // Load all 6 attack animations
+      const attackPaths = [
+        witchAttack1,
+        witchAttack2,
+        witchAttack3,
+        witchAttack4,
+        witchAttack5,
+        witchAttack6
+      ];
 
-      const poisonClip = await loadAnimation(witchAttack2);
-      this.attacks.poison = this.mixer.clipAction(poisonClip);
-      this.attacks.poison.setLoop(THREE.LoopOnce);
-      this.attacks.poison.clampWhenFinished = true;
+      for (const path of attackPaths) {
+        const clip = await loadAnimation(path);
+        const action = this.mixer.clipAction(clip);
+        action.setLoop(THREE.LoopOnce);
+        action.clampWhenFinished = true;
+        this.attacks.push(action);
+      }
       
       // Animation finish handler for attacks
       this.mixer.addEventListener('finished', (e) => {
         const finishedAction = e.action;
-        if (Object.values(this.attacks).includes(finishedAction)) {
+        if (this.attacks.includes(finishedAction)) {
           finishedAction.fadeOut(0.2);
           this.actions.idle.reset().fadeIn(0.2).play();
           this.currentAction = this.actions.idle;
@@ -138,85 +145,81 @@ export class ChaserNPC {
     this.indicator.position.y = physicsPos.y + 3.5;
   }
   
-update(delta) {
-  const physicsPos = this.rigidBody.translation();
-  this.entity.position.set(physicsPos.x, physicsPos.y, physicsPos.z);
-  this.seekBehavior.target.copy(this.target.entity.position);
+  update(delta) {
+    const physicsPos = this.rigidBody.translation();
+    this.entity.position.set(physicsPos.x, physicsPos.y, physicsPos.z);
+    this.seekBehavior.target.copy(this.target.entity.position);
 
-  const distanceToTarget = this.entity.position.distanceTo(this.target.entity.position);
-  const velocity = this.entity.velocity;
-  const currentVel = this.rigidBody.linvel();
+    const distanceToTarget = this.entity.position.distanceTo(this.target.entity.position);
+    const velocity = this.entity.velocity;
+    const currentVel = this.rigidBody.linvel();
 
-  if (distanceToTarget > this.stopDistance && velocity.length() > 0) {
-    // === CHASING BEHAVIOR (unchanged) ===
-    const lerpFactor = 0.4;
-    const newVel = {
-      x: currentVel.x + (velocity.x - currentVel.x) * lerpFactor,
-      y: currentVel.y,
-      z: currentVel.z + (velocity.z - currentVel.z) * lerpFactor
-    };
+    if (distanceToTarget > this.stopDistance && velocity.length() > 0) {
+      // === CHASING BEHAVIOR (unchanged) ===
+      const lerpFactor = 0.4;
+      const newVel = {
+        x: currentVel.x + (velocity.x - currentVel.x) * lerpFactor,
+        y: currentVel.y,
+        z: currentVel.z + (velocity.z - currentVel.z) * lerpFactor
+      };
 
-    const maxSpeed = 8;
-    const hSpeed = Math.sqrt(newVel.x ** 2 + newVel.z ** 2);
-    if (hSpeed > maxSpeed) {
-      const scale = maxSpeed / hSpeed;
-      newVel.x *= scale;
-      newVel.z *= scale;
-    }
-
-    this.rigidBody.setLinvel(newVel, true);
-
-    if (velocity.length() > 0) {
-      const targetYRotation = Math.atan2(velocity.x, velocity.z);
-      this.entity.rotation.set(0, targetYRotation, 0);
-    }
-
-    if (this.mixer && this.actions.walk && this.currentAction !== this.actions.walk) {
-      if (this.actions.idle) this.actions.idle.fadeOut(0.2);
-      this.actions.walk.reset().fadeIn(0.2).play();
-      this.currentAction = this.actions.walk;
-    }
-  } else {
-    // === IN RANGE: COMBAT BEHAVIOR ===
-    const stopVel = { x: currentVel.x * 0.85, y: currentVel.y, z: currentVel.z * 0.85 };
-    this.rigidBody.setLinvel(stopVel, true);
-
-    this.attackCooldown -= delta;
-    const isAttacking = this.currentAction && Object.values(this.attacks).includes(this.currentAction);
-
-    // === TRIGGER NEXT ATTACK ===
-    if (this.attackCooldown <= 0 && !isAttacking) {
-      const selectedAction = Math.random() < 0.5
-        ? this.attacks.attack
-        : this.attacks.poison;
-
-      if (this.currentAction !== selectedAction) {
-        if (this.currentAction) this.currentAction.fadeOut(0.2);
-        selectedAction.reset().fadeIn(0.2).play();
-        this.currentAction = selectedAction;
+      const maxSpeed = 8;
+      const hSpeed = Math.sqrt(newVel.x ** 2 + newVel.z ** 2);
+      if (hSpeed > maxSpeed) {
+        const scale = maxSpeed / hSpeed;
+        newVel.x *= scale;
+        newVel.z *= scale;
       }
 
-      // Fixed 0.3-second cooldown
-      this.attackCooldown = 0;
+      this.rigidBody.setLinvel(newVel, true);
+
+      if (velocity.length() > 0) {
+        const targetYRotation = Math.atan2(velocity.x, velocity.z);
+        this.entity.rotation.set(0, targetYRotation, 0);
+      }
+
+      if (this.mixer && this.actions.walk && this.currentAction !== this.actions.walk) {
+        if (this.actions.idle) this.actions.idle.fadeOut(0.2);
+        this.actions.walk.reset().fadeIn(0.2).play();
+        this.currentAction = this.actions.walk;
+      }
+    } else {
+      // === IN RANGE: COMBAT BEHAVIOR ===
+      const stopVel = { x: currentVel.x * 0.85, y: currentVel.y, z: currentVel.z * 0.85 };
+      this.rigidBody.setLinvel(stopVel, true);
+
+      this.attackCooldown -= delta;
+      const isAttacking = this.currentAction && this.attacks.includes(this.currentAction);
+
+      // === TRIGGER NEXT ATTACK ===
+      if (this.attackCooldown <= 0 && !isAttacking) {
+        // Randomly select from 6 attacks
+        const selectedAction = this.attacks[Math.floor(Math.random() * this.attacks.length)];
+
+        if (this.currentAction !== selectedAction) {
+          if (this.currentAction) this.currentAction.fadeOut(0.2);
+          selectedAction.reset().fadeIn(0.2).play();
+          this.currentAction = selectedAction;
+        }
+      }
+      // === RETURN TO IDLE IF NOT ATTACKING ===
+      else if (!isAttacking && this.currentAction !== this.actions.idle) {
+        if (this.actions.walk) this.actions.walk.fadeOut(0.2);
+        this.actions.idle.reset().fadeIn(0.2).play();
+        this.currentAction = this.actions.idle;
+      }
     }
-    // === RETURN TO IDLE IF NOT ATTACKING ===
-    else if (!isAttacking && this.currentAction !== this.actions.idle) {
-      if (this.actions.walk) this.actions.walk.fadeOut(0.2);
-      this.actions.idle.reset().fadeIn(0.2).play();
-      this.currentAction = this.actions.idle;
+
+    if (this.mixer) this.mixer.update(delta);
+
+    // === DEBUG INDICATOR ===
+    if (this.indicator && this.model) {
+      const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.entity.rotation);
+      const headPos = new THREE.Vector3();
+      this.model.getWorldPosition(headPos);
+      headPos.y += 4;
+      this.indicator.position.copy(headPos).add(forward.multiplyScalar(1));
+      this.indicator.visible = true;
     }
   }
-
-  if (this.mixer) this.mixer.update(delta);
-
-  // === DEBUG INDICATOR ===
-  if (this.indicator && this.model) {
-    const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.entity.rotation);
-    const headPos = new THREE.Vector3();
-    this.model.getWorldPosition(headPos);
-    headPos.y += 4;
-    this.indicator.position.copy(headPos).add(forward.multiplyScalar(1));
-    this.indicator.visible = true;
-  }
-}
 }

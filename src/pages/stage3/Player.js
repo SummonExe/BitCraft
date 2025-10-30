@@ -6,7 +6,6 @@ import { Projectile } from './Projectile.js';
 import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
 import heroDying from "../../../public/models/cop/Magic Spell Pack/Standing React Death Backward.fbx";
 import heroAttacked from "../../../public/models/cop/Magic Spell Pack/Standing React Small From Front.fbx";
-import heroBlock from "../../../public/models/cop/Magic Spell Pack/Standing Block React Large.fbx";
 import heroWalk from "../../../public/models/cop/Magic Spell Pack/Walking.fbx";
 import heroRun from "../../../public/models/cop/Magic Spell Pack/Unarmed Run Forward.fbx";
 import heroIdle from "../../../public/models/cop/Magic Spell Pack/Unarmed Idle.fbx";
@@ -16,6 +15,7 @@ import heroHitO from "../../../public/models/cop/Magic Spell Pack/Standing 2H Ma
 import heroHitK from "../../../public/models/cop/Magic Spell Pack/Standing 2H Magic Attack 04.fbx";
 import heroHitI from "../../../public/models/cop/Magic Spell Pack/Standing 2H Magic Attack 05.fbx";
 import heroHitJ from "../../../public/models/cop/Magic Spell Pack/Standing 1H Magic Attack 03.fbx";
+import heroBlock from "../../../public/models/cop/Magic Spell Pack/Standing Block React Large.fbx";
 
 export class Player {
   constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles }) {
