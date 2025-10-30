@@ -294,7 +294,8 @@ async function initGame() {
       mixers,
       entityManager,
       loadModel,
-      loadAnimation
+      loadAnimation,
+        projectiles
     });
 
     // Wait for ALL models to finish loading

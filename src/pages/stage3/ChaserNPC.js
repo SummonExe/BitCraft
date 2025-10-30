@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
+import { Projectile } from './Projectile.js';
 
 import witchWalk from "../../../public/models/witch/Mutant Walking.fbx";
 import witchIdle from "../../../public/models/witch/witch_Idle.fbx";
@@ -15,17 +16,21 @@ import witchDying from "../../../public/models/witch/Zombie Dying.fbx";
 import witchPowerup from "../../../public/models/witch/Standing Taunt Battlecry.fbx";
 
 export class ChaserNPC {
-  constructor({ position, modelPath, maxSpeed, stopDistance, target, world, scene, mixers, entityManager, loadModel, loadAnimation }) {
+  constructor({ position, modelPath, maxSpeed, stopDistance, target, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles }) {
     this.stopDistance = stopDistance;
     this.target = target;
     this.model = null;
     this.mixer = null;
     this.world = world;
+    this.scene = scene;
+    this.projectiles = projectiles;
     this.actions = { idle: null, walk: null };
     this.attacks = []; // Array for 6 attacks
     this.currentAction = null;
     this.attackCooldown = 0;
     this.cooldownDuration = 0.7;
+    this.projectileCooldown = 0;
+    this.projectileCooldownDuration = 2.0; // Fire projectile every 2 seconds
     
     // Debug indicator (optional - can be removed later)
     const indicatorGeometry = new THREE.SphereGeometry(0.2, 16, 16);
@@ -111,6 +116,9 @@ export class ChaserNPC {
           this.actions.idle.reset().fadeIn(0.2).play();
           this.currentAction = this.actions.idle;
           this.attackCooldown = this.cooldownDuration; // Start cooldown after attack
+          
+          // Fire projectile when attack animation finishes
+          this.fireProjectile();
         }
       });
       
@@ -145,6 +153,25 @@ export class ChaserNPC {
     this.indicator.position.y = physicsPos.y + 3.5;
   }
   
+  fireProjectile() {
+    const physicsPos = this.rigidBody.translation();
+    const startPosition = new THREE.Vector3(physicsPos.x, physicsPos.y + 15, physicsPos.z);
+    
+    // Calculate direction towards target
+    const direction = new THREE.Vector3(
+      this.target.entity.position.x - physicsPos.x,
+      0,
+      this.target.entity.position.z - physicsPos.z
+    ).normalize();
+    
+    // Create projectile with purple/dark color for witch
+    const projectile = new Projectile(
+      { position: startPosition, direction: direction },
+      { world: this.world, scene: this.scene, color: 0x9d00ff } // Purple projectile
+    );
+    this.projectiles.push(projectile);
+  }
+  
   update(delta) {
     const physicsPos = this.rigidBody.translation();
     this.entity.position.set(physicsPos.x, physicsPos.y, physicsPos.z);
@@ -154,8 +181,11 @@ export class ChaserNPC {
     const velocity = this.entity.velocity;
     const currentVel = this.rigidBody.linvel();
 
+    // Update projectile cooldown
+    this.projectileCooldown -= delta;
+
     if (distanceToTarget > this.stopDistance && velocity.length() > 0) {
-      // === CHASING BEHAVIOR (unchanged) ===
+      // === CHASING BEHAVIOR ===
       const lerpFactor = 0.4;
       const newVel = {
         x: currentVel.x + (velocity.x - currentVel.x) * lerpFactor,
@@ -188,8 +218,25 @@ export class ChaserNPC {
       const stopVel = { x: currentVel.x * 0.85, y: currentVel.y, z: currentVel.z * 0.85 };
       this.rigidBody.setLinvel(stopVel, true);
 
+      // Face the target
+      const directionToTarget = new THREE.Vector3(
+        this.target.entity.position.x - physicsPos.x,
+        0,
+        this.target.entity.position.z - physicsPos.z
+      );
+      if (directionToTarget.length() > 0) {
+        const targetYRotation = Math.atan2(directionToTarget.x, directionToTarget.z);
+        this.entity.rotation.set(0, targetYRotation, 0);
+      }
+
       this.attackCooldown -= delta;
       const isAttacking = this.currentAction && this.attacks.includes(this.currentAction);
+
+      // === FIRE PROJECTILE ===
+      if (this.projectileCooldown <= 0 && !isAttacking) {
+        this.fireProjectile();
+        this.projectileCooldown = this.projectileCooldownDuration;
+      }
 
       // === TRIGGER NEXT ATTACK ===
       if (this.attackCooldown <= 0 && !isAttacking) {
