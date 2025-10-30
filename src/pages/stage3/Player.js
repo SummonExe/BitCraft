@@ -346,32 +346,37 @@ export class Player {
   }
   
   update(delta) {
-    if (this.mixer) {
-      // Always update mixer to allow animations to play
-      this.mixer.update(delta);
-    }
+    if (this.isDead) return;
     
-    // Don't update movement logic if dead, hit, or attacking
-    if (this.isDead || this.isHit || this.isAttacking) return;
-    
-    if (this.actions.idle && this.actions.walk && this.actions.run) {
-      if (this.isMoving) {
-        const targetAction = this.isRunning ? this.actions.run : this.actions.walk;
-        if (this.currentAction !== targetAction) {
-          if (this.currentAction) this.currentAction.fadeOut(0.3);
-          targetAction.reset().fadeIn(0.3).play();
-          this.currentAction = targetAction;
-        }
-      } else if (this.currentAction !== this.actions.idle) {
-        if (this.currentAction) this.currentAction.fadeOut(0.3);
-        this.actions.idle.reset().fadeIn(0.3).play();
-        this.currentAction = this.actions.idle;
+    if (this.mixer && this.actions.idle && this.actions.walk && this.actions.run) {
+      const isAttacking = this.currentAction && Object.values(this.attacks).includes(this.currentAction);
+      
+      // Don't interrupt hit animation
+      if (this.isHit) {
+        this.mixer.update(delta);
+        return;
       }
+      
+      if (!isAttacking) {
+        if (this.isMoving) {
+          const targetAction = this.isRunning ? this.actions.run : this.actions.walk;
+          if (this.currentAction !== targetAction) {
+            if (this.currentAction) this.currentAction.fadeOut(0.3);
+            targetAction.reset().fadeIn(0.3).play();
+            this.currentAction = targetAction;
+          }
+        } else if (this.currentAction !== this.actions.idle) {
+          if (this.currentAction) this.currentAction.fadeOut(0.3);
+          this.actions.idle.reset().fadeIn(0.3).play();
+          this.currentAction = this.actions.idle;
+        }
+      }
+      this.mixer.update(delta);
     }
   }
   
   handleInput(keys, delta) {
-    if (this.isDead || this.isHit || this.isAttacking) return; // Can't control during hit, death, or attack
+    if (this.isDead || this.isHit) return; // Can't control during hit or death
     
     const velocity = new THREE.Vector3();
     let rotationInput = 0;
@@ -399,7 +404,6 @@ export class Player {
     }
 
     if (triggeredAttack && this.currentAction !== triggeredAttack) {
-      this.isAttacking = true; // Mark as attacking (will be cleared when animation finishes)
       if (this.currentAction) this.currentAction.fadeOut(0.3);
       triggeredAttack.reset().fadeIn(0.3).play();
       this.currentAction = triggeredAttack;
