@@ -1,6 +1,7 @@
-import { 
-  Clock, Scene, PerspectiveCamera, WebGLRenderer, Mesh, 
-  PlaneGeometry, DoubleSide, TextureLoader, MeshStandardMaterial, 
+import * as THREE from 'three';
+import {
+  Clock, Scene, PerspectiveCamera, WebGLRenderer, Mesh,
+  PlaneGeometry, DoubleSide, TextureLoader, MeshStandardMaterial,
   AmbientLight, Vector3, Quaternion, Color, AnimationMixer, Box3
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -15,10 +16,13 @@ import DoorModel from "../../../public/models/door_wood.glb";
 import Coin from "../../../public/models/holy_water.glb";
 import NPCModel from "../../../src/assets/models/creepy_teen_girl.glb";
 
-import Outside from "../../../public/models/theMansion/the_mansion.compressed.glb"; 
+import Outside from "../../../public/models/theMansion/the_mansion.compressed.glb";
 import Building from "../../../public/models/maze_room.glb";
 import bedroom from "../../../public/models/hill_room.glb";
 import kid from "../../../public/models/kid2/Idle.fbx";
+
+import GhostSound from "../../../src/assets/sounds/ghost-screaming.mp3";
+import GirlScream from "../../../src/assets/sounds/kid-screaming.mp3";
 
 // === LOADING SCREEN ===
 const loadingScreen = document.getElementById('loadingScreen');
@@ -37,7 +41,7 @@ let loadingComplete = false;
 let isPaused = false;
 let bedroomReached = false;
 let bedroomReachTime = null;
-const BEDROOM_WIN_DELAY = 3000; // 3 seconds
+const BEDROOM_WIN_DELAY = 10000; // 10 seconds
 
 let scene, camera, renderer, character;
 let activeColliders = [];
@@ -51,6 +55,7 @@ let score = 0;
 let scoreElement;
 let miniMap = null;
 let isGameOver = false;
+let listener, soundLoader;
 
 const cameraOffset = new Vector3(0, 3, -6);
 const lookAtOffset = new Vector3(0, 1.5, 0);
@@ -154,6 +159,40 @@ async function init() {
   dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
   dracoLoader.setDecoderConfig({ type: 'js' });
   loader.setDRACOLoader(dracoLoader);
+
+  // --------------------------
+  // AUDIO SETUP
+  // --------------------------
+  listener = new THREE.AudioListener();
+  camera.add(listener);
+  soundLoader = new THREE.AudioLoader();
+
+  // Ensure audio context resumes on first user gesture
+  let _audioContextResumed = false;
+  function ensureAudioContext() {
+    if (_audioContextResumed) return Promise.resolve();
+    if (!listener || !listener.context) return Promise.resolve();
+    if (listener.context.state === 'running') {
+      _audioContextResumed = true;
+      return Promise.resolve();
+    }
+    return new Promise((resolve) => {
+      const resume = () => {
+        listener.context.resume().catch(() => { /* ignore */ }).finally(() => {
+          _audioContextResumed = true;
+          window.removeEventListener('pointerdown', resume);
+          resolve();
+        });
+      };
+      window.addEventListener('pointerdown', resume, { once: true });
+      listener.context.resume().then(() => {
+        _audioContextResumed = true;
+        resolve();
+      }).catch(() => {
+        // wait for pointerdown
+      });
+    });
+  }
 
   // --------------------------
   // GROUND COLLIDER
@@ -297,7 +336,7 @@ async function init() {
   // --------------------------
   // NPC SYSTEM
   // --------------------------
-  function loadNPC(url, startPosition) {
+  function loadNPC(url, startPosition, soundUrl = GhostSound) {
     loader.load(url, (gltf) => {
       const npc = gltf.scene;
       npc.position.copy(startPosition);
@@ -314,9 +353,26 @@ async function init() {
         action.play();
       }
       
+      // Load sound and attach to NPC (positional)
+      const sound = new THREE.PositionalAudio(listener);
+      soundLoader.load(soundUrl, (buffer) => {
+        sound.setBuffer(buffer);
+        sound.setRefDistance(20);
+        sound.setLoop(false);
+        sound.setVolume(0.7);
+        
+        ensureAudioContext().then(() => {
+          try { sound.play(); } catch (e) { /* play may fail until user gesture */ }
+        });
+      }, undefined, (err) => {
+        console.warn('Failed to load NPC sound:', err);
+      });
+      npc.add(sound);
+      
       const npcData = {
         model: npc,
         mixer: mixer,
+        sound: sound,
         speed: 3,
         detectionRadius: 50.0,
         active: false
@@ -341,6 +397,12 @@ async function init() {
       
       if (distToPlayer < npc.detectionRadius) {
         npc.active = true;
+        // play sound when player enters radius
+        if (npc.sound && !npc.sound.isPlaying) {
+          ensureAudioContext().then(() => {
+            try { npc.sound.play(); } catch (e) {}
+          });
+        }
       }
       
       if (npc.active && distToPlayer > 1.0) {
@@ -370,24 +432,29 @@ async function init() {
         npc.model.position.x += dirX * npc.speed * delta;
         npc.model.position.z += dirZ * npc.speed * delta;
         
+        // Set Y position based on scene
         if (currentScene === "maze") {
-          npc.model.position.y = 3
+          npc.model.position.y = 3;
+        } else if (currentScene === "mansion") {
+          npc.model.position.y = 1.2;
         }
+        
         npc.model.rotation.y = Math.atan2(dx, dz);
       }
     }
   }
 
   function checkNPCCollisions(characterPos) {
-    // Check collisions in both mansion and maze scenes
+    // Check collisions with NPCs in both mansion and maze scenes
     for (const npc of npcs) {
       const dx = characterPos.x - npc.model.position.x;
       const dy = characterPos.y - npc.model.position.y;
       const dz = characterPos.z - npc.model.position.z;
       const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
       
-      // Collision distance threshold (checking 3D distance now)
-      if (dist < 2.5) {
+      // Collision distance threshold - checking 3D distance
+      if (dist < 2.5 ) {
+        console.log("NPC collision detected! Distance:", dist, "Scene:", currentScene);
         return true;
       }
     }
@@ -548,7 +615,7 @@ async function init() {
   // --------------------------
   // DOORS
   // --------------------------
-  function loadDoorModel(url, position) {
+  function loadDoorModel(url, position, soundUrl = GirlScream) {
     loader.load(url, (gltf) => {
       const door = gltf.scene;
       door.rotation.y = Math.PI;
@@ -556,6 +623,21 @@ async function init() {
       door.position.copy(position);
       scene.add(door);
       activeBuildingRoots.push(door);
+
+      // attach positional sound to door
+      const sound = new THREE.PositionalAudio(listener);
+      soundLoader.load(soundUrl, (buffer) => {
+        sound.setBuffer(buffer);
+        sound.setRefDistance(20);
+        sound.setLoop(false);
+        sound.setVolume(0.7);
+      }, undefined, (err) => console.warn('Failed to load door sound:', err));
+      door.add(sound);
+
+      // store sound and detection data
+      door.userData.sound = sound;
+      door.userData.detectionRadius = 300;
+      door.userData.hasScreamed = false;
 
       try {
         const doorBodyDesc = RAPIER.RigidBodyDesc.fixed().setTranslation(position.x, position.y, position.z);
@@ -577,8 +659,28 @@ async function init() {
     }, undefined, (err) => console.error("Failed to load door model:", err));
   }
 
-  function updateDoors(delta) {
+  function updateDoors(delta, playerPosition) {
     for (const mixer of doorMixers) mixer.update(delta);
+
+    if (!playerPosition) return;
+
+    for (const obj of activeBuildingRoots) {
+      if (!obj || !obj.position || !obj.userData.sound) continue;
+
+      const distance = obj.position.distanceTo(playerPosition);
+      const withinRange = distance <= obj.userData.detectionRadius;
+
+      if (withinRange && !obj.userData.hasScreamed) {
+        ensureAudioContext().then(() => {
+          try { obj.userData.sound.play(); } catch (e) {}
+        });
+        obj.userData.hasScreamed = true;
+      }
+
+      if (!withinRange && obj.userData.hasScreamed && !obj.userData.sound.isPlaying) {
+        obj.userData.hasScreamed = false;
+      }
+    }
   }
 
   // --------------------------
@@ -705,7 +807,7 @@ async function init() {
   document.body.appendChild(dialogueBox);
 
   const DIALOGUE = [
-    { speaker: "Man", text: "You're safe now. I found you just in time. Come on, let's get you out of here. There are people waiting for you." },
+    { speaker: "YOU", text: "You're safe now. I found you just in time. Come on, let's get you out of here. There are entities here waiting for kill us." },
   ];
 
   function showDialogueSequence(lines, typingSpeed = 28, onFinish = null) {
@@ -751,6 +853,69 @@ async function init() {
     }
 
     nextDialogue();
+  }
+
+  // --------------------------
+  // BEDROOM OBJECTS
+  // --------------------------
+  function loadBedroomObjects() {
+    // Load kid model if needed
+    const fbxLoader = new FBXLoader();
+    fbxLoader.load(kid, (fbx) => {
+      kidModel = fbx;
+      kidModel.position.set(5, 1, 5);
+      kidModel.scale.set(0.025, 0.025, 0.025);
+      scene.add(kidModel);
+      activeBuildingRoots.push(kidModel);
+      
+      // Add scream sound to kid
+      const kidSound = new THREE.PositionalAudio(listener);
+      soundLoader.load(GirlScream, (buffer) => {
+        kidSound.setBuffer(buffer);
+        kidSound.setRefDistance(30);
+        kidSound.setLoop(false);
+        kidSound.setVolume(0.8);
+      }, undefined, (err) => console.warn('Failed to load kid scream sound:', err));
+      kidModel.add(kidSound);
+      
+      // Store sound and detection data
+      kidModel.userData.sound = kidSound;
+      kidModel.userData.detectionRadius = 25;
+      kidModel.userData.hasScreamed = false;
+      
+      if (fbx.animations && fbx.animations.length > 0) {
+        const mixer = new AnimationMixer(kidModel);
+        const action = mixer.clipAction(fbx.animations[0]);
+        action.play();
+        doorMixers.push(mixer);
+      }
+    }, undefined, (err) => console.error("Failed to load kid model:", err));
+  }
+  
+  // --------------------------
+  // UPDATE KID
+  // --------------------------
+  function updateKid(playerPosition) {
+    if (!kidModel || !playerPosition || !kidModel.userData.sound) return;
+    
+    const distance = kidModel.position.distanceTo(playerPosition);
+    const withinRange = distance <= kidModel.userData.detectionRadius;
+    
+    if (withinRange && !kidModel.userData.hasScreamed) {
+      ensureAudioContext().then(() => {
+        try { 
+          kidModel.userData.sound.play();
+          console.log("Kid screaming! Distance:", distance);
+        } catch (e) {
+          console.warn("Failed to play kid scream:", e);
+        }
+      });
+      kidModel.userData.hasScreamed = true;
+    }
+    
+    if (!withinRange && kidModel.userData.hasScreamed && !kidModel.userData.sound.isPlaying) {
+      kidModel.userData.hasScreamed = false;
+    }
   }
 
   // --------------------------
@@ -820,21 +985,21 @@ async function init() {
     ];
     
     for (const pos of npcPositions) {
-      loadNPC(NPCModel, pos);
+      loadNPC(NPCModel, pos, GhostSound);
     }
   }
 
   async function loadMazeObjects() {
     loadFlashingModel(FlashingModel, new Vector3(-45.78, 0.60, -46.07));
     loadFlashingModel(FlashingModel, new Vector3(-45.78, 0.60, 30.00));
-    loadDoorModel(DoorModel, new Vector3(-28.28, -48.51, -74.33));
+    loadDoorModel(DoorModel, new Vector3(-28.28, -48.51, -74.33), GirlScream);
     loadCoin(Coin, new Vector3(-35, -21, -145));
     loadCoin(Coin, new Vector3(-45, 2, -65));
     loadCoin(Coin, new Vector3(-30, 2, 25));
     loadCoin(Coin, new Vector3(24, 2, 25));
 
-    loadNPC(NPCModel, new Vector3(-45.78, 3, -46.07));
-    loadNPC(NPCModel, new Vector3(-45.78, 3, 30.00));
+    loadNPC(NPCModel, new Vector3(-45.78, 3, -46.07), GhostSound);
+    loadNPC(NPCModel, new Vector3(-45.78, 3, 30.00), GhostSound);
   }
 
   // --------------------------
@@ -869,10 +1034,14 @@ async function init() {
   // --------------------------
   // MUSIC
   // --------------------------
-  const bgMusic = new Audio("https://play.rosebud.ai/assets/windy_day_ambience_01.wav?gq3B");
+  const bgMusic = new window.Audio("https://play.rosebud.ai/assets/windy_day_ambience_01.wav?gq3B");
   bgMusic.loop = true;
   bgMusic.volume = 0.5;
-  bgMusic.play();
+  bgMusic.play().catch(() => {
+    window.addEventListener('pointerdown', () => {
+      bgMusic.play().catch(() => {});
+    }, { once: true });
+  });
 
   function updateCamera(delta) {
     if (!character.model) return;
@@ -912,10 +1081,15 @@ async function init() {
       character.update(delta);
       snapToGround(character, character.controller, delta);
       updateFlashing(delta);
-      updateDoors(delta);
       
       if (character.model) {
+        updateDoors(delta, character.model.position);
         updateNPCs(delta, character.model.position);
+        
+        // Update kid scream in bedroom
+        if (currentScene === "bedroom") {
+          updateKid(character.model.position);
+        }
       }
     }
     
@@ -929,6 +1103,13 @@ async function init() {
       character.model.scale.set(1.5, 1.5, 1.5);
       const pos = character.model.position;
 
+      // Check for NPC collisions FIRST - this kills the player immediately
+      if (checkNPCCollisions(pos)) {
+        console.log("Player killed by NPC collision!");
+        showGameOver(false);
+        return;
+      }
+
       // Check for win condition in bedroom - simple 3 second timer
       if (bedroomReached && bedroomReachTime) {
         const elapsedTime = Date.now() - bedroomReachTime;
@@ -936,12 +1117,6 @@ async function init() {
           showGameOver(true);
           return;
         }
-      }
-
-      // Check for NPC collisions
-      if (checkNPCCollisions(pos)) {
-        showGameOver(false);
-        return;
       }
 
       if (miniMap) miniMap.update(pos);

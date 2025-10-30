@@ -10,10 +10,33 @@ import soloModel from "../../../public/models/solo.glb";
 import finalChurch from "../../../public/models/final_church/final_church.glb";
 import Bible from "../../../public/models/bible/bible.glb";
 
+import MusicSound from "../../../src/assets/sounds/horror.mp3";
+
 // === LOADING SCREEN ===
 const loadingScreen = document.getElementById('loadingScreen');
 if (!loadingScreen) {
   console.error("Loading screen element not found!");
+}
+
+// === BACKGROUND MUSIC ===
+const bgMusic = new Audio(MusicSound);
+bgMusic.loop = true;
+bgMusic.volume = 0.3; // Adjusted for better gameplay experience
+bgMusic.preload = 'auto';
+
+// Function to start music (handles autoplay restrictions)
+function startBackgroundMusic() {
+  bgMusic.play().catch(error => {
+    console.log('Autoplay prevented, waiting for user interaction:', error);
+    // Fallback: play on first user interaction
+    const playOnInteraction = () => {
+      bgMusic.play().catch(() => {});
+      document.removeEventListener('keydown', playOnInteraction);
+      document.removeEventListener('click', playOnInteraction);
+    };
+    document.addEventListener('keydown', playOnInteraction, { once: true });
+    document.addEventListener('click', playOnInteraction, { once: true });
+  });
 }
 
 // === GLOBAL STATE ===
@@ -31,9 +54,9 @@ const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x1a1a1a);
 scene.fog = new THREE.Fog(0x0f0f0f, 100, 800);
 
-const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 15, 25);
-camera.lookAt(0, 0, 0);
+const camera = new THREE.PerspectiveCamera(110, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(0, 15, 20);
+camera.lookAt(new THREE.Vector3(0, 0, 0));
 
 const renderer = new THREE.WebGLRenderer({ antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -43,7 +66,7 @@ renderer.outputColorSpace = THREE.SRGBColorSpace;
 document.body.appendChild(renderer.domElement);
 
 // Lighting
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.25);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.1);
 scene.add(ambientLight);
 
 const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
@@ -90,7 +113,7 @@ let collectionTime = null;
 
 // Game state
 let isGameOver = false;
-const GAME_DURATION = 135000; // 2:15 in milliseconds (135 seconds)
+const GAME_DURATION = 130000; // 2:15 in milliseconds (135 seconds)
 
 // Create spawn indicator (green square)
 const spawnIndicator = new THREE.Mesh(
@@ -98,7 +121,7 @@ const spawnIndicator = new THREE.Mesh(
   new THREE.MeshStandardMaterial({ 
     color: 0x00ff00, 
     emissive: 0x00ff00,
-    emissiveIntensity: 0.5,
+    emissiveIntensity: 3.5,
     transparent: true,
     opacity: 0.7,
     side: THREE.DoubleSide
@@ -188,9 +211,12 @@ function togglePause() {
   isPaused = !isPaused;
   pauseMenu.style.display = isPaused ? 'block' : 'none';
   
+  // Pause/resume music
   if (isPaused) {
+    bgMusic.pause();
     console.log('Game paused');
   } else {
+    bgMusic.play().catch(() => {});
     console.log('Game resumed');
   }
 }
@@ -198,6 +224,7 @@ function togglePause() {
 // Game Over System
 function showGameOver(won = false) {
   isGameOver = true;
+  bgMusic.pause(); // Stop music when game ends
   
   const gameOverDiv = document.createElement("div");
   gameOverDiv.style.position = "absolute";
@@ -628,6 +655,9 @@ async function initGame() {
       loadingScreen.style.display = 'none';
     }
 
+    // Start background music
+    startBackgroundMusic();
+
     // Start animation loop
     animate();
 
@@ -730,7 +760,7 @@ function animate() {
     const playerForward = new THREE.Vector3(0, 0, 1);
     playerForward.applyQuaternion(player.entity.rotation);
     
-    const cameraDistance = 35;
+    const cameraDistance = 40;
     const cameraHeight = 20;
     
     const desiredPosition = new THREE.Vector3(
