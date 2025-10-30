@@ -5,6 +5,7 @@ import {
 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import RAPIER from '@dimforge/rapier3d-compat';
 import Character from '../../../public/character/undercover_cop/character_2.js';
 import MiniMap from "../../MiniMap.js";
@@ -17,22 +18,121 @@ import NPCModel from "../../../src/assets/models/creepy_teen_girl.glb";
 import Outside from "../../../public/models/theMansion/the_mansion.compressed.glb"; 
 import Building from "../../../public/models/maze_room.glb";
 import bedroom from "../../../public/models/hill_room.glb";
+import kid from "../../../public/models/kid2/Idle.fbx";
 
+// === LOADING SCREEN ===
+const loadingScreen = document.getElementById('loadingScreen');
+if (!loadingScreen) {
+  console.error("Loading screen element not found!");
+}
 
+// === GLOBAL STATE ===
 let clock = new Clock();
 let world;
 let currentScene = "mansion";
 let mazeSize = null;
 let isSwitching = false;
-let groundCollider = null; // To track the current ground collider
+let groundCollider = null;
+let loadingComplete = false;
+let isPaused = false;
+let bedroomReached = false;
+let bedroomReachTime = null;
+const BEDROOM_WIN_DELAY = 3000; // 3 seconds
+
+let scene, camera, renderer, character;
+let activeColliders = [];
+let activeBuildingRoots = [];
+let flashingObjects = [];
+let doorMixers = [];
+let coins = [];
+let npcs = [];
+let kidModel = null;
+let score = 0;
+let scoreElement;
+let miniMap = null;
+let isGameOver = false;
+
+const cameraOffset = new Vector3(0, 3, -6);
+const lookAtOffset = new Vector3(0, 1.5, 0);
+
+// Create Pause Menu
+const pauseMenu = document.createElement('div');
+pauseMenu.style.position = 'absolute';
+pauseMenu.style.top = '50%';
+pauseMenu.style.left = '50%';
+pauseMenu.style.transform = 'translate(-50%, -50%)';
+pauseMenu.style.padding = '40px 60px';
+pauseMenu.style.background = 'rgba(0, 0, 0, 0.95)';
+pauseMenu.style.border = '3px solid #ffffff';
+pauseMenu.style.borderRadius = '15px';
+pauseMenu.style.color = '#fff';
+pauseMenu.style.textAlign = 'center';
+pauseMenu.style.zIndex = '2000';
+pauseMenu.style.display = 'none';
+pauseMenu.innerHTML = `
+  <div style="font-size: 48px; margin-bottom: 30px;">PAUSED</div>
+  <button id="resume-btn" style="
+    padding: 15px 40px;
+    font-size: 24px;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 10px;
+    width: 200px;
+  ">Resume</button>
+  <br>
+  <button id="pause-menu-btn" style="
+    padding: 15px 40px;
+    font-size: 24px;
+    background: #ff9800;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    margin: 10px;
+    width: 200px;
+  ">Main Menu</button>
+  <div style="margin-top: 30px; font-size: 16px; color: #aaa;">Press ESC to resume</div>
+`;
+document.body.appendChild(pauseMenu);
+
+// Pause menu event listeners
+document.getElementById('resume-btn').addEventListener('click', () => {
+  togglePause();
+});
+
+document.getElementById('pause-menu-btn').addEventListener('click', () => {
+  window.location.href = '/';
+});
+
+// Function to toggle pause
+function togglePause() {
+  isPaused = !isPaused;
+  pauseMenu.style.display = isPaused ? 'block' : 'none';
+  
+  if (isPaused) {
+    console.log('Game paused');
+  } else {
+    console.log('Game resumed');
+  }
+}
+
+// Input handling for pause
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !isGameOver && loadingComplete) {
+    togglePause();
+  }
+});
 
 async function init() {
   await RAPIER.init();
 
-  const scene = new Scene();
-  const camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+  scene = new Scene();
+  camera = new PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-  const renderer = new WebGLRenderer({ antialias: true });
+  renderer = new WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.setAnimationLoop(animate);
   document.body.appendChild(renderer.domElement);
@@ -43,22 +143,11 @@ async function init() {
   // physics world
   world = new RAPIER.World({ x: 0, y: -9.81, z: 0 });
 
-  // character - will be positioned properly after scene loads
-  const character = new Character(world, scene, { x: 1, y: 2, z: 116 });
-  const cameraOffset = new Vector3(0, 3, -6);
-  const lookAtOffset = new Vector3(0, 1.5, 0);
-
-  // bookkeeping
-  let activeColliders = [];
-  let activeBuildingRoots = [];
-  let flashingObjects = [];
-  let doorMixers = [];
-  let coins = [];
-  let npcs = [];
-  let score = 0;
-  let scoreElement;
+  // character
+  character = new Character(world, scene, { x: 1, y: 2, z: 116 });
 
   const loader = new GLTFLoader();
+  const fbxLoader = new FBXLoader();
   
   // Setup Draco decoder for compressed models
   const dracoLoader = new DRACOLoader();
@@ -70,8 +159,6 @@ async function init() {
   // GROUND COLLIDER
   // --------------------------
   function createGroundCollider(yPosition) {
-    // Only create ground collider for maze scene
-    // Mansion and bedroom use their actual mesh geometry for ground
     if (currentScene === "maze") {
       if (groundCollider) {
         world.removeCollider(groundCollider, true);
@@ -81,7 +168,6 @@ async function init() {
       const groundBody = world.createRigidBody(groundDesc);
       groundCollider = world.createCollider(RAPIER.ColliderDesc.cuboid(125, 0.1, 125), groundBody);
     } else {
-      // Remove ground collider for mansion/bedroom
       if (groundCollider) {
         world.removeCollider(groundCollider, true);
         groundCollider = null;
@@ -111,7 +197,6 @@ async function init() {
         }
         if (targetScale) building.scale.copy(targetScale);
         
-        // Create ground collider after setting position
         createGroundCollider(name === "maze_room" ? -50 : 0);
 
         scene.add(building);
@@ -124,14 +209,12 @@ async function init() {
 
         building.traverse((child) => {
           if (child.isMesh && child.geometry) {
-            // Skip physics for trees, grass, foliage, leaves, plants
             const meshName = child.name.toLowerCase();
             if (meshName.includes('outsideobjects') || 
                 meshName.includes('glass') || 
                 meshName.includes('yard_78_m_0') || 
                 meshName.includes('yard_56_m_0') ||
                 meshName.includes('yard_58_m_0')) {
-              // console.log("Skipping collider for vegetation:", child.name);
               return;
             }
             
@@ -139,15 +222,12 @@ async function init() {
               const geometry = child.geometry.clone();
               geometry.applyMatrix4(child.matrixWorld);
               const posAttr = geometry.attributes.position;
-              if (!posAttr) {
-                console.warn("No position attribute for mesh:", child.name);
-                return;
-              }
+              if (!posAttr) return;
+              
               const vertices = new Float32Array(posAttr.array.slice(0));
               const indices = geometry.index ? new Uint32Array(geometry.index.array.slice(0)) : null;
               
               if (!indices) {
-                console.warn("No indices for mesh:", child.name, "- skipping");
                 geometry.dispose?.();
                 return;
               }
@@ -157,7 +237,6 @@ async function init() {
               const rigidBody = world.createRigidBody(rigidBodyDesc);
               const collider = world.createCollider(colliderDesc, rigidBody);
               activeColliders.push(collider);
-              // console.log("Created collider for:", child.name, "vertices:", vertices.length / 3, "triangles:", indices.length / 3);
               geometry.dispose?.();
             } catch (err) {
               console.error("Failed to create collider for mesh:", child.name, err);
@@ -181,19 +260,17 @@ async function init() {
 
     const currentPos = character.rigidBody.translation();
     
-    // Cast a ray downward to detect the ground
     const ray = new RAPIER.Ray(
-      { x: currentPos.x, y: currentPos.y + 1, z: currentPos.z }, // Start ray from character center
+      { x: currentPos.x, y: currentPos.y + 1, z: currentPos.z },
       { x: 0, y: -1, z: 0 }
     );
-    const maxToi = 10.0; // Check down
+    const maxToi = 10.0;
     const hit = world.castRay(ray, maxToi, true);
 
     if (hit) {
-      const groundY = (currentPos.y + 1) - hit.toi; // Calculate actual ground Y
-      const targetY = groundY + 0.1; // Small offset so feet are just above ground
+      const groundY = (currentPos.y + 1) - hit.toi;
+      const targetY = groundY + 0.1;
       
-      // Smoothly move character to ground
       if (Math.abs(currentPos.y - targetY) > 0.05) {
         const newY = currentPos.y + (targetY - currentPos.y) * Math.min(delta * 15, 1);
         character.rigidBody.setTranslation(
@@ -206,7 +283,6 @@ async function init() {
         );
       }
     } else {
-      // No ground detected, apply gravity
       character.rigidBody.setTranslation(
         {
           x: currentPos.x,
@@ -231,7 +307,6 @@ async function init() {
       scene.add(npc);
       activeBuildingRoots.push(npc);
       
-      // Setup animation if available
       let mixer = null;
       if (gltf.animations && gltf.animations.length > 0) {
         mixer = new AnimationMixer(npc);
@@ -242,9 +317,9 @@ async function init() {
       const npcData = {
         model: npc,
         mixer: mixer,
-        speed: 3, // Chasing speed
-        detectionRadius: 50.0, // How far they can detect the player
-        active: false // Whether they're currently chasing
+        speed: 3,
+        detectionRadius: 50.0,
+        active: false
       };
       
       npcs.push(npcData);
@@ -253,55 +328,67 @@ async function init() {
   }
 
   function updateNPCs(delta, playerPos) {
-    if (!playerPos || currentScene !== "mansion") return;
+    if (!playerPos) return;
     
     for (const npc of npcs) {
       if (npc.mixer) {
         npc.mixer.update(delta);
       }
       
-      // Calculate distance to player (2D distance, ignoring Y)
       const dx = playerPos.x - npc.model.position.x;
       const dz = playerPos.z - npc.model.position.z;
       const distToPlayer = Math.sqrt(dx * dx + dz * dz);
       
-      // Activate if player is within detection radius
       if (distToPlayer < npc.detectionRadius) {
         npc.active = true;
       }
       
-      // Chase the player if active
       if (npc.active && distToPlayer > 1.0) {
-        // Normalize direction
-        const dirX = dx / distToPlayer;
-        const dirZ = dz / distToPlayer;
+        let dirX = dx / distToPlayer;
+        let dirZ = dz / distToPlayer;
         
-        // Move towards player
+        for (const otherNpc of npcs) {
+          if (otherNpc === npc) continue;
+          
+          const npcDx = npc.model.position.x - otherNpc.model.position.x;
+          const npcDz = npc.model.position.z - otherNpc.model.position.z;
+          const npcDist = Math.sqrt(npcDx * npcDx + npcDz * npcDz);
+          
+          if (npcDist < 3.0 && npcDist > 0.01) {
+            const separationForce = 1.5;
+            dirX += (npcDx / npcDist) * separationForce;
+            dirZ += (npcDz / npcDist) * separationForce;
+          }
+        }
+        
+        const magnitude = Math.sqrt(dirX * dirX + dirZ * dirZ);
+        if (magnitude > 0.01) {
+          dirX /= magnitude;
+          dirZ /= magnitude;
+        }
+        
         npc.model.position.x += dirX * npc.speed * delta;
-
         npc.model.position.z += dirZ * npc.speed * delta;
         
-        // Keep NPC at same Y level as player for ground following
-        npc.model.position.y = 2;
-        
-        // Rotate to face player
+        if (currentScene === "maze") {
+          npc.model.position.y = 3
+        }
         npc.model.rotation.y = Math.atan2(dx, dz);
       }
     }
   }
 
-  // Check collision between character and NPCs
   function checkNPCCollisions(characterPos) {
-    if (currentScene !== "mansion") return false;
-    
+    // Check collisions in both mansion and maze scenes
     for (const npc of npcs) {
       const dx = characterPos.x - npc.model.position.x;
+      const dy = characterPos.y - npc.model.position.y;
       const dz = characterPos.z - npc.model.position.z;
-      const dist = Math.sqrt(dx * dx + dz * dz);
+      const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
       
-      // Collision distance threshold
-      if (dist < 1.5) {
-        return true; // Collision detected
+      // Collision distance threshold (checking 3D distance now)
+      if (dist < 2.5) {
+        return true;
       }
     }
     return false;
@@ -310,47 +397,118 @@ async function init() {
   // --------------------------
   // GAME OVER SYSTEM
   // --------------------------
-  let isGameOver = false;
-  
-  function showGameOver() {
+  function showGameOver(won = false) {
     isGameOver = true;
     character.canMove = () => false;
     
-    // Create game over screen
     const gameOverDiv = document.createElement("div");
     gameOverDiv.style.position = "absolute";
     gameOverDiv.style.top = "50%";
     gameOverDiv.style.left = "50%";
     gameOverDiv.style.transform = "translate(-50%, -50%)";
     gameOverDiv.style.padding = "40px 60px";
-    gameOverDiv.style.background = "rgba(139, 0, 0, 0.95)";
-    gameOverDiv.style.border = "3px solid #ff0000";
+    gameOverDiv.style.background = won ? "rgba(0, 139, 0, 0.95)" : "rgba(139, 0, 0, 0.95)";
+    gameOverDiv.style.border = won ? "3px solid #00ff00" : "3px solid #ff0000";
     gameOverDiv.style.borderRadius = "15px";
     gameOverDiv.style.color = "#fff";
     gameOverDiv.style.fontSize = "48px";
     gameOverDiv.style.fontWeight = "bold";
     gameOverDiv.style.textAlign = "center";
-    gameOverDiv.style.zIndex = "1000";
-    gameOverDiv.innerHTML = `
-      <div style="margin-bottom: 20px;">YOU DIED</div>
-      <div style="font-size: 20px; margin-bottom: 30px;">The creature caught you...</div>
-      <button id="restart-btn" style="
-        padding: 15px 40px;
-        font-size: 24px;
-        background: #ff0000;
-        color: white;
-        border: 2px solid #fff;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: bold;
-      ">Restart</button>
-    `;
+    gameOverDiv.style.zIndex = "3000";
+    
+    if (won) {
+      gameOverDiv.innerHTML = `
+        <div style="margin-bottom: 20px;">🎉 YOU ESCAPED! 🎉</div>
+        <div style="font-size: 20px; margin-bottom: 10px;">You made it to safety!</div>
+        <div style="font-size: 18px; margin-bottom: 30px;">Holy Water Collected: ${score}</div>
+        <button id="next-stage-btn" style="
+          padding: 15px 40px;
+          font-size: 24px;
+          background: #00ff00;
+          color: black;
+          border: 2px solid #fff;
+          border-radius: 8px;
+          cursor: pointer;
+          margin: 10px;
+          font-weight: bold;
+        ">Next Stage ➜</button>
+        <br>
+        <button id="restart-btn" style="
+          padding: 15px 40px;
+          font-size: 24px;
+          background: #4CAF50;
+          color: white;
+          border: 2px solid #fff;
+          border-radius: 8px;
+          cursor: pointer;
+          margin: 10px;
+          font-weight: bold;
+        ">Play Again</button>
+        <br>
+        <button id="menu-btn" style="
+          padding: 15px 40px;
+          font-size: 24px;
+          background: #ff9800;
+          color: white;
+          border: 2px solid #fff;
+          border-radius: 8px;
+          cursor: pointer;
+          margin: 10px;
+          font-weight: bold;
+        ">Main Menu</button>
+      `;
+    } else {
+      gameOverDiv.innerHTML = `
+        <div style="margin-bottom: 20px;">YOU DIED</div>
+        <div style="font-size: 20px; margin-bottom: 30px;">The creature caught you...</div>
+        <button id="restart-btn" style="
+          padding: 15px 40px;
+          font-size: 24px;
+          background: #ff0000;
+          color: white;
+          border: 2px solid #fff;
+          border-radius: 8px;
+          cursor: pointer;
+          margin: 10px;
+          font-weight: bold;
+        ">Try Again</button>
+        <br>
+        <button id="menu-btn" style="
+          padding: 15px 40px;
+          font-size: 24px;
+          background: #ff9800;
+          color: white;
+          border: 2px solid #fff;
+          border-radius: 8px;
+          cursor: pointer;
+          margin: 10px;
+          font-weight: bold;
+        ">Main Menu</button>
+      `;
+    }
+    
     document.body.appendChild(gameOverDiv);
     
-    // Add restart functionality
-    document.getElementById("restart-btn").addEventListener("click", () => {
-      location.reload();
-    });
+    const restartBtn = document.getElementById("restart-btn");
+    if (restartBtn) {
+      restartBtn.addEventListener("click", () => {
+        location.reload();
+      });
+    }
+    
+    const menuBtn = document.getElementById("menu-btn");
+    if (menuBtn) {
+      menuBtn.addEventListener("click", () => {
+        window.location.href = '/';
+      });
+    }
+    
+    const nextStageBtn = document.getElementById("next-stage-btn");
+    if (nextStageBtn) {
+      nextStageBtn.addEventListener("click", () => {
+        window.location.href = '/src/pages/stage3/stage3.html';
+      });
+    }
   }
 
   // --------------------------
@@ -376,6 +534,7 @@ async function init() {
       flashingObjects.push(model);
     }, undefined, (err) => console.error("Failed to load flashing model:", err));
   }
+
   function updateFlashing(delta) {
     for (const obj of flashingObjects) {
       obj.userData.flashTime += delta * 5;
@@ -417,6 +576,7 @@ async function init() {
       }
     }, undefined, (err) => console.error("Failed to load door model:", err));
   }
+
   function updateDoors(delta) {
     for (const mixer of doorMixers) mixer.update(delta);
   }
@@ -424,7 +584,6 @@ async function init() {
   // --------------------------
   // MINIMAP
   // --------------------------
-  let miniMap = null;
   function initMiniMap() {
     miniMap = new MiniMap(renderer, scene, character);
   }
@@ -437,7 +596,6 @@ async function init() {
   scoreElement.style.top = "10px";
   scoreElement.style.left = "150px";
   scoreElement.style.color = "white";
-  // scoreElement.style.fontFamily = "Arial, sans-serif";
   scoreElement.style.fontSize = "18px";
   scoreElement.style.fontWeight = "700";
   scoreElement.style.background = "rgba(0,0,0,0.45)";
@@ -466,6 +624,7 @@ async function init() {
       });
     }, undefined, (err) => console.error("Failed to load coin:", err));
   }
+
   function updateCoins(delta, pos) {
     for (let i = coins.length - 1; i >= 0; i--) {
       const coin = coins[i];
@@ -521,7 +680,7 @@ async function init() {
     activeBuildingRoots.length = 0;
     flashingObjects.length = 0;
     doorMixers.length = 0;
-    npcs.length = 0; // Clear NPCs when switching scenes
+    npcs.length = 0;
   }
 
   // --------------------------
@@ -540,14 +699,13 @@ async function init() {
   dialogueBox.style.borderRadius = "12px";
   dialogueBox.style.background = "rgba(0, 0, 0, 0.85)";
   dialogueBox.style.color = "#fff";
-  // dialogueBox.style.fontFamily = "monospace";
   dialogueBox.style.fontSize = "18px";
   dialogueBox.style.display = "none";
   dialogueBox.style.zIndex = "999";
   document.body.appendChild(dialogueBox);
 
   const DIALOGUE = [
-    { speaker: "Man", text: "You're safe now. I found you just in time.Come on, let's get you out of here. There are people waiting for you." },
+    { speaker: "Man", text: "You're safe now. I found you just in time. Come on, let's get you out of here. There are people waiting for you." },
   ];
 
   function showDialogueSequence(lines, typingSpeed = 28, onFinish = null) {
@@ -607,7 +765,6 @@ async function init() {
     const yPosition = (name === "bedroom" || name === "mansion") ? 0 : -50;
     mazeSize = await loadBuilding(filePath, new Vector3(0, yPosition, 0), name, targetScale);
 
-    // Set initial position - mansion spawns at (1, 2, 116)
     let startX = 0;
     let startY = 2;
     let startZ = 0;
@@ -620,9 +777,18 @@ async function init() {
     updateCamera(0);
 
     if (name === "bedroom") {
-      character.canMove = () => false;
+      bedroomReached = true;
+      bedroomReachTime = Date.now();
+      
+      // Load bedroom specific objects (kid model) - non-blocking
+      loadBedroomObjects();
+      
+      // Allow character to move freely
+      character.canMove = () => true;
+      
+      // Show dialogue without blocking game
       showDialogueSequence(DIALOGUE, 28, () => {
-        character.canMove = () => true;
+        console.log("Dialogue finished");
       });
     } else {
       character.canMove = () => true;
@@ -635,12 +801,17 @@ async function init() {
   // INITIAL LOAD
   // --------------------------
   async function loadInitialScene() {
-    mazeSize = await loadBuilding(Outside, new Vector3(0, 0, 0), "mansion");
+    try {
+      console.log("Starting to load mansion...");
+      mazeSize = await loadBuilding(Outside, new Vector3(0, 0, 0), "mansion");
+      console.log("Mansion loaded successfully");
+    } catch (err) {
+      console.error("Failed to load mansion:", err);
+      throw err;
+    }
   }
 
-  // Load mansion-specific objects (will be cleaned up when switching scenes)
   async function loadMansionObjects() {
-    // Load 4 NPCs at different positions around the yard
     const npcPositions = [
       new Vector3(-8, 2, 10),
       new Vector3(12, 2, 8),
@@ -653,7 +824,6 @@ async function init() {
     }
   }
 
-  // Load maze-specific objects (will be loaded when switching to maze)
   async function loadMazeObjects() {
     loadFlashingModel(FlashingModel, new Vector3(-45.78, 0.60, -46.07));
     loadFlashingModel(FlashingModel, new Vector3(-45.78, 0.60, 30.00));
@@ -664,13 +834,37 @@ async function init() {
     loadCoin(Coin, new Vector3(24, 2, 25));
 
     loadNPC(NPCModel, new Vector3(-45.78, 3, -46.07));
-    loadNPC(NPCModel, new Vector3(-45.78, 0.60, 30.00));
-
+    loadNPC(NPCModel, new Vector3(-45.78, 3, 30.00));
   }
 
-  await loadInitialScene();
-  await loadMansionObjects();
-  initMiniMap();
+  // --------------------------
+  // GAME INITIALIZATION
+  // --------------------------
+  async function initGame() {
+    try {
+      console.log("Starting game initialization...");
+      
+      await Promise.all([
+        loadInitialScene(),
+        loadMansionObjects()
+      ]);
+      
+      initMiniMap();
+      
+      console.log("All assets loaded successfully!");
+      loadingComplete = true;
+      
+      if (loadingScreen) {
+        loadingScreen.style.display = 'none';
+      }
+      
+    } catch (error) {
+      console.error("Failed to load game assets:", error);
+      if (loadingScreen) {
+        loadingScreen.innerHTML = `<h2>Loading Failed</h2><p>Please refresh and try again.</p>`;
+      }
+    }
+  }
 
   // --------------------------
   // MUSIC
@@ -694,9 +888,21 @@ async function init() {
 
   function animate() {
     const delta = clock.getDelta();
+    
+    // Don't update game until loading is complete
+    if (!loadingComplete) {
+      renderer.render(scene, camera);
+      return;
+    }
+    
+    // If paused, just render and return
+    if (isPaused) {
+      renderer.render(scene, camera);
+      return;
+    }
+    
     if (!isSwitching && !isGameOver) {
       world.step();
-      // Update character controller with stair-stepping parameters
       if (character.controller) {
         character.controller.enableSnapToGround(0.5);
         character.controller.setMaxSlopeClimbAngle(Math.PI / 4);
@@ -708,11 +914,11 @@ async function init() {
       updateFlashing(delta);
       updateDoors(delta);
       
-      // Update NPCs with player position
       if (character.model) {
         updateNPCs(delta, character.model.position);
       }
     }
+    
     updateCamera(delta);
     renderer.setViewport(0, 0, window.innerWidth, window.innerHeight);
     renderer.setScissor(0, 0, window.innerWidth, window.innerHeight);
@@ -723,11 +929,18 @@ async function init() {
       character.model.scale.set(1.5, 1.5, 1.5);
       const pos = character.model.position;
 
-      // console.log(pos.x, pos.y, pos.z);
+      // Check for win condition in bedroom - simple 3 second timer
+      if (bedroomReached && bedroomReachTime) {
+        const elapsedTime = Date.now() - bedroomReachTime;
+        if (elapsedTime >= BEDROOM_WIN_DELAY) {
+          showGameOver(true);
+          return;
+        }
+      }
 
-      // Check for NPC collisions first
+      // Check for NPC collisions
       if (checkNPCCollisions(pos)) {
-        showGameOver();
+        showGameOver(false);
         return;
       }
 
@@ -735,7 +948,6 @@ async function init() {
       updateCoins(delta, pos);
 
       if (currentScene === "mansion") {
-        // Trigger when character reaches door position
         const dx = pos.x - (2.5);
         const dz = pos.z - (3.5);
         const dist = Math.sqrt(dx * dx + dz * dz);
@@ -761,9 +973,10 @@ async function init() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
   });
+
+  // Start game initialization
+  await initGame();
 }
 
 init();
