@@ -5,7 +5,7 @@ import { Projectile } from './Projectile.js';
 
 import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
 import heroDying from "../../../public/models/cop/Magic Spell Pack/Standing React Death Backward.fbx";
-import heroAttacked from "../../../public/models/cop/Magic Spell Pack/Standing React Small From Left.fbx";
+import heroAttacked from "../../../public/models/cop/Magic Spell Pack/Standing React Small From Front.fbx";
 import heroWalk from "../../../public/models/cop/Magic Spell Pack/Walking.fbx";
 import heroRun from "../../../public/models/cop/Magic Spell Pack/Unarmed Run Forward.fbx";
 import heroIdle from "../../../public/models/cop/Magic Spell Pack/Unarmed Idle.fbx";
@@ -399,6 +399,7 @@ export class Player {
     }
 
     if (triggeredAttack && this.currentAction !== triggeredAttack) {
+      this.isAttacking = true; // Mark as attacking (will be cleared when animation finishes)
       if (this.currentAction) this.currentAction.fadeOut(0.3);
       triggeredAttack.reset().fadeIn(0.3).play();
       this.currentAction = triggeredAttack;
