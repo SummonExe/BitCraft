@@ -3,7 +3,7 @@ import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
 
 export class Projectile {
-  constructor({ position, direction }, { world, scene, color = 0xff0000, modelPath = null, loadModel = null, scale = 1, speed = 20, maxDistance = 80, colliderRadius = 0.5, rotation = null, damage = 50, team = 'neutral' }) {
+  constructor({ position, direction }, { world, scene, color = 0xff0000, modelPath = null, loadModel = null, scale = 1, speed = 25, maxDistance = 80, colliderRadius = 0.6, rotation = null, damage = 50, team = 'neutral' }) {
     this.world = world;
     this.scene = scene;
     this.mesh = null;

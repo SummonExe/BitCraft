@@ -40,16 +40,17 @@ export class ChaserNPC {
     this.projectiles = projectiles;
     this.modelLoader = loadModel;
     this.animationLoader = loadAnimation;
-    this.actions = { idle: null, walk: null };
+    this.actions = { idle: null, walk: null, hit: null, dying: null, powerup: null };
     this.attacks = [];
     this.currentAction = null;
     this.attackCooldown = 0;
-    this.cooldownDuration = 0.7;
+    this.cooldownDuration = 0.9;
     
     // HEALTH SYSTEM
     this.maxHealth = 1000;
     this.health = 1000;
     this.isDead = false;
+    this.isHit = false; // Track if currently playing hit animation
     this.team = 'enemy'; // Used for collision detection
     
     // Configure projectiles for each attack (6 attacks total)
@@ -165,6 +166,24 @@ export class ChaserNPC {
       this.actions.walk = this.mixer.clipAction(walkClip);
       this.actions.walk.timeScale = 0.8;
       
+      // Load hit animation
+      const hitClip = await this.animationLoader(witchHit);
+      this.actions.hit = this.mixer.clipAction(hitClip);
+      this.actions.hit.setLoop(THREE.LoopOnce);
+      this.actions.hit.clampWhenFinished = true;
+      
+      // Load death animation
+      const dyingClip = await this.animationLoader(witchDying);
+      this.actions.dying = this.mixer.clipAction(dyingClip);
+      this.actions.dying.setLoop(THREE.LoopOnce);
+      this.actions.dying.clampWhenFinished = true;
+      
+      // Load powerup animation (for when player dies)
+      const powerupClip = await this.animationLoader(witchPowerup);
+      this.actions.powerup = this.mixer.clipAction(powerupClip);
+      this.actions.powerup.setLoop(THREE.LoopOnce);
+      this.actions.powerup.clampWhenFinished = true;
+      
       // Load all 6 attack animations
       const attackPaths = [
         witchAttack1,
@@ -186,11 +205,21 @@ export class ChaserNPC {
       // Animation finish handler for attacks
       this.mixer.addEventListener('finished', (e) => {
         const finishedAction = e.action;
+        
+        // Handle attack animations
         if (this.attacks.includes(finishedAction)) {
           finishedAction.fadeOut(0.2);
           this.actions.idle.reset().fadeIn(0.2).play();
           this.currentAction = this.actions.idle;
           this.attackCooldown = this.cooldownDuration;
+        }
+        
+        // Handle hit animation
+        if (finishedAction === this.actions.hit) {
+          this.isHit = false;
+          finishedAction.fadeOut(0.2);
+          this.actions.idle.reset().fadeIn(0.2).play();
+          this.currentAction = this.actions.idle;
         }
       });
       
@@ -217,7 +246,7 @@ export class ChaserNPC {
   }
   
   takeDamage(amount) {
-    if (this.isDead) return;
+    if (this.isDead || this.isHit) return;
     
     this.health -= amount;
     console.log(`Witch took ${amount} damage! Health: ${this.health}/${this.maxHealth}`);
@@ -225,15 +254,55 @@ export class ChaserNPC {
     if (this.health <= 0) {
       this.health = 0;
       this.die();
+    } else {
+      // Play hit animation if not dead
+      this.playHitAnimation();
     }
   }
   
+  playHitAnimation() {
+    if (!this.actions.hit || this.isHit || this.isDead) return;
+    
+    this.isHit = true;
+    if (this.currentAction) this.currentAction.fadeOut(0.1);
+    this.actions.hit.reset().fadeIn(0.1).play();
+    this.currentAction = this.actions.hit;
+  }
+  
   die() {
+    if (this.isDead) return;
+    
     this.isDead = true;
+    this.isHit = false; // Clear hit flag if dying
     console.log('Witch died!');
+    
     // Stop all movement
     this.rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
-    // You can trigger death animation here if you have one
+    
+    // Remove seek behavior to stop following player
+    this.entity.steering.remove(this.seekBehavior);
+    
+    // Play death animation - will freeze at last frame due to clampWhenFinished
+    if (this.actions.dying) {
+      if (this.currentAction) this.currentAction.stop();
+      this.actions.dying.reset().play();
+      this.currentAction = this.actions.dying;
+    }
+  }
+  
+  playVictoryAnimation() {
+    if (!this.actions.powerup || this.isDead) return;
+    
+    // Stop movement
+    this.rigidBody.setLinvel({ x: 0, y: 0, z: 0 }, true);
+    
+    // Remove seek behavior to stop following
+    this.entity.steering.remove(this.seekBehavior);
+    
+    // Play powerup/victory animation - will freeze at last frame due to clampWhenFinished
+    if (this.currentAction) this.currentAction.stop();
+    this.actions.powerup.reset().play();
+    this.currentAction = this.actions.powerup;
   }
   
   updateIndicator() {
@@ -344,6 +413,14 @@ export class ChaserNPC {
     this.entity.position.set(physicsPos.x, physicsPos.y, physicsPos.z);
     this.seekBehavior.target.copy(this.target.entity.position);
 
+    // Don't move or attack during hit animation
+    if (this.isHit) {
+      const stopVel = { x: this.rigidBody.linvel().x * 0.85, y: this.rigidBody.linvel().y, z: this.rigidBody.linvel().z * 0.85 };
+      this.rigidBody.setLinvel(stopVel, true);
+      if (this.mixer) this.mixer.update(delta);
+      return;
+    }
+
     const distanceToTarget = this.entity.position.distanceTo(this.target.entity.position);
     const velocity = this.entity.velocity;
     const currentVel = this.rigidBody.linvel();
@@ -417,8 +494,6 @@ export class ChaserNPC {
         this.currentAction = this.actions.idle;
       }
     }
-
-    if (this.mixer) this.mixer.update(delta);
 
     // DEBUG INDICATOR
     if (this.indicator && this.model) {

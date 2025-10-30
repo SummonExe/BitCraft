@@ -36,6 +36,7 @@ let indoorOffset = -120;
 let outsideOffset = 50;
 let doorOffset = -15;
 let loadingComplete = false;
+let gameOver = false; // Track if game has ended
 
 // === INITIALIZE RAPIER ===
 await RAPIER.init();
@@ -261,6 +262,129 @@ function updateHealthUI() {
   }
 }
 
+// === CHECK GAME OVER ===
+function checkGameOver() {
+  if (gameOver) return;
+  
+  // Player died - Witch wins
+  if (player.isDead && !gameOver) {
+    gameOver = true;
+    console.log('GAME OVER - Witch wins!');
+    npc2.playVictoryAnimation();
+    
+    // Show game over after 5 seconds
+    setTimeout(() => {
+      showGameOverScreen(false); // false = player lost
+    }, 5000);
+  }
+  
+  // Witch died - Player wins
+  if (npc2.isDead && !gameOver) {
+    gameOver = true;
+    console.log('VICTORY - Player wins!');
+    
+    // Show victory screen after 5 seconds
+    setTimeout(() => {
+      showGameOverScreen(true); // true = player won
+    }, 10000);
+  }
+}
+
+// === SHOW GAME OVER SCREEN ===
+function showGameOverScreen(playerWon) {
+  // Create game over overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'gameOverScreen';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    animation: fadeIn 1s ease-in;
+  `;
+  
+  // Title
+  const title = document.createElement('h1');
+  title.style.cssText = `
+    font-family: 'DK Okiku', sans-serif;
+    font-size: 5em;
+    margin-bottom: 30px;
+    color: ${playerWon ? '#8b0000' : '#8a00e6'};
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    text-shadow: 0 0 30px ${playerWon ? 'rgba(139, 0, 0, 0.8)' : 'rgba(138, 0, 230, 0.8)'};
+    animation: bloodPulse 2s ease-in-out infinite alternate;
+  `;
+  title.textContent = playerWon ? '† VICTORY †' : '† DEFEAT †';
+  
+  // Message
+  const message = document.createElement('p');
+  message.style.cssText = `
+    font-family: 'Dudu Calligraphy', cursive;
+    font-size: 2em;
+    margin-bottom: 50px;
+    color: #666;
+    text-align: center;
+    max-width: 600px;
+  `;
+  message.textContent = playerWon 
+    ? 'The witch has been vanquished. Your soul remains your own... for now.'
+    : 'The witch claims another soul. Darkness falls eternal.';
+  
+  // Restart button
+  const restartBtn = document.createElement('button');
+  restartBtn.style.cssText = `
+    font-family: 'Dudu Calligraphy', cursive;
+    font-size: 1.5em;
+    padding: 15px 50px;
+    background: rgba(20, 20, 20, 0.8);
+    color: #8b0000;
+    border: 2px solid rgba(139, 0, 0, 0.6);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(139, 0, 0, 0.3);
+  `;
+  restartBtn.textContent = '† Restart †';
+  restartBtn.onmouseover = () => {
+    restartBtn.style.background = 'rgba(30, 0, 0, 0.9)';
+    restartBtn.style.borderColor = 'rgba(139, 0, 0, 1)';
+    restartBtn.style.boxShadow = '0 0 30px rgba(139, 0, 0, 0.6)';
+    restartBtn.style.transform = 'scale(1.05)';
+  };
+  restartBtn.onmouseout = () => {
+    restartBtn.style.background = 'rgba(20, 20, 20, 0.8)';
+    restartBtn.style.borderColor = 'rgba(139, 0, 0, 0.6)';
+    restartBtn.style.boxShadow = '0 0 20px rgba(139, 0, 0, 0.3)';
+    restartBtn.style.transform = 'scale(1)';
+  };
+  restartBtn.onclick = () => {
+    window.location.reload();
+  };
+  
+  overlay.appendChild(title);
+  overlay.appendChild(message);
+  overlay.appendChild(restartBtn);
+  document.body.appendChild(overlay);
+  
+  // Add fade in animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 // === GAME INITIALIZATION ===
 async function initGame() {
   try {
@@ -376,6 +500,9 @@ function animate() {
 
   // Update health UI
   updateHealthUI();
+  
+  // Check for game over conditions
+  checkGameOver();
 
   world.step();
 

@@ -5,7 +5,7 @@ import { Projectile } from './Projectile.js';
 
 import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
 import heroDying from "../../../public/models/cop/Magic Spell Pack/Standing React Death Backward.fbx";
-import heroAttacked from "../../../public/models/cop/Magic Spell Pack/Standing React Small From Front.fbx";
+import heroAttacked from "../../../public/models/cop/Magic Spell Pack/Standing React Small From Left.fbx";
 import heroWalk from "../../../public/models/cop/Magic Spell Pack/Walking.fbx";
 import heroRun from "../../../public/models/cop/Magic Spell Pack/Unarmed Run Forward.fbx";
 import heroIdle from "../../../public/models/cop/Magic Spell Pack/Unarmed Idle.fbx";
@@ -25,7 +25,7 @@ export class Player {
     this.isMoving = false;
     this.isRunning = false;
     this.mixer = null;
-    this.actions = { idle: null, walk: null, run: null };
+    this.actions = { idle: null, walk: null, run: null, hit: null, dying: null };
     this.attacks = {}; // Will hold: p, l, o, k, i, j
     this.currentAction = null;
     this.world = world;
@@ -41,6 +41,8 @@ export class Player {
     this.maxHealth = 1000;
     this.health = 1000;
     this.isDead = false;
+    this.isHit = false; // Track if currently playing hit animation
+    this.isAttacking = false; // Track if currently playing attack animation
     this.team = 'player'; // Used for collision detection
     
     // Configure projectiles for each attack key
@@ -144,6 +146,18 @@ export class Player {
       this.actions.run = this.mixer.clipAction(runClip);
       this.actions.run.timeScale = 0.6;
       
+      // === Load Hit Animation ===
+      const hitClip = await this.animationLoader(heroAttacked);
+      this.actions.hit = this.mixer.clipAction(hitClip);
+      this.actions.hit.setLoop(THREE.LoopOnce);
+      this.actions.hit.clampWhenFinished = true;
+      
+      // === Load Death Animation ===
+      const dyingClip = await this.animationLoader(heroDying);
+      this.actions.dying = this.mixer.clipAction(dyingClip);
+      this.actions.dying.setLoop(THREE.LoopOnce);
+      this.actions.dying.clampWhenFinished = true;
+      
       // === Load All Attack Animations ===
       const attackMap = {
         p: heroHitP,
@@ -165,11 +179,24 @@ export class Player {
       // === Animation Finish Handler ===
       this.mixer.addEventListener('finished', (e) => {
         const finishedAction = e.action;
+        
+        // Handle attack animations
         if (Object.values(this.attacks).includes(finishedAction)) {
+          this.isAttacking = false; // Allow next attack
           finishedAction.fadeOut(0.3);
           this.actions.idle.reset().fadeIn(0.3).play();
           this.currentAction = this.actions.idle;
         }
+        
+        // Handle hit animation - return to idle
+        if (finishedAction === this.actions.hit) {
+          this.isHit = false;
+          finishedAction.fadeOut(0.2);
+          this.actions.idle.reset().fadeIn(0.2).play();
+          this.currentAction = this.actions.idle;
+        }
+        
+        // Death animation stays frozen at last frame (clampWhenFinished handles this)
       });
       
       this.entity.setRenderComponent(this.model, this.sync);
@@ -185,7 +212,7 @@ export class Player {
   }
   
   takeDamage(amount) {
-    if (this.isDead) return;
+    if (this.isDead || this.isHit) return;
     
     this.health -= amount;
     console.log(`Player took ${amount} damage! Health: ${this.health}/${this.maxHealth}`);
@@ -193,13 +220,38 @@ export class Player {
     if (this.health <= 0) {
       this.health = 0;
       this.die();
+    } else {
+      // Play hit animation if not dead
+      this.playHitAnimation();
     }
   }
   
+  playHitAnimation() {
+    if (!this.actions.hit || this.isHit || this.isDead) return;
+    
+    this.isHit = true;
+    if (this.currentAction) this.currentAction.fadeOut(0.1);
+    this.actions.hit.reset().fadeIn(0.1).play();
+    this.currentAction = this.actions.hit;
+  }
+  
   die() {
+    if (this.isDead) return;
+    
     this.isDead = true;
+    this.isHit = false; // Clear hit flag if dying
+    this.isAttacking = false; // Clear attacking flag
     console.log('Player died!');
-    // You can trigger death animation here if you have one
+    
+    // Stop movement
+    this.rigidBody.setLinvel({ x: 0, y: this.rigidBody.linvel().y, z: 0 }, true);
+    
+    // Play death animation - will freeze at last frame due to clampWhenFinished
+    if (this.actions.dying) {
+      if (this.currentAction) this.currentAction.stop();
+      this.actions.dying.reset().play();
+      this.currentAction = this.actions.dying;
+    }
   }
   
   fireProjectiles(attackKey) {
@@ -294,31 +346,32 @@ export class Player {
   }
   
   update(delta) {
-    if (this.isDead) return;
-    
-    if (this.mixer && this.actions.idle && this.actions.walk && this.actions.run) {
-      const isAttacking = this.currentAction && Object.values(this.attacks).includes(this.currentAction);
-      
-      if (!isAttacking) {
-        if (this.isMoving) {
-          const targetAction = this.isRunning ? this.actions.run : this.actions.walk;
-          if (this.currentAction !== targetAction) {
-            if (this.currentAction) this.currentAction.fadeOut(0.3);
-            targetAction.reset().fadeIn(0.3).play();
-            this.currentAction = targetAction;
-          }
-        } else if (this.currentAction !== this.actions.idle) {
-          if (this.currentAction) this.currentAction.fadeOut(0.3);
-          this.actions.idle.reset().fadeIn(0.3).play();
-          this.currentAction = this.actions.idle;
-        }
-      }
+    if (this.mixer) {
+      // Always update mixer to allow animations to play
       this.mixer.update(delta);
+    }
+    
+    // Don't update movement logic if dead, hit, or attacking
+    if (this.isDead || this.isHit || this.isAttacking) return;
+    
+    if (this.actions.idle && this.actions.walk && this.actions.run) {
+      if (this.isMoving) {
+        const targetAction = this.isRunning ? this.actions.run : this.actions.walk;
+        if (this.currentAction !== targetAction) {
+          if (this.currentAction) this.currentAction.fadeOut(0.3);
+          targetAction.reset().fadeIn(0.3).play();
+          this.currentAction = targetAction;
+        }
+      } else if (this.currentAction !== this.actions.idle) {
+        if (this.currentAction) this.currentAction.fadeOut(0.3);
+        this.actions.idle.reset().fadeIn(0.3).play();
+        this.currentAction = this.actions.idle;
+      }
     }
   }
   
   handleInput(keys, delta) {
-    if (this.isDead) return;
+    if (this.isDead || this.isHit || this.isAttacking) return; // Can't control during hit, death, or attack
     
     const velocity = new THREE.Vector3();
     let rotationInput = 0;
