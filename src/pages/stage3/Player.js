@@ -44,6 +44,10 @@ export class Player {
     this.modelLoader = loadModel;
     this.animationLoader = loadAnimation;
     
+    // ATTACK COOLDOWN
+    this.attackCooldown = 0;
+    this.attackCooldownDuration = 1.0;
+    
     // HEALTH SYSTEM
     this.maxHealth = 1000;
     this.health = 1000;
@@ -355,6 +359,11 @@ export class Player {
   update(delta) {
     if (this.isDead) return;
     
+    // Update cooldown
+    if (this.attackCooldown > 0) {
+      this.attackCooldown -= delta;
+    }
+    
     if (this.mixer && this.actions.idle && this.actions.walk && this.actions.run) {
       const isAttacking = this.currentAction && Object.values(this.attacks).includes(this.currentAction);
       
@@ -398,25 +407,30 @@ export class Player {
     this.moveForce = this.isRunning ? this.baseMoveForce + 10 : this.baseMoveForce;
     
     // === Handle Attack Keys ===
-    const attackKeyMap = { 'p': 'p', 'l': 'l', 'o': 'o', 'k': 'k', 'i': 'i', 'j': 'j' };
-    let triggeredAttack = null;
-    let attackKey = null;
+    if (this.attackCooldown <= 0) {
+      const attackKeyMap = { 'p': 'p', 'l': 'l', 'o': 'o', 'k': 'k', 'i': 'i', 'j': 'j' };
+      let triggeredAttack = null;
+      let attackKey = null;
 
-    for (const [inputKey, key] of Object.entries(attackKeyMap)) {
-      if (keys[inputKey] && this.attacks[key]) {
-        triggeredAttack = this.attacks[key];
-        attackKey = key;
-        break; // First pressed key wins
+      for (const [inputKey, key] of Object.entries(attackKeyMap)) {
+        if (keys[inputKey] && this.attacks[key]) {
+          triggeredAttack = this.attacks[key];
+          attackKey = key;
+          break; // First pressed key wins
+        }
       }
-    }
 
-    if (triggeredAttack && this.currentAction !== triggeredAttack) {
-      if (this.currentAction) this.currentAction.fadeOut(0.3);
-      triggeredAttack.reset().fadeIn(0.3).play();
-      this.currentAction = triggeredAttack;
-      
-      // Fire projectiles immediately when attack starts
-      this.fireProjectiles(attackKey);
+      if (triggeredAttack && this.currentAction !== triggeredAttack) {
+        if (this.currentAction) this.currentAction.fadeOut(0.3);
+        triggeredAttack.reset().fadeIn(0.3).play();
+        this.currentAction = triggeredAttack;
+        
+        // Fire projectiles immediately when attack starts
+        this.fireProjectiles(attackKey);
+        
+        // Start cooldown
+        this.attackCooldown = this.attackCooldownDuration;
+      }
     }
     
     // === Rotation ===
