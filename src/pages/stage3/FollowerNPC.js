@@ -4,8 +4,9 @@ import RAPIER from '@dimforge/rapier3d-compat';
 
 import kidWalk from "../../../public/models/kid2/Female Walk.fbx";
 import kidIdle from "../../../public/models/kid2/Idle.fbx";
-// const kidWalk = "../../../models/kid2/Female Walk.fbx";
-// const kidIdle = "../../../models/kid2/Idle.fbx";
+import kidSit from "../../../public/models/kid2/Male Sitting Pose.fbx";
+import kidFear from "../../../public/models/kid2/Terrified.fbx";
+
 
 export class FollowerNPC {
   constructor({ position, modelPath, maxSpeed, followDistance, stopThreshold, target, world, scene, mixers, entityManager, loadModel, loadAnimation }) {

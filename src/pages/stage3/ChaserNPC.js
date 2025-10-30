@@ -4,10 +4,15 @@ import RAPIER from '@dimforge/rapier3d-compat';
 
 import witchWalk from "../../../public/models/witch/Mutant Walking.fbx";
 import witchIdle from "../../../public/models/witch/witch_Idle.fbx";
-import witchAttack from "../../../public/models/witch/Zombie Attack.fbx";
-import witchPosionAttack from "../../../public/models/witch/Sword And Shield Casting.fbx";
-// const witchWalk = "../../../models/witch/Mutant Walking.fbx";
-// const witchIdle = "../../../models/witch/witch_Idle.fbx";
+import witchAttack1 from "../../../public/models/witch/Zombie Attack.fbx";
+import witchAttack2 from "../../../public/models/witch/Standing Melee Attack Downward.fbx";
+import witchAttack3 from "../../../public/models/witch/Mutant Swiping.fbx";
+import witchAttack4 from "../../../public/models/witch/Standing Melee Attack Horizontal.fbx";
+import witchAttack5 from "../../../public/models/witch/Mutant Punch.fbx";
+import witchAttack6 from "../../../public/models/witch/Sword And Shield Casting.fbx";
+import witchHit from "../../../public/models/witch/Zombie Reaction Hit.fbx";
+import witchDying from "../../../public/models/witch/Zombie Dying.fbx";
+import witchPowerup from "../../../public/models/witch/Standing Taunt Battlecry.fbx";
 
 export class ChaserNPC {
   constructor({ position, modelPath, maxSpeed, stopDistance, target, world, scene, mixers, entityManager, loadModel, loadAnimation }) {
@@ -81,12 +86,12 @@ export class ChaserNPC {
       this.actions.walk.timeScale = 0.8; // Faster for witch
       
       // Load attack animations
-      const attackClip = await loadAnimation(witchAttack);
+      const attackClip = await loadAnimation(witchAttack1);
       this.attacks.attack = this.mixer.clipAction(attackClip);
       this.attacks.attack.setLoop(THREE.LoopOnce);
       this.attacks.attack.clampWhenFinished = true;
 
-      const poisonClip = await loadAnimation(witchPosionAttack);
+      const poisonClip = await loadAnimation(witchAttack2);
       this.attacks.poison = this.mixer.clipAction(poisonClip);
       this.attacks.poison.setLoop(THREE.LoopOnce);
       this.attacks.poison.clampWhenFinished = true;
