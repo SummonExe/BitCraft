@@ -286,7 +286,7 @@ function checkGameOver() {
     // Show victory screen after 5 seconds
     setTimeout(() => {
       showGameOverScreen(true); // true = player won
-    }, 10000);
+    }, 5000);
   }
 }
 

@@ -50,8 +50,8 @@ export class ChaserNPC {
     this.actions = { idle: null, walk: null, hit: null, dying: null, powerup: null };
     this.attacks = [];
     this.currentAction = null;
-    this.attackCooldown = 0.5;
-    this.cooldownDuration = 0.9;
+    this.attackCooldown = 1;
+    this.cooldownDuration = 1;
     
     // HEALTH SYSTEM
     this.maxHealth = 1000;
