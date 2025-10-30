@@ -15,6 +15,13 @@ import witchHit from "../../../public/models/witch/Zombie Reaction Hit.fbx";
 import witchDying from "../../../public/models/witch/Zombie Dying.fbx";
 import witchPowerup from "../../../public/models/witch/Standing Taunt Battlecry.fbx";
 
+import power1 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
+import power2 from "../../../public/models/projectiles/blood_moon_grin.glb";
+import power3 from "../../../public/models/projectiles/packwar_blood_edition.glb";
+import power4 from "../../../public/models/projectiles/graveyard_fog_eyeball_-_blender_file.glb";
+import power5 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
+import power6 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
+
 export class ChaserNPC {
   constructor({ 
     position, 

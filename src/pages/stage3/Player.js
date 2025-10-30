@@ -17,6 +17,13 @@ import heroHitI from "../../../public/models/cop/Magic Spell Pack/Standing 2H Ma
 import heroHitJ from "../../../public/models/cop/Magic Spell Pack/Standing 1H Magic Attack 03.fbx";
 import heroBlock from "../../../public/models/cop/Magic Spell Pack/Standing Block React Large.fbx";
 
+import powerP from "../../../public/models/projectiles/rasengan.glb";
+import powerL from "../../../public/models/projectiles/monocyte.glb";
+import powerO from "../../../public/models/projectiles/magical_orb.glb";
+import powerK from "../../../public/models/projectiles/projectile_-_magma_ball.glb";
+import powerI from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
+import powerJ from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
+
 export class Player {
   constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles, attackProjectileConfigs = null }) {
     this.baseMoveForce = moveForce;
