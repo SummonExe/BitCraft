@@ -38,7 +38,7 @@ let mazeSize = null;
 let isSwitching = false;
 let groundCollider = null;
 let loadingComplete = false;
-let isPaused = false;
+let gamePaused = false;
 let bedroomReached = false;
 let bedroomReachTime = null;
 const BEDROOM_WIN_DELAY = 10000; // 10 seconds
@@ -60,76 +60,93 @@ let listener, soundLoader;
 const cameraOffset = new Vector3(0, 3, -6);
 const lookAtOffset = new Vector3(0, 1.5, 0);
 
-// Create Pause Menu
-const pauseMenu = document.createElement('div');
-pauseMenu.style.position = 'absolute';
-pauseMenu.style.top = '50%';
-pauseMenu.style.left = '50%';
-pauseMenu.style.transform = 'translate(-50%, -50%)';
-pauseMenu.style.padding = '40px 60px';
-pauseMenu.style.background = 'rgba(0, 0, 0, 0.95)';
-pauseMenu.style.border = '3px solid #ffffff';
-pauseMenu.style.borderRadius = '15px';
-pauseMenu.style.color = '#fff';
-pauseMenu.style.textAlign = 'center';
-pauseMenu.style.zIndex = '2000';
-pauseMenu.style.display = 'none';
-pauseMenu.innerHTML = `
-  <div style="font-size: 48px; margin-bottom: 30px;">PAUSED</div>
-  <button id="resume-btn" style="
-    padding: 15px 40px;
-    font-size: 24px;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin: 10px;
-    width: 200px;
-  ">Resume</button>
-  <br>
-  <button id="pause-menu-btn" style="
-    padding: 15px 40px;
-    font-size: 24px;
-    background: #ff9800;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin: 10px;
-    width: 200px;
-  ">Main Menu</button>
-  <div style="margin-top: 30px; font-size: 16px; color: #aaa;">Press ESC to resume</div>
-`;
-document.body.appendChild(pauseMenu);
+// Pause menu state
+gamePaused = false;
 
-// Pause menu event listeners
-document.getElementById('resume-btn').addEventListener('click', () => {
-  togglePause();
-});
+// Pause menu elements
+const pauseMenu = document.getElementById('pauseMenu');
+const controlsScreen = document.getElementById('controlsScreen');
+const objectiveScreen = document.getElementById('objectiveScreen');
+const restartStageBtn = document.getElementById('restartStage');
+const showControlsBtn = document.getElementById('showControls');
+const showObjectiveBtn = document.getElementById('showObjective');
+const closeBtns = document.querySelectorAll('.close-btn');
 
-document.getElementById('pause-menu-btn').addEventListener('click', () => {
-  window.location.href = '/';
-});
-
-// Function to toggle pause
-function togglePause() {
-  isPaused = !isPaused;
-  pauseMenu.style.display = isPaused ? 'block' : 'none';
+// Toggle pause menu
+function togglePauseMenu() {
+  if (isGameOver || !loadingComplete) return; // Don't allow pausing when game over or loading
   
-  if (isPaused) {
-    console.log('Game paused');
+  gamePaused = !gamePaused;
+  
+  if (gamePaused) {
+    if (pauseMenu) pauseMenu.style.display = 'flex';
+    console.log("Game Paused");
   } else {
-    console.log('Game resumed');
+    if (pauseMenu) pauseMenu.style.display = 'none';
+    if (controlsScreen) controlsScreen.style.display = 'none';
+    if (objectiveScreen) objectiveScreen.style.display = 'none';
+    console.log("Game Resumed");
   }
 }
 
-// Input handling for pause
+// Event listeners for pause menu
 window.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && !isGameOver && loadingComplete) {
-    togglePause();
+  if (e.key === 'Escape' && loadingComplete && !isGameOver) {
+    e.preventDefault();
+    togglePauseMenu();
   }
 });
+
+// Restart stage
+if (restartStageBtn) {
+  restartStageBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.reload();
+  });
+}
+
+// Show controls
+if (showControlsBtn) {
+  showControlsBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (controlsScreen) controlsScreen.style.display = 'flex';
+  });
+}
+
+// Show objective
+if (showObjectiveBtn) {
+  showObjectiveBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (objectiveScreen) objectiveScreen.style.display = 'flex';
+  });
+}
+
+// Close buttons
+if (closeBtns) {
+  closeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (controlsScreen) controlsScreen.style.display = 'none';
+      if (objectiveScreen) objectiveScreen.style.display = 'none';
+    });
+  });
+}
+
+// Close modals when clicking outside
+if (controlsScreen) {
+  controlsScreen.addEventListener('click', (e) => {
+    if (e.target === controlsScreen) {
+      controlsScreen.style.display = 'none';
+    }
+  });
+}
+
+if (objectiveScreen) {
+  objectiveScreen.addEventListener('click', (e) => {
+    if (e.target === objectiveScreen) {
+      objectiveScreen.style.display = 'none';
+    }
+  });
+}
 
 async function init() {
   await RAPIER.init();
@@ -1065,7 +1082,7 @@ async function init() {
     }
     
     // If paused, just render and return
-    if (isPaused) {
+    if (gamePaused) {
       renderer.render(scene, camera);
       return;
     }
