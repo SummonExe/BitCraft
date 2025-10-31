@@ -22,12 +22,12 @@ import powerK from "../../../public/models/projectiles/low_poly_water_drop.glb";
 import powerI from "../../../public/models/projectiles/speakerman_cross_effect.glb";
 import powerJ from "../../../public/models/projectiles/monocyte.glb";
 
-import power0 from "../../../public/models/projectiles/water_orb.glb";
-import power1 from "../../../public/models/projectiles/adorned_metal_sphere.glb";
-import power2 from "../../../public/models/projectiles/water_orb.glb";
-import power3 from "../../../public/models/projectiles/rift.glb";
-import power4 from "../../../public/models/projectiles/rift.glb";
-import power5 from "../../../public/models/projectiles/water_orb.glb";
+import power0 from "../../../public/models/projectiles/blood_moon_grin.glb";
+import power1 from "../../../public/models/projectiles/water_orb.glb";
+import power2 from "../../../public/models/projectiles/blood_moon_grin.glb";
+import power3 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
+import power4 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
+import power5 from "../../../public/models/projectiles/graveyard_fog_eyeball_-_blender_file.glb";
 
 // === LOADING SCREEN & UI ===
 const loadingScreen = document.getElementById('loadingScreen');

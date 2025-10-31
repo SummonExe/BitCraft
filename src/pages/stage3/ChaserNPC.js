@@ -15,12 +15,12 @@ import witchHit from "../../../public/models/witch/Zombie Reaction Hit.fbx";
 import witchDying from "../../../public/models/witch/Zombie Dying.fbx";
 import witchPowerup from "../../../public/models/witch/Standing Taunt Battlecry.fbx";
 
-import power0 from "../../../public/models/projectiles/water_orb.glb";
-import power1 from "../../../public/models/projectiles/adorned_metal_sphere.glb";
-import power2 from "../../../public/models/projectiles/water_orb.glb";
-import power3 from "../../../public/models/projectiles/rift.glb";
-import power4 from "../../../public/models/projectiles/rift.glb";
-import power5 from "../../../public/models/projectiles/water_orb.glb";
+import power0 from "../../../public/models/projectiles/blood_moon_grin.glb";
+import power1 from "../../../public/models/projectiles/water_orb.glb";
+import power2 from "../../../public/models/projectiles/blood_moon_grin.glb";
+import power3 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
+import power4 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
+import power5 from "../../../public/models/projectiles/graveyard_fog_eyeball_-_blender_file.glb";
 
 export class ChaserNPC {
   constructor({ 
@@ -52,7 +52,7 @@ export class ChaserNPC {
     this.currentAction = null;
     this.attackCooldown = 5;
     this.cooldownDuration = 3;
-    this.baseAttackSpeed = 40;
+    this.baseAttackSpeed = 50;
     
     // HEALTH SYSTEM
     this.maxHealth = 1000;
@@ -65,60 +65,59 @@ export class ChaserNPC {
     this.attackProjectileConfigs = attackProjectileConfigs || {
       0: { // Attack 1 - Single purple
         pattern: 'single',
-        speed: this.baseAttackSpeed + 20,
-        offsetY: 15,
-        scale: 1,
-        damage: 50,
+        speed: this.baseAttackSpeed + 150,
+        offsetY: 10,
+        scale: 8,
+        damage: 120,
         modelPath: power0,
         loadModel: loadModel
       },
       1: { // Attack 2 - Triple dark
         pattern: 'triple',
-        speed: this.baseAttackSpeed + 20,
-        spreadAngle: 0.3,
+        speed: this.baseAttackSpeed + 30,
+        spreadAngle: 0.25,
         offsetY: 15,
-        scale: 1,
+        scale: 5,
         damage: 30,
         modelPath: power1,
         loadModel: loadModel
       },
       2: { // Attack 3 - Fast single
         pattern: 'single',
-        speed: this.baseAttackSpeed + 30,
-        offsetY: 15,
-        scale: 2,
-        damage: 100,
+        speed: this.baseAttackSpeed + 85,
+        offsetY: 10,
+        scale: 8,
+        damage: 75,
         modelPath: power2,
         loadModel: loadModel
       },
       3: { // Attack 4 - Spread
         pattern: 'spread',
         count: 6,
-        speed: this.baseAttackSpeed + 25,
-        spreadAngle: 0.2,
-        offsetY: 15,
-        scale: 1.5,
-        damage: 60,
+        speed: this.baseAttackSpeed + 150,
+        spreadAngle: 0.3,
+        offsetY: 25,
+        scale: 10,
+        damage: 30,
         modelPath: power3,
         loadModel: loadModel
       },
       4: { // Attack 5 - Circle burst
-        pattern: 'spread',
-        count: 8,
-        spreadAngle: 0.2,
-        speed: this.baseAttackSpeed + 30,
-        offsetY: 15,
-        scale: 1,
-        damage: 40,
+        pattern: 'circle',
+        count: 25,
+        spreadAngle: 0.05,
+        speed: this.baseAttackSpeed + 200,
+        offsetY: 20,
+        scale: 10,
+        damage: 100,
         modelPath: power4,
         loadModel: loadModel
       },
       5: { // Attack 6 - Powerful single
-        pattern: 'triple',
-        spreadAngle: 0.1,
+        pattern: 'single',
         speed: this.baseAttackSpeed + 35,
         offsetY: 15,
-        scale: 2,
+        scale: 5,
         damage: 80,
         modelPath: power5,
         loadModel: loadModel
@@ -492,6 +491,7 @@ export class ChaserNPC {
       // TRIGGER NEXT ATTACK
       if (this.attackCooldown <= 0 && !isAttacking) {
         const attackIndex = Math.floor(Math.random() * this.attacks.length);
+        // const attackIndex = 5;
         const selectedAction = this.attacks[attackIndex];
 
         if (this.currentAction !== selectedAction) {
