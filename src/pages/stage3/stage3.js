@@ -295,9 +295,42 @@ const keys = {
   k: false,
   o: false,
   p: false,
-  l: false
+  l: false,
+  Escape: false  // Add Escape key
 };
 
+// Pause menu state
+let gamePaused = false;
+
+// Pause menu elements
+const pauseMenu = document.getElementById('pauseMenu');
+const controlsScreen = document.getElementById('controlsScreen');
+const objectiveScreen = document.getElementById('objectiveScreen');
+const restartStageBtn = document.getElementById('restartStage');
+const showControlsBtn = document.getElementById('showControls');
+const showObjectiveBtn = document.getElementById('showObjective');
+const closeBtns = document.querySelectorAll('.close-btn');
+
+// Toggle pause menu
+function togglePauseMenu() {
+  if (gameOver) return; // Don't allow pausing when game over
+  
+  gamePaused = !gamePaused;
+  
+  if (gamePaused) {
+    pauseMenu.style.display = 'flex';
+    // Stop animation and physics
+    time.stop();
+  } else {
+    pauseMenu.style.display = 'none';
+    controlsScreen.style.display = 'none';
+    objectiveScreen.style.display = 'none';
+    // Resume animation and physics
+    time.start();
+  }
+}
+
+// Event listeners for pause menu
 window.addEventListener('keydown', (e) => {
   let key = e.key;
   
@@ -309,6 +342,47 @@ window.addEventListener('keydown', (e) => {
   if (keys.hasOwnProperty(key)) {
     keys[key] = true;
   }
+  
+  // Escape key to toggle pause
+  if (key === 'Escape' || key === 'Esc') {
+    e.preventDefault();
+    togglePauseMenu();
+  }
+});
+
+// Restart stage
+restartStageBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  window.location.reload();
+});
+
+// Show controls
+showControlsBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  controlsScreen.style.display = 'flex';
+});
+
+// Show objective
+showObjectiveBtn.addEventListener('click', (e) => {
+  e.preventDefault();
+  objectiveScreen.style.display = 'flex';
+});
+
+// Close buttons
+closeBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    controlsScreen.style.display = 'none';
+    objectiveScreen.style.display = 'none';
+  });
+});
+
+// Close modals when clicking outside
+[controlsScreen, objectiveScreen].forEach(modal => {
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.style.display = 'none';
+    }
+  });
 });
 
 window.addEventListener('keyup', (e) => {
@@ -566,7 +640,7 @@ async function initGame() {
 function animate() {
   requestAnimationFrame(animate);
 
-  if (!physicsReady || !loadingComplete) return;
+  if (!physicsReady || !loadingComplete || gamePaused) return;
 
   const delta = time.update().getDelta();
 
