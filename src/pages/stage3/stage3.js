@@ -301,6 +301,7 @@ const keys = {
 
 // Pause menu state
 let gamePaused = false;
+let lastDeltaTime = 0;
 
 // Pause menu elements
 const pauseMenu = document.getElementById('pauseMenu');
@@ -313,20 +314,18 @@ const closeBtns = document.querySelectorAll('.close-btn');
 
 // Toggle pause menu
 function togglePauseMenu() {
-  if (gameOver) return; // Don't allow pausing when game over
+  if (gameOver || !loadingComplete) return; // Don't allow pausing when game over or loading
   
   gamePaused = !gamePaused;
   
   if (gamePaused) {
-    pauseMenu.style.display = 'flex';
-    // Stop animation and physics
-    time.stop();
+    if (pauseMenu) pauseMenu.style.display = 'flex';
+    console.log("Game Paused");
   } else {
-    pauseMenu.style.display = 'none';
-    controlsScreen.style.display = 'none';
-    objectiveScreen.style.display = 'none';
-    // Resume animation and physics
-    time.start();
+    if (pauseMenu) pauseMenu.style.display = 'none';
+    if (controlsScreen) controlsScreen.style.display = 'none';
+    if (objectiveScreen) objectiveScreen.style.display = 'none';
+    console.log("Game Resumed");
   }
 }
 
@@ -346,44 +345,63 @@ window.addEventListener('keydown', (e) => {
   // Escape key to toggle pause
   if (key === 'Escape' || key === 'Esc') {
     e.preventDefault();
-    togglePauseMenu();
+    // Only allow pausing after loading is complete
+    if (loadingComplete && !gameOver) {
+      togglePauseMenu();
+    }
   }
 });
 
 // Restart stage
-restartStageBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  window.location.reload();
-});
+if (restartStageBtn) {
+  restartStageBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.reload();
+  });
+}
 
 // Show controls
-showControlsBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  controlsScreen.style.display = 'flex';
-});
+if (showControlsBtn) {
+  showControlsBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (controlsScreen) controlsScreen.style.display = 'flex';
+  });
+}
 
 // Show objective
-showObjectiveBtn.addEventListener('click', (e) => {
-  e.preventDefault();
-  objectiveScreen.style.display = 'flex';
-});
+if (showObjectiveBtn) {
+  showObjectiveBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (objectiveScreen) objectiveScreen.style.display = 'flex';
+  });
+}
 
 // Close buttons
-closeBtns.forEach(btn => {
-  btn.addEventListener('click', () => {
-    controlsScreen.style.display = 'none';
-    objectiveScreen.style.display = 'none';
+if (closeBtns) {
+  closeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (controlsScreen) controlsScreen.style.display = 'none';
+      if (objectiveScreen) objectiveScreen.style.display = 'none';
+    });
   });
-});
+}
 
 // Close modals when clicking outside
-[controlsScreen, objectiveScreen].forEach(modal => {
-  modal.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.style.display = 'none';
+if (controlsScreen) {
+  controlsScreen.addEventListener('click', (e) => {
+    if (e.target === controlsScreen) {
+      controlsScreen.style.display = 'none';
     }
   });
-});
+}
+
+if (objectiveScreen) {
+  objectiveScreen.addEventListener('click', (e) => {
+    if (e.target === objectiveScreen) {
+      objectiveScreen.style.display = 'none';
+    }
+  });
+}
 
 window.addEventListener('keyup', (e) => {
   let key = e.key;
