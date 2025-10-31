@@ -4,6 +4,8 @@ import RAPIER from '@dimforge/rapier3d-compat';
 import { Projectile } from './Projectile.js';
 
 import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
+import heroDying from "../../../public/models/cop/Magic Spell Pack/Standing React Death Backward.fbx";
+import heroAttacked from "../../../public/models/cop/Magic Spell Pack/Standing React Small From Front.fbx";
 import heroWalk from "../../../public/models/cop/Magic Spell Pack/Walking.fbx";
 import heroRun from "../../../public/models/cop/Magic Spell Pack/Unarmed Run Forward.fbx";
 import heroIdle from "../../../public/models/cop/Magic Spell Pack/Unarmed Idle.fbx";
@@ -13,16 +15,24 @@ import heroHitO from "../../../public/models/cop/Magic Spell Pack/Standing 2H Ma
 import heroHitK from "../../../public/models/cop/Magic Spell Pack/Standing 2H Magic Attack 04.fbx";
 import heroHitI from "../../../public/models/cop/Magic Spell Pack/Standing 2H Magic Attack 05.fbx";
 import heroHitJ from "../../../public/models/cop/Magic Spell Pack/Standing 1H Magic Attack 03.fbx";
+import heroBlock from "../../../public/models/cop/Magic Spell Pack/Standing Block React Large.fbx";
+
+import powerP from "../../../public/models/projectiles/rasengan.glb";
+import powerL from "../../../public/models/projectiles/speakerman_cross_effect.glb";
+import powerO from "../../../public/models/projectiles/adorned_metal_sphere.glb";
+import powerK from "../../../public/models/projectiles/adorned_metal_sphere.glb";
+import powerI from "../../../public/models/projectiles/speakerman_cross_effect.glb";
+import powerJ from "../../../public/models/projectiles/exoplanet_sg10446623.glb";
 
 export class Player {
-  constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles }) {
+  constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles, attackProjectileConfigs = null }) {
     this.baseMoveForce = moveForce;
     this.moveForce = moveForce;
     this.modelPath = modelPath;
     this.isMoving = false;
     this.isRunning = false;
     this.mixer = null;
-    this.actions = { idle: null, walk: null, run: null };
+    this.actions = { idle: null, walk: null, run: null, hit: null, dying: null };
     this.attacks = {}; // Will hold: p, l, o, k, i, j
     this.currentAction = null;
     this.world = world;
@@ -31,6 +41,83 @@ export class Player {
     this.targetRotation = 0;
     this.currentRotation = 0;
     this.rotationSpeed = 0.05;
+    this.modelLoader = loadModel;
+    this.animationLoader = loadAnimation;
+    
+    // ATTACK COOLDOWN
+    this.attackCooldown = 0;
+    this.attackCooldownDuration = 1.0;
+    this.baseAttackSpeed = 50;
+    
+    // HEALTH SYSTEM
+    this.maxHealth = 1000;
+    this.health = 1000;
+    this.isDead = false;
+    this.isHit = false; // Track if currently playing hit animation
+    this.isAttacking = false; // Track if currently playing attack animation
+    this.team = 'player'; // Used for collision detection
+    
+    // Configure projectiles for each attack key
+    this.attackProjectileConfigs = attackProjectileConfigs || {
+      'p': {
+        pattern: 'triple',
+        speed: this.baseAttackSpeed + 120,
+        offsetY: 18,
+        scale: 10,
+        damage: 50, // Damage amount
+        modelPath: powerP,
+        loadModel: loadModel
+      },
+      'l': {
+        pattern: 'circle',
+        count: 25,
+        speed: this.baseAttackSpeed + 60,
+        spreadAngle: 0.05,
+        offsetY: 10,
+        scale: 1.5,
+        damage: 80,
+        modelPath: powerL,
+        loadModel: loadModel
+      },
+      'o': {
+        pattern: 'single',
+        speed: this.baseAttackSpeed + 100,
+        offsetY: 10,
+        scale: 5,
+        damage: 50,
+        modelPath: powerO,
+        loadModel: loadModel
+      },
+      'k': {
+        pattern: 'single',
+        speed: this.baseAttackSpeed + 500,
+        offsetY: 10,
+        scale: 8,
+        damage: 80,
+        modelPath: powerK,
+        loadModel: loadModel
+      },
+      'i': {
+        pattern: 'spread',
+        spreadAngle: 0.25,
+        count: 6,
+        speed: this.baseAttackSpeed + 30,
+        offsetY: 15,
+        scale: 2,
+        damage: 100,
+        modelPath: powerI,
+        loadModel: loadModel
+      },
+      'j': {
+        pattern: 'single',
+        speed: this.baseAttackSpeed + 80,
+        offsetY: 15,
+        scale: 5,
+        damage: 40,
+        modelPath: powerJ,
+        loadModel: loadModel
+      }
+    };
     
     // Yuka entity
     this.entity = new YUKA.Vehicle();
@@ -46,36 +133,48 @@ export class Player {
     this.rigidBody = world.createRigidBody(bodyDesc);
     
     const colliderDesc = RAPIER.ColliderDesc.cuboid(1, 2, 1);
-    world.createCollider(colliderDesc, this.rigidBody);
+    this.collider = world.createCollider(colliderDesc, this.rigidBody);
     this.rigidBody.setEnabledRotations(false, false, false, true);
     
     entityManager.add(this.entity);
     
-    this.loadPromise = this.loadModel(position, loadModel, loadAnimation, scene, mixers);
+    this.loadPromise = this.initModel(position, scene, mixers);
   }
   
-  async loadModel(initialPosition, loadModel, loadAnimation, scene, mixers) {
+  async initModel(initialPosition, scene, mixers) {
     try {
       const scale = 0.05;
       const rotation = new THREE.Euler(0, Math.PI, 0);
-      this.model = await loadModel(this.modelPath, scale, rotation, new THREE.Vector3(initialPosition.x, initialPosition.y, initialPosition.z));
+      this.model = await this.modelLoader(this.modelPath, scale, rotation, new THREE.Vector3(initialPosition.x, initialPosition.y, initialPosition.z));
       
       this.mixer = new THREE.AnimationMixer(this.model);
       mixers.push(this.mixer);
       
       // === Load Base Animations ===
-      const idleClip = await loadAnimation(heroIdle);
+      const idleClip = await this.animationLoader(heroIdle);
       this.actions.idle = this.mixer.clipAction(idleClip);
       this.actions.idle.play();
       this.currentAction = this.actions.idle;
       
-      const walkClip = await loadAnimation(heroWalk);
+      const walkClip = await this.animationLoader(heroWalk);
       this.actions.walk = this.mixer.clipAction(walkClip);
       this.actions.walk.timeScale = 0.6;
       
-      const runClip = await loadAnimation(heroRun);
+      const runClip = await this.animationLoader(heroRun);
       this.actions.run = this.mixer.clipAction(runClip);
       this.actions.run.timeScale = 0.6;
+      
+      // === Load Hit Animation ===
+      const hitClip = await this.animationLoader(heroAttacked);
+      this.actions.hit = this.mixer.clipAction(hitClip);
+      this.actions.hit.setLoop(THREE.LoopOnce);
+      this.actions.hit.clampWhenFinished = true;
+      
+      // === Load Death Animation ===
+      const dyingClip = await this.animationLoader(heroDying);
+      this.actions.dying = this.mixer.clipAction(dyingClip);
+      this.actions.dying.setLoop(THREE.LoopOnce);
+      this.actions.dying.clampWhenFinished = true;
       
       // === Load All Attack Animations ===
       const attackMap = {
@@ -88,7 +187,7 @@ export class Player {
       };
 
       for (const [key, path] of Object.entries(attackMap)) {
-        const clip = await loadAnimation(path);
+        const clip = await this.animationLoader(path);
         const action = this.mixer.clipAction(clip);
         action.setLoop(THREE.LoopOnce);
         action.clampWhenFinished = true;
@@ -98,11 +197,24 @@ export class Player {
       // === Animation Finish Handler ===
       this.mixer.addEventListener('finished', (e) => {
         const finishedAction = e.action;
+        
+        // Handle attack animations
         if (Object.values(this.attacks).includes(finishedAction)) {
+          this.isAttacking = false; // Allow next attack
           finishedAction.fadeOut(0.3);
           this.actions.idle.reset().fadeIn(0.3).play();
           this.currentAction = this.actions.idle;
         }
+        
+        // Handle hit animation - return to idle
+        if (finishedAction === this.actions.hit) {
+          this.isHit = false;
+          finishedAction.fadeOut(0.2);
+          this.actions.idle.reset().fadeIn(0.2).play();
+          this.currentAction = this.actions.idle;
+        }
+        
+        // Death animation stays frozen at last frame (clampWhenFinished handles this)
       });
       
       this.entity.setRenderComponent(this.model, this.sync);
@@ -117,9 +229,156 @@ export class Player {
     renderComponent.quaternion.copy(entity.rotation);
   }
   
+  takeDamage(amount) {
+    if (this.isDead || this.isHit) return;
+    
+    this.health -= amount;
+    console.log(`Player took ${amount} damage! Health: ${this.health}/${this.maxHealth}`);
+    
+    if (this.health <= 0) {
+      this.health = 0;
+      this.die();
+    } else {
+      // Play hit animation if not dead
+      this.playHitAnimation();
+    }
+  }
+  
+  playHitAnimation() {
+    if (!this.actions.hit || this.isHit || this.isDead) return;
+    
+    this.isHit = true;
+    if (this.currentAction) this.currentAction.fadeOut(0.1);
+    this.actions.hit.reset().fadeIn(0.1).play();
+    this.currentAction = this.actions.hit;
+  }
+  
+  die() {
+    if (this.isDead) return;
+    
+    this.isDead = true;
+    this.isHit = false; // Clear hit flag if dying
+    this.isAttacking = false; // Clear attacking flag
+    console.log('Player died!');
+    
+    // Stop movement
+    this.rigidBody.setLinvel({ x: 0, y: this.rigidBody.linvel().y, z: 0 }, true);
+    
+    // Play death animation - will freeze at last frame due to clampWhenFinished
+    if (this.actions.dying) {
+      if (this.currentAction) this.currentAction.stop();
+      this.actions.dying.reset().play();
+      this.currentAction = this.actions.dying;
+    }
+  }
+  
+  fireProjectiles(attackKey) {
+    const config = this.attackProjectileConfigs[attackKey];
+    if (!config) return;
+    
+    const physicsPos = this.rigidBody.translation();
+    const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.entity.rotation);
+    forward.y = 0;
+    forward.normalize();
+    
+    // Custom pattern function
+    if (config.pattern === 'custom' && config.customPattern) {
+      config.customPattern(this, physicsPos, forward);
+      return;
+    }
+    
+    // Get projectile directions based on pattern
+    const projectileDirections = this.getProjectileDirections(forward, config.pattern, config.count || 1, config.spreadAngle || 0.3);
+    
+    projectileDirections.forEach(direction => {
+      const startPosition = new THREE.Vector3(
+        physicsPos.x,
+        physicsPos.y + (config.offsetY || 10),
+        physicsPos.z
+      );
+      
+      const projectileOptions = {
+        world: this.world,
+        scene: this.scene,
+        color: config.color || 0xff0000,
+        speed: config.speed || 20,
+        scale: config.scale || 1,
+        damage: config.damage || 50, // Pass damage to projectile
+        team: 'player' // Team identification
+      };
+      
+      // Add model parameters if model path is provided
+      if (config.modelPath && config.loadModel) {
+        projectileOptions.modelPath = config.modelPath;
+        projectileOptions.loadModel = config.loadModel;
+        projectileOptions.scale = config.scale;
+      } else if (config.modelPath && this.modelLoader) {
+        projectileOptions.modelPath = config.modelPath;
+        projectileOptions.loadModel = this.modelLoader;
+        projectileOptions.scale = config.scale;
+      }
+      
+      const projectile = new Projectile(
+        { position: startPosition, direction: direction },
+        projectileOptions
+      );
+      this.projectiles.push(projectile);
+    });
+  }
+  
+  getProjectileDirections(baseDirection, pattern, count, spreadAngle) {
+    const directions = [];
+    
+    switch (pattern) {
+      case 'single':
+        directions.push(baseDirection.clone());
+        break;
+        
+      case 'triple':
+        directions.push(baseDirection.clone());
+        directions.push(baseDirection.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), spreadAngle));
+        directions.push(baseDirection.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), -spreadAngle));
+        break;
+        
+      case 'spread':
+        const totalSpread = spreadAngle * 2;
+        for (let i = 0; i < count; i++) {
+          const angle = -spreadAngle + (totalSpread / (count - 1)) * i;
+          directions.push(baseDirection.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), angle));
+        }
+        break;
+        
+      case 'circle':
+        for (let i = 0; i < count; i++) {
+          const angle = (Math.PI * 2 / count) * i;
+          const direction = new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle));
+          directions.push(direction);
+        }
+        break;
+        
+      default:
+        directions.push(baseDirection.clone());
+    }
+    
+    return directions;
+  }
+  
   update(delta) {
+    if (this.isDead) return;
+    
+    // Update cooldown
+    if (this.attackCooldown > 0) {
+      this.attackCooldown -= delta;
+    }
+    
     if (this.mixer && this.actions.idle && this.actions.walk && this.actions.run) {
       const isAttacking = this.currentAction && Object.values(this.attacks).includes(this.currentAction);
+      
+      // Don't interrupt hit animation
+      if (this.isHit) {
+        this.mixer.update(delta);
+        return;
+      }
       
       if (!isAttacking) {
         if (this.isMoving) {
@@ -140,6 +399,8 @@ export class Player {
   }
   
   handleInput(keys, delta) {
+    if (this.isDead || this.isHit) return; // Can't control during hit or death
+    
     const velocity = new THREE.Vector3();
     let rotationInput = 0;
     
@@ -153,29 +414,30 @@ export class Player {
     this.moveForce = this.isRunning ? this.baseMoveForce + 10 : this.baseMoveForce;
     
     // === Handle Attack Keys ===
-    const attackKeyMap = { 'p': 'p', 'l': 'l', 'o': 'o', 'k': 'k', 'i': 'i', 'j': 'j' };
-    let triggeredAttack = null;
+    if (this.attackCooldown <= 0) {
+      const attackKeyMap = { 'p': 'p', 'l': 'l', 'o': 'o', 'k': 'k', 'i': 'i', 'j': 'j' };
+      let triggeredAttack = null;
+      let attackKey = null;
 
-    for (const [inputKey, attackKey] of Object.entries(attackKeyMap)) {
-      if (keys[inputKey] && this.attacks[attackKey]) {
-        triggeredAttack = this.attacks[attackKey];
-        break; // First pressed key wins
+      for (const [inputKey, key] of Object.entries(attackKeyMap)) {
+        if (keys[inputKey] && this.attacks[key]) {
+          triggeredAttack = this.attacks[key];
+          attackKey = key;
+          break; // First pressed key wins
+        }
       }
-    }
 
-    if (triggeredAttack && this.currentAction !== triggeredAttack) {
-      if (this.currentAction) this.currentAction.fadeOut(0.3);
-      triggeredAttack.reset().fadeIn(0.3).play();
-      this.currentAction = triggeredAttack;
-      
-      // Fire projectile
-      const physicsPos = this.rigidBody.translation();
-      const startPosition = new THREE.Vector3(physicsPos.x, physicsPos.y + 15, physicsPos.z);
-      const forward = new THREE.Vector3(0, 0, 1).applyQuaternion(this.entity.rotation);
-      forward.y = 0; forward.normalize();
-      
-      const projectile = new Projectile({ position: startPosition, direction: forward }, { world: this.world, scene: this.scene });
-      this.projectiles.push(projectile);
+      if (triggeredAttack && this.currentAction !== triggeredAttack) {
+        if (this.currentAction) this.currentAction.fadeOut(0.3);
+        triggeredAttack.reset().fadeIn(0.3).play();
+        this.currentAction = triggeredAttack;
+        
+        // Fire projectiles immediately when attack starts
+        this.fireProjectiles(attackKey);
+        
+        // Start cooldown
+        this.attackCooldown = this.attackCooldownDuration;
+      }
     }
     
     // === Rotation ===
