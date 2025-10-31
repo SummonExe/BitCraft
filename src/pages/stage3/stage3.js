@@ -479,6 +479,7 @@ function checkGameOver() {
 }
 
 // === SHOW GAME OVER SCREEN ===
+// === SHOW GAME OVER SCREEN ===
 function showGameOverScreen(playerWon) {
   // Create game over overlay
   const overlay = document.createElement('div');
@@ -526,6 +527,15 @@ function showGameOverScreen(playerWon) {
     ? 'The witch has been vanquished. Your child remains your alive... for now.'
     : 'The witch claims another soul. Darkness falls eternal.';
   
+  // Button container
+  const buttonContainer = document.createElement('div');
+  buttonContainer.style.cssText = `
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  `;
+  
   // Restart button
   const restartBtn = document.createElement('button');
   restartBtn.style.cssText = `
@@ -557,9 +567,43 @@ function showGameOverScreen(playerWon) {
     window.location.reload();
   };
   
+  // Main Menu button
+  const menuBtn = document.createElement('button');
+  menuBtn.style.cssText = `
+    font-family: 'Dudu Calligraphy', cursive;
+    font-size: 1.5em;
+    padding: 15px 50px;
+    background: rgba(20, 20, 20, 0.8);
+    color: #8b0000;
+    border: 2px solid rgba(139, 0, 0, 0.6);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(139, 0, 0, 0.3);
+  `;
+  menuBtn.textContent = '† Main Menu †';
+  menuBtn.onmouseover = () => {
+    menuBtn.style.background = 'rgba(30, 0, 0, 0.9)';
+    menuBtn.style.borderColor = 'rgba(139, 0, 0, 1)';
+    menuBtn.style.boxShadow = '0 0 30px rgba(139, 0, 0, 0.6)';
+    menuBtn.style.transform = 'scale(1.05)';
+  };
+  menuBtn.onmouseout = () => {
+    menuBtn.style.background = 'rgba(20, 20, 20, 0.8)';
+    menuBtn.style.borderColor = 'rgba(139, 0, 0, 0.6)';
+    menuBtn.style.boxShadow = '0 0 20px rgba(139, 0, 0, 0.3)';
+    menuBtn.style.transform = 'scale(1)';
+  };
+  menuBtn.onclick = () => {
+    window.location.href = '../../../index.html';
+  };
+  
+  buttonContainer.appendChild(restartBtn);
+  buttonContainer.appendChild(menuBtn);
+  
   overlay.appendChild(title);
   overlay.appendChild(message);
-  overlay.appendChild(restartBtn);
+  overlay.appendChild(buttonContainer);
   document.body.appendChild(overlay);
   
   // Add fade in animation
@@ -569,10 +613,13 @@ function showGameOverScreen(playerWon) {
       from { opacity: 0; }
       to { opacity: 1; }
     }
+    @keyframes bloodPulse {
+      0% { text-shadow: 0 0 10px rgba(139, 0, 0, 0.5); }
+      100% { text-shadow: 0 0 25px rgba(139, 0, 0, 0.9); }
+    }
   `;
   document.head.appendChild(style);
 }
-
 // === GAME INITIALIZATION ===
 async function initGame() {
   try {

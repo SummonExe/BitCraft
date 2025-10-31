@@ -490,8 +490,8 @@ export class ChaserNPC {
 
       // TRIGGER NEXT ATTACK
       if (this.attackCooldown <= 0 && !isAttacking) {
-        // const attackIndex = Math.floor(Math.random() * this.attacks.length);
-        const attackIndex = 1;
+        const attackIndex = Math.floor(Math.random() * this.attacks.length);
+        // const attackIndex = 1;
         const selectedAction = this.attacks[attackIndex];
 
         if (this.currentAction !== selectedAction) {
