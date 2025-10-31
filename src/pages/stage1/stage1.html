@@ -4,24 +4,111 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<link rel="icon" href="/icon.png" type="image/x-icon">
+		<link rel="stylesheet" href="./stage1.css" />
 		<title>Enchanted Town</title>
-		<link rel="stylesheet" href="./style.css" />
-		<style>
-			#info-text {
-				position: absolute;
-				top: 10px;
-				width: 100%;
-				text-align: center;
-				/* font-family: Arial, sans-serif; */
-				font-size: 24px;
-				color: #ffffff;
-				text-shadow: 2px 2px 4px #000000;
-				z-index: 1;
-			}
-		</style>
 	</head>
 	<body>
+		<!-- Loading Screen -->
+		<div id="loadingScreen">
+			<h2>† Stage 1 Loading †</h2>
+			<div class="loader"></div>
+		</div>
+
+    <!-- Health UI -->
+    <div id="healthUI" style="display: none;">
+      <div class="health-bar-container player-health">
+        <div class="health-label">† Player †</div>
+        <div class="health-bar-bg">
+          <div id="playerHealthFill" class="health-bar-fill" style="width: 100%;"></div>
+          <div class="health-text" id="playerHealthText">100 / 100</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause Menu -->
+    <div id="pauseMenu" class="modal-overlay" style="display: none;">
+      <div class="modal-content">
+        <h2 class="modal-title">† PAUSED †</h2>
+        
+        <div class="pause-menu-links">
+          <a href="../../../index.html" class="menu-link">† Main Menu †</a>
+          <a href="#" class="menu-link" id="restartStage">† Restart Stage †</a>
+          <a href="#" class="menu-link" id="showControls">† Controls †</a>
+          <a href="#" class="menu-link" id="showObjective">† Objective †</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls Screen -->
+    <div id="controlsScreen" class="modal-overlay" style="display: none;">
+      <div class="modal-content">
+        <button class="close-btn">✖</button>
+        <h2 class="modal-title">† CONTROLS †</h2>
+        
+        <div class="controls-grid">
+          <div class="control-item">
+            <span class="control-key">W</span>
+            <span class="control-desc">Move Forward</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">S</span>
+            <span class="control-desc">Move Backward</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">A</span>
+            <span class="control-desc">Move Left</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">D</span>
+            <span class="control-desc">Move Right</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">Shift</span>
+            <span class="control-desc">Run</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">Space</span>
+            <span class="control-desc">Jump</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">ESC</span>
+            <span class="control-desc">Pause Menu</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Objective Screen -->
+    <div id="objectiveScreen" class="modal-overlay" style="display: none;">
+      <div class="modal-content">
+        <button class="close-btn">✖</button>
+        <h2 class="modal-title">☠ OBJECTIVE ☠</h2>
+        
+        <div class="objective-text">
+          <p class="objective-main">
+            Find the sacred Bible in the church before time runs out.
+          </p>
+          
+          <p class="objective-detail">
+            Dark forces are gathering and only the holy Bible can protect you. 
+            You must navigate through the cursed town to find the abandoned church 
+            and retrieve the sacred text.
+          </p>
+          
+          <p class="objective-detail">
+            The church is located in the northern part of town. Look for the green glowing marker 
+            to find the entrance. Once inside, locate the Bible on the altar.
+          </p>
+          
+          <div class="objective-warning">
+            ⚠ WARNING: You have 2 minutes and 15 seconds to complete your mission! ⚠
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="info-text" style="position: absolute; bottom: 20px; left: 20px; color: white;"></div>
+
 		<script type="module" src="./stage1.js"></script>
-		<p id="info-text">Talk to the priest</p>
 	</body>
 </html>

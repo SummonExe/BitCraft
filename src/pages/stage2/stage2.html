@@ -4,10 +4,108 @@
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		 <link rel="icon" href="/icon.png" type="image/x-icon">
+    <link rel="stylesheet" href="./stage2.css" />
 		<title>Enchanted Town</title>
-		<link rel="stylesheet" href="./style.css" />
 	</head>
 	<body>
+		<!-- Loading Screen -->
+		<div id="loadingScreen">
+			<h2>† Stage 2 Loading †</h2>
+			<div class="loader"></div>
+		</div>
+
+    <!-- Health UI -->
+    <div id="healthUI" style="display: none;">
+      <div class="health-bar-container player-health">
+        <div class="health-label">† Player †</div>
+        <div class="health-bar-bg">
+          <div id="playerHealthFill" class="health-bar-fill" style="width: 100%;"></div>
+          <div class="health-text" id="playerHealthText">100 / 100</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause Menu -->
+    <div id="pauseMenu" class="modal-overlay" style="display: none;">
+      <div class="modal-content">
+        <h2 class="modal-title">† PAUSED †</h2>
+        
+        <div class="pause-menu-links">
+          <a href="../../../index.html" class="menu-link">† Main Menu †</a>
+          <a href="#" class="menu-link" id="restartStage">† Restart Stage †</a>
+          <a href="#" class="menu-link" id="showControls">† Controls †</a>
+          <a href="#" class="menu-link" id="showObjective">† Objective †</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls Screen -->
+    <div id="controlsScreen" class="modal-overlay" style="display: none;">
+      <div class="modal-content">
+        <button class="close-btn">✖</button>
+        <h2 class="modal-title">† CONTROLS †</h2>
+        
+        <div class="controls-grid">
+          <div class="control-item">
+            <span class="control-key">W</span>
+            <span class="control-desc">Move Forward</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">S</span>
+            <span class="control-desc">Move Backward</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">A</span>
+            <span class="control-desc">Move Left</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">D</span>
+            <span class="control-desc">Move Right</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">Shift</span>
+            <span class="control-desc">Run</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">Space</span>
+            <span class="control-desc">Jump</span>
+          </div>
+          <div class="control-item">
+            <span class="control-key">ESC</span>
+            <span class="control-desc">Pause Menu</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Objective Screen -->
+    <div id="objectiveScreen" class="modal-overlay" style="display: none;">
+      <div class="modal-content">
+        <button class="close-btn">✖</button>
+        <h2 class="modal-title">☠ OBJECTIVE ☠</h2>
+        
+        <div class="objective-text">
+          <p class="objective-main">
+            Find your child and escape the haunted mansion.
+          </p>
+          
+          <p class="objective-detail">
+            Your child has been taken by dark forces and trapped in this cursed mansion. 
+            You must navigate through the terrifying halls and maze to find them before it's too late.
+          </p>
+          
+          <p class="objective-detail">
+            Collect holy water to strengthen your resolve. Avoid the ghostly entities that roam the halls - 
+            they will stop at nothing to keep you from your child.
+          </p>
+          
+          <div class="objective-warning">
+            ⚠ WARNING: The entities are drawn to movement and sound. Stay quiet and move carefully ⚠
+          </div>
+        </div>
+      </div>
+    </div>
+
 		<script type="module" src="./stage2.js" defer></script>
 	</body>
 </html>

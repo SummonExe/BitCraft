@@ -8,13 +8,17 @@
     src: url('../../../public/fonts/Dudu_Calligraphy.ttf') format('truetype');
 }
 
+* {
+    font-family: 'Dudu Calligraphy', cursive;
+}
+
 html,body {
 	margin: 0;
 	padding: 0;
 	overflow: hidden; /* Prevents scrollbars */
 	font-family: 'Dudu Calligraphy', cursive;
-
 }
+
 #menuContent {
     position: absolute;
     top: 50%;
@@ -86,7 +90,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .menu-link::after {
-    content: '† ';
+    content: '†';
     position: absolute;
     left: 10px;
     top: 50%;
@@ -206,12 +210,6 @@ canvas {
                 inset 0 0 10px rgba(0, 0, 0, 0.4);
 }
 
-#witchHealthFill {
-    background: linear-gradient(to right, #4a0080, #2d004d);
-    box-shadow: 0 0 15px rgba(138, 0, 230, 0.5),
-                inset 0 0 10px rgba(0, 0, 0, 0.4);
-}
-
 .health-text {
     position: absolute;
     top: 50%;
@@ -232,14 +230,6 @@ canvas {
 
 .player-health .health-label {
     color: #8b0000;
-}
-
-.witch-health {
-    border-color: rgba(138, 0, 230, 0.6);
-}
-
-.witch-health .health-label {
-    color: #8a00e6;
 }
 
 @keyframes spin {

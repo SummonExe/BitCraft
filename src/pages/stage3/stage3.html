@@ -14,6 +14,126 @@
     <div class="loader"></div>
   </div>
 
+  <!-- Health UI -->
+  <div id="healthUI" style="display: none;">
+    <div class="health-bar-container player-health">
+      <div class="health-label">† Player †</div>
+      <div class="health-bar-bg">
+        <div id="playerHealthFill" class="health-bar-fill" style="width: 100%;"></div>
+        <div class="health-text" id="playerHealthText">1000 / 1000</div>
+      </div>
+    </div>
+    
+    <div class="health-bar-container witch-health">
+      <div class="health-label">☠ Witch ☠</div>
+      <div class="health-bar-bg">
+        <div id="witchHealthFill" class="health-bar-fill" style="width: 100%;"></div>
+        <div class="health-text" id="witchHealthText">1000 / 1000</div>
+      </div>
+    </div>
+  </div>
+    <!-- Pause Menu -->
+  <div id="pauseMenu" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h2 class="modal-title">† PAUSED †</h2>
+      
+      <div class="pause-menu-links">
+        <a href="../../../index.html" class="menu-link">† Main Menu †</a>
+        <a href="#" class="menu-link" id="restartStage">† Restart Stage †</a>
+        <a href="#" class="menu-link" id="showControls">† Controls †</a>
+        <a href="#" class="menu-link" id="showObjective">† Objective †</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls Screen -->
+  <div id="controlsScreen" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <button class="close-btn">✖</button>
+      <h2 class="modal-title">† CONTROLS †</h2>
+      
+      <div class="controls-grid">
+        <div class="control-item">
+          <span class="control-key">↑</span>
+          <span class="control-desc">Move Forward</span>
+        </div>
+        <div class="control-item">
+          <span class="control-key">↓</span>
+          <span class="control-desc">Move Backward</span>
+        </div>
+        <div class="control-item">
+          <span class="control-key">←</span>
+          <span class="control-desc">Turn Left</span>
+        </div>
+        <div class="control-item">
+          <span class="control-key">→</span>
+          <span class="control-desc">Turn Right</span>
+        </div>
+        <div class="control-item">
+          <span class="control-key">Shift</span>
+          <span class="control-desc">Run</span>
+        </div>
+        <div class="control-item">
+          <span class="control-key">P</span>
+          <span class="control-desc">Triple Shot</span>
+        </div>
+        <div class="control-item">
+          <span class="control-key">L</span>
+          <span class="control-desc">Circle Burst</span>
+        </div>
+        <div class="control-item">
+          <span class="control-key">O</span>
+          <span class="control-desc">Single Shot</span>
+        </div>
+        <div class="control-item">
+          <span class="control-key">K</span>
+          <span class="control-desc">Fast Shot</span>
+        </div>
+        <div class="control-item">
+          <span class="control-key">I</span>
+          <span class="control-desc">Spread Shot</span>
+        </div>
+        <div class="control-item">
+          <span class="control-key">J</span>
+          <span class="control-desc">Magic Orb</span>
+        </div>
+        <div class="control-item">
+          <span class="control-key">ESC</span>
+          <span class="control-desc">Pause Menu</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Objective Screen -->
+  <div id="objectiveScreen" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <button class="close-btn">✖</button>
+      <h2 class="modal-title">☠ OBJECTIVE ☠</h2>
+      
+      <div class="objective-text">
+        <p class="objective-main">
+          Defeat the witch to save your child from eternal darkness.
+        </p>
+        
+        <p class="objective-detail">
+          The witch has kidnapped your child and dragged them into the cursed town. 
+          You must vanquish this evil creature before she claims another innocent soul.
+        </p>
+        
+        <p class="objective-detail">
+          Use your magical abilities to attack from range. The witch is powerful - 
+          dodge her projectiles and strike when the moment is right.
+        </p>
+        
+        <div class="objective-warning">
+          ⚠ WARNING: The witch will not stop till one of you is dead. Kill or be killed ⚠
+        </div>
+      </div>
+    </div>
+  </div>
+  
+
   <script type="module" src="./stage3.js" defer></script>
 </body>
 </html>
