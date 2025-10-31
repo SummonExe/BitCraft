@@ -276,13 +276,14 @@ canvas {
   animation: fadeIn 0.3s ease-in;
 }
 
+/* Updated Modal Content - Make it more petite */
 .modal-content {
   background: rgba(15, 15, 15, 0.95);
   border: 3px solid rgba(139, 0, 0, 0.7);
   border-radius: 5px;
-  padding: 40px;
-  max-width: 800px;
-  width: 90%;
+  padding: 30px; /* Reduced from 40px for compactness */
+  max-width: 650px; /* Reduced from 800px to match main menu's petite feel */
+  width: 80%; /* Changed from 90% to auto to fit content */
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
@@ -319,17 +320,17 @@ canvas {
   animation: bloodPulse 2s ease-in-out infinite alternate;
 }
 
-/* Pause Menu Links */
+/* Updated Pause Menu Links - Slimmer links */
 .pause-menu-links {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 1;
 }
 
 .pause-menu-links .menu-link {
-  width: 80%;
-  max-width: 300px;
+  width: 100%; /* Changed from 80% to 100% for full width within smaller container */
+  max-width: 350px; /* Reduced from 300px for petite feel */
   text-align: center;
 }
 
