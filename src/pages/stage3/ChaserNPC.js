@@ -16,10 +16,10 @@ import witchDying from "../../../public/models/witch/Zombie Dying.fbx";
 import witchPowerup from "../../../public/models/witch/Standing Taunt Battlecry.fbx";
 
 import power0 from "../../../public/models/projectiles/water_orb.glb";
-import power1 from "../../../public/models/projectiles/water_orb.glb";
+import power1 from "../../../public/models/projectiles/adorned_metal_sphere.glb";
 import power2 from "../../../public/models/projectiles/water_orb.glb";
-import power3 from "../../../public/models/projectiles/water_orb.glb";
-import power4 from "../../../public/models/projectiles/water_orb.glb";
+import power3 from "../../../public/models/projectiles/rift.glb";
+import power4 from "../../../public/models/projectiles/rift.glb";
 import power5 from "../../../public/models/projectiles/water_orb.glb";
 
 export class ChaserNPC {
@@ -50,8 +50,8 @@ export class ChaserNPC {
     this.actions = { idle: null, walk: null, hit: null, dying: null, powerup: null };
     this.attacks = [];
     this.currentAction = null;
-    this.attackCooldown = 1;
-    this.cooldownDuration = 1;
+    this.attackCooldown = 5;
+    this.cooldownDuration = 3;
     
     // HEALTH SYSTEM
     this.maxHealth = 1000;
@@ -100,19 +100,19 @@ export class ChaserNPC {
         speed: 40,
         spreadAngle: 0.2,
         offsetY: 15,
-        scale: 1,
+        scale: 1.5,
         damage: 60,
         modelPath: power3,
         loadModel: loadModel
       },
       4: { // Attack 5 - Circle burst
         pattern: 'spread',
-        count: 10,
-        // color: 0xbb00ff,
-        speed: 80,
+        count: 8,
+        spreadAngle: 0.5,
+        speed: 30,
         offsetY: 15,
         scale: 1,
-        damage: 20,
+        damage: 40,
         modelPath: power4,
         loadModel: loadModel
       },

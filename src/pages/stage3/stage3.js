@@ -17,16 +17,16 @@ import groundTexture from "../../../public/2025-10-23 123028.png";
 
 import powerP from "../../../public/models/projectiles/low_poly_water_drop.glb";
 import powerL from "../../../public/models/projectiles/speakerman_cross_effect.glb";
-import powerO from "../../../public/models/projectiles/speakerman_cross_effect.glb";
+import powerO from "../../../public/models/projectiles/adorned_metal_sphere.glb";
 import powerK from "../../../public/models/projectiles/low_poly_water_drop.glb";
-import powerI from "../../../public/models/projectiles/low_poly_water_drop.glb";
-import powerJ from "../../../public/models/projectiles/low_poly_water_drop.glb";
+import powerI from "../../../public/models/projectiles/speakerman_cross_effect.glb";
+import powerJ from "../../../public/models/projectiles/monocyte.glb";
 
 import power0 from "../../../public/models/projectiles/water_orb.glb";
-import power1 from "../../../public/models/projectiles/water_orb.glb";
+import power1 from "../../../public/models/projectiles/adorned_metal_sphere.glb";
 import power2 from "../../../public/models/projectiles/water_orb.glb";
-import power3 from "../../../public/models/projectiles/water_orb.glb";
-import power4 from "../../../public/models/projectiles/water_orb.glb";
+import power3 from "../../../public/models/projectiles/rift.glb";
+import power4 from "../../../public/models/projectiles/rift.glb";
 import power5 from "../../../public/models/projectiles/water_orb.glb";
 
 // === LOADING SCREEN & UI ===
@@ -508,7 +508,7 @@ async function initGame() {
       position: { x: -10, y: 0, z: 100 + outsideOffset },
       modelPath: witch,
       maxSpeed: 20,
-      stopDistance: 60,
+      stopDistance: 50,
       target: player,
       world,
       scene,

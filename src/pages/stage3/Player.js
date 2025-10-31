@@ -19,10 +19,10 @@ import heroBlock from "../../../public/models/cop/Magic Spell Pack/Standing Bloc
 
 import powerP from "../../../public/models/projectiles/low_poly_water_drop.glb";
 import powerL from "../../../public/models/projectiles/speakerman_cross_effect.glb";
-import powerO from "../../../public/models/projectiles/speakerman_cross_effect.glb";
+import powerO from "../../../public/models/projectiles/adorned_metal_sphere.glb";
 import powerK from "../../../public/models/projectiles/low_poly_water_drop.glb";
-import powerI from "../../../public/models/projectiles/low_poly_water_drop.glb";
-import powerJ from "../../../public/models/projectiles/low_poly_water_drop.glb";
+import powerI from "../../../public/models/projectiles/speakerman_cross_effect.glb";
+import powerJ from "../../../public/models/projectiles/monocyte.glb";
 
 export class Player {
   constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles, attackProjectileConfigs = null }) {
@@ -68,21 +68,22 @@ export class Player {
         loadModel: loadModel
       },
       'l': {
-        pattern: 'triple',
+        pattern: 'spread',
+        count: 6,
         speed: 30,
-        spreadAngle: 0.2,
-        offsetY: 15,
+        spreadAngle: 0.3,
+        offsetY: 10,
         scale: 0.5,
-        damage: 40,
+        damage: 80,
         modelPath: powerL,
         loadModel: loadModel
       },
       'o': {
-        pattern: 'triple',
+        pattern: 'single',
         speed: 30,
         offsetY: 15,
-        scale: 0.5,
-        damage: 60,
+        scale: 2,
+        damage: 50,
         modelPath: powerO,
         loadModel: loadModel
       },
@@ -106,12 +107,13 @@ export class Player {
         loadModel: loadModel
       },
       'j': {
-        pattern: 'triple',
-        spreadAngle: 0.5,
-        speed: 35,
-        offsetY: 15,
-        scale: 8,
-        damage: 80,
+        pattern: 'spread',
+        spreadAngle: 0.6,
+        count: 10,
+        speed: 40,
+        offsetY: 25,
+        scale: 0.5,
+        damage: 40,
         modelPath: powerJ,
         loadModel: loadModel
       }
@@ -291,7 +293,7 @@ export class Player {
     projectileDirections.forEach(direction => {
       const startPosition = new THREE.Vector3(
         physicsPos.x,
-        physicsPos.y + (config.offsetY || 15),
+        physicsPos.y + (config.offsetY || 10),
         physicsPos.z
       );
       
