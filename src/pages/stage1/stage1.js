@@ -44,6 +44,94 @@ let world, physicsReady = false;
 let player;
 let loadingComplete = false;
 let isPaused = false;
+// Pause menu state
+let gamePaused = false;
+
+// Pause menu elements
+const pauseMenu = document.getElementById('pauseMenu');
+const controlsScreen = document.getElementById('controlsScreen');
+const objectiveScreen = document.getElementById('objectiveScreen');
+const restartStageBtn = document.getElementById('restartStage');
+const showControlsBtn = document.getElementById('showControls');
+const showObjectiveBtn = document.getElementById('showObjective');
+const closeBtns = document.querySelectorAll('.close-btn');
+
+// Toggle pause menu
+function togglePauseMenu() {
+  if (isGameOver || !loadingComplete) return; // Don't allow pausing when game over or loading
+  
+  gamePaused = !gamePaused;
+  
+  if (gamePaused) {
+    if (pauseMenu) pauseMenu.style.display = 'flex';
+    console.log("Game Paused");
+  } else {
+    if (pauseMenu) pauseMenu.style.display = 'none';
+    if (controlsScreen) controlsScreen.style.display = 'none';
+    if (objectiveScreen) objectiveScreen.style.display = 'none';
+    console.log("Game Resumed");
+  }
+}
+
+// Event listeners for pause menu
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && loadingComplete && !isGameOver) {
+    e.preventDefault();
+    togglePauseMenu();
+  }
+});
+
+// Restart stage
+if (restartStageBtn) {
+  restartStageBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    window.location.reload();
+  });
+}
+
+// Show controls
+if (showControlsBtn) {
+  showControlsBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (controlsScreen) controlsScreen.style.display = 'flex';
+  });
+}
+
+// Show objective
+if (showObjectiveBtn) {
+  showObjectiveBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (objectiveScreen) objectiveScreen.style.display = 'flex';
+  });
+}
+
+// Close buttons
+if (closeBtns) {
+  closeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (controlsScreen) controlsScreen.style.display = 'none';
+      if (objectiveScreen) objectiveScreen.style.display = 'none';
+    });
+  });
+}
+
+// Close modals when clicking outside
+if (controlsScreen) {
+  controlsScreen.addEventListener('click', (e) => {
+    if (e.target === controlsScreen) {
+      controlsScreen.style.display = 'none';
+    }
+  });
+}
+
+if (objectiveScreen) {
+  objectiveScreen.addEventListener('click', (e) => {
+    if (e.target === objectiveScreen) {
+      objectiveScreen.style.display = 'none';
+    }
+  });
+}
+
 const subtitleElement = document.getElementById('info-text');
 
 // Initialize Rapier physics
@@ -131,204 +219,224 @@ spawnIndicator.rotation.x = -Math.PI / 2; // Lay flat on ground
 spawnIndicator.position.set(2842, 9.5, -952); // Outside church spawn position
 scene.add(spawnIndicator);
 
-// Create UI elements
+// Create UI elements - Updated to match theme
 const timerElement = document.createElement('div');
-timerElement.style.position = 'absolute';
-timerElement.style.top = '20px';
-timerElement.style.left = '20px';
-timerElement.style.color = 'white';
-timerElement.style.fontSize = '32px';
-timerElement.style.textShadow = '2px 2px 4px rgba(0,0,0,0.8)';
-timerElement.style.zIndex = '1000';
+timerElement.style.cssText = `
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  color: #8b0000;
+  font-size: 2em;
+  font-family: 'DK Okiku', sans-serif;
+  text-shadow: 0 0 10px rgba(139, 0, 0, 0.8);
+  background: rgba(10, 10, 10, 0.7);
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: 2px solid rgba(139, 0, 0, 0.4);
+  z-index: 1000;
+`;
 document.body.appendChild(timerElement);
 
 const bibleBarElement = document.createElement('div');
-bibleBarElement.style.position = 'absolute';
-bibleBarElement.style.top = '70px';
-bibleBarElement.style.left = '20px';
-bibleBarElement.style.color = '#FFD700';
-bibleBarElement.style.fontSize = '20px';
-bibleBarElement.style.textShadow = '2px 2px 4px rgba(0,0,0,0.8)';
-bibleBarElement.style.display = 'none';
-bibleBarElement.style.zIndex = '1000';
-bibleBarElement.innerText = '📖 BIBLE COLLECTED!';
+bibleBarElement.style.cssText = `
+  position: absolute;
+  top: 80px;
+  left: 20px;
+  color: #FFD700;
+  font-size: 1.5em;
+  font-family: 'Dudu Calligraphy', cursive;
+  text-shadow: 0 0 10px rgba(255, 215, 0, 0.8);
+  background: rgba(10, 10, 10, 0.7);
+  padding: 8px 16px;
+  border-radius: 5px;
+  border: 2px solid rgba(255, 215, 0, 0.4);
+  display: none;
+  z-index: 1000;
+`;
+bibleBarElement.innerHTML = '† HOLY BIBLE COLLECTED †';
 document.body.appendChild(bibleBarElement);
 
-// Create Pause Menu
-const pauseMenu = document.createElement('div');
-pauseMenu.style.position = 'absolute';
-pauseMenu.style.top = '50%';
-pauseMenu.style.left = '50%';
-pauseMenu.style.transform = 'translate(-50%, -50%)';
-pauseMenu.style.padding = '40px 60px';
-pauseMenu.style.background = 'rgba(0, 0, 0, 0.95)';
-pauseMenu.style.border = '3px solid #ffffff';
-pauseMenu.style.borderRadius = '15px';
-pauseMenu.style.color = '#fff';
-pauseMenu.style.textAlign = 'center';
-pauseMenu.style.zIndex = '2000';
-pauseMenu.style.display = 'none';
-pauseMenu.innerHTML = `
-  <div style="font-size: 48px; margin-bottom: 30px;">PAUSED</div>
-  <button id="resume-btn" style="
-    padding: 15px 40px;
-    font-size: 24px;
-    background: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin: 10px;
-    width: 200px;
-  ">Resume</button>
-  <br>
-  <button id="pause-menu-btn" style="
-    padding: 15px 40px;
-    font-size: 24px;
-    background: #ff9800;
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    margin: 10px;
-    width: 200px;
-  ">Main Menu</button>
-  <div style="margin-top: 30px; font-size: 16px; color: #aaa;">Press ESC to resume</div>
-`;
-document.body.appendChild(pauseMenu);
 
-// Pause menu event listeners
-document.getElementById('resume-btn').addEventListener('click', () => {
-  togglePause();
-});
-
-document.getElementById('pause-menu-btn').addEventListener('click', () => {
-  window.location.href = '/'; // Navigate to main menu
-});
-
-// Function to toggle pause
-function togglePause() {
-  isPaused = !isPaused;
-  pauseMenu.style.display = isPaused ? 'block' : 'none';
-  
-  // Pause/resume music
-  if (isPaused) {
-    bgMusic.pause();
-    console.log('Game paused');
-  } else {
-    bgMusic.play().catch(() => {});
-    console.log('Game resumed');
-  }
-}
-
-// Game Over System
+// Game Over System - Updated to match horror theme
 function showGameOver(won = false) {
   isGameOver = true;
   bgMusic.pause(); // Stop music when game ends
   
-  const gameOverDiv = document.createElement("div");
-  gameOverDiv.style.position = "absolute";
-  gameOverDiv.style.top = "50%";
-  gameOverDiv.style.left = "50%";
-  gameOverDiv.style.transform = "translate(-50%, -50%)";
-  gameOverDiv.style.padding = "40px 60px";
-  gameOverDiv.style.background = won ? "rgba(0, 139, 0, 0.95)" : "rgba(139, 0, 0, 0.95)";
-  gameOverDiv.style.border = won ? "3px solid #00ff00" : "3px solid #ff0000";
-  gameOverDiv.style.borderRadius = "15px";
-  gameOverDiv.style.color = "#fff";
-  gameOverDiv.style.fontSize = "48px";
-  gameOverDiv.style.textAlign = "center";
-  gameOverDiv.style.zIndex = "3000";
+  const overlay = document.createElement('div');
+  overlay.id = 'gameOverScreen';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    animation: fadeIn 1s ease-in;
+  `;
+  
+  // Title
+  const title = document.createElement('h1');
+  title.style.cssText = `
+    font-family: 'DK Okiku', sans-serif;
+    font-size: 5em;
+    margin-bottom: 30px;
+    color: ${won ? '#8b0000' : '#8a00e6'};
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    text-shadow: 0 0 30px ${won ? 'rgba(139, 0, 0, 0.8)' : 'rgba(138, 0, 230, 0.8)'};
+    animation: bloodPulse 2s ease-in-out infinite alternate;
+  `;
+  title.textContent = won ? '† VICTORY †' : '† DEFEAT †';
+  
+  // Message
+  const message = document.createElement('p');
+  message.style.cssText = `
+    font-family: 'Dudu Calligraphy', cursive;
+    font-size: 2em;
+    margin-bottom: 50px;
+    color: #666;
+    text-align: center;
+    max-width: 600px;
+  `;
   
   if (won) {
-    gameOverDiv.innerHTML = `
-      <div style="margin-bottom: 20px;">🎉 YOU WIN! 🎉</div>
-      <div style="font-size: 20px; margin-bottom: 10px;">Bible collected in time!</div>
-      <div style="font-size: 18px; margin-bottom: 30px;">Time: ${formatTime(collectionTime - gameStartTime)}</div>
-      <button id="next-stage-btn" style="
-        padding: 15px 40px;
-        font-size: 24px;
-        background: #00ff00;
-        color: black;
-        border: 2px solid #fff;
-        border-radius: 8px;
-        cursor: pointer;
-        margin: 10px;
-      ">Next Stage ➜</button>
-      <br>
-      <button id="restart-btn" style="
-        padding: 15px 40px;
-        font-size: 24px;
-        background: #4CAF50;
-        color: white;
-        border: 2px solid #fff;
-        border-radius: 8px;
-        cursor: pointer;
-        margin: 10px;
-      ">Play Again</button>
-      <br>
-      <button id="menu-btn" style="
-        padding: 15px 40px;
-        font-size: 24px;
-        background: #ff9800;
-        color: white;
-        border: 2px solid #fff;
-        border-radius: 8px;
-        cursor: pointer;
-        margin: 10px;
-      ">Main Menu</button>
-    `;
+    const collectionTimeFormatted = formatTime(collectionTime - gameStartTime);
+    message.textContent = `You found the sacred Bible in ${collectionTimeFormatted}! The holy text will protect you in the battles ahead.`;
   } else {
-    gameOverDiv.innerHTML = `
-      <div style="margin-bottom: 20px;">⏰ TIME'S UP!</div>
-      <div style="font-size: 20px; margin-bottom: 30px;">You ran out of time...</div>
-      <button id="restart-btn" style="
-        padding: 15px 40px;
-        font-size: 24px;
-        background: #ff0000;
-        color: white;
-        border: 2px solid #fff;
-        border-radius: 8px;
-        cursor: pointer;
-        margin: 10px;
-      ">Try Again</button>
-      <br>
-      <button id="menu-btn" style="
-        padding: 15px 40px;
-        font-size: 24px;
-        background: #ff9800;
-        color: white;
-        border: 2px solid #fff;
-        border-radius: 8px;
-        cursor: pointer;
-        margin: 10px;
-      ">Main Menu</button>
+    message.textContent = 'The darkness has consumed you. Time has run out and the evil forces prevail.';
+  }
+  
+  // Button container
+  const buttonContainer = document.createElement('div');
+  buttonContainer.style.cssText = `
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  `;
+  
+  // Next Stage button (only for victory)
+  if (won) {
+    const nextStageBtn = document.createElement('button');
+    nextStageBtn.style.cssText = `
+      font-family: 'Dudu Calligraphy', cursive;
+      font-size: 1.5em;
+      padding: 15px 50px;
+      background: rgba(20, 20, 20, 0.8);
+      color: #8b0000;
+      border: 2px solid rgba(139, 0, 0, 0.6);
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 20px rgba(139, 0, 0, 0.3);
     `;
+    nextStageBtn.textContent = '† Next Stage †';
+    nextStageBtn.onmouseover = () => {
+      nextStageBtn.style.background = 'rgba(30, 0, 0, 0.9)';
+      nextStageBtn.style.borderColor = 'rgba(139, 0, 0, 1)';
+      nextStageBtn.style.boxShadow = '0 0 30px rgba(139, 0, 0, 0.6)';
+      nextStageBtn.style.transform = 'scale(1.05)';
+    };
+    nextStageBtn.onmouseout = () => {
+      nextStageBtn.style.background = 'rgba(20, 20, 20, 0.8)';
+      nextStageBtn.style.borderColor = 'rgba(139, 0, 0, 0.6)';
+      nextStageBtn.style.boxShadow = '0 0 20px rgba(139, 0, 0, 0.3)';
+      nextStageBtn.style.transform = 'scale(1)';
+    };
+    nextStageBtn.onclick = () => {
+      window.location.href = '/src/pages/stage2/stage2.html';
+    };
+    buttonContainer.appendChild(nextStageBtn);
   }
   
-  document.body.appendChild(gameOverDiv);
+  // Restart button
+  const restartBtn = document.createElement('button');
+  restartBtn.style.cssText = `
+    font-family: 'Dudu Calligraphy', cursive;
+    font-size: 1.5em;
+    padding: 15px 50px;
+    background: rgba(20, 20, 20, 0.8);
+    color: #8b0000;
+    border: 2px solid rgba(139, 0, 0, 0.6);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(139, 0, 0, 0.3);
+  `;
+  restartBtn.textContent = '† Restart †';
+  restartBtn.onmouseover = () => {
+    restartBtn.style.background = 'rgba(30, 0, 0, 0.9)';
+    restartBtn.style.borderColor = 'rgba(139, 0, 0, 1)';
+    restartBtn.style.boxShadow = '0 0 30px rgba(139, 0, 0, 0.6)';
+    restartBtn.style.transform = 'scale(1.05)';
+  };
+  restartBtn.onmouseout = () => {
+    restartBtn.style.background = 'rgba(20, 20, 20, 0.8)';
+    restartBtn.style.borderColor = 'rgba(139, 0, 0, 0.6)';
+    restartBtn.style.boxShadow = '0 0 20px rgba(139, 0, 0, 0.3)';
+    restartBtn.style.transform = 'scale(1)';
+  };
+  restartBtn.onclick = () => {
+    window.location.reload();
+  };
   
-  // Event listeners for buttons
-  const restartBtn = document.getElementById("restart-btn");
-  if (restartBtn) {
-    restartBtn.addEventListener("click", () => {
-      location.reload();
-    });
-  }
+  // Main Menu button
+  const menuBtn = document.createElement('button');
+  menuBtn.style.cssText = `
+    font-family: 'Dudu Calligraphy', cursive;
+    font-size: 1.5em;
+    padding: 15px 50px;
+    background: rgba(20, 20, 20, 0.8);
+    color: #8b0000;
+    border: 2px solid rgba(139, 0, 0, 0.6);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(139, 0, 0, 0.3);
+  `;
+  menuBtn.textContent = '† Main Menu †';
+  menuBtn.onmouseover = () => {
+    menuBtn.style.background = 'rgba(30, 0, 0, 0.9)';
+    menuBtn.style.borderColor = 'rgba(139, 0, 0, 1)';
+    menuBtn.style.boxShadow = '0 0 30px rgba(139, 0, 0, 0.6)';
+    menuBtn.style.transform = 'scale(1.05)';
+  };
+  menuBtn.onmouseout = () => {
+    menuBtn.style.background = 'rgba(20, 20, 20, 0.8)';
+    menuBtn.style.borderColor = 'rgba(139, 0, 0, 0.6)';
+    menuBtn.style.boxShadow = '0 0 20px rgba(139, 0, 0, 0.3)';
+    menuBtn.style.transform = 'scale(1)';
+  };
+  menuBtn.onclick = () => {
+    window.location.href = '../../../index.html';
+  };
   
-  const menuBtn = document.getElementById("menu-btn");
-  if (menuBtn) {
-    menuBtn.addEventListener("click", () => {
-      window.location.href = '/'; // Navigate to main menu
-    });
-  }
+  buttonContainer.appendChild(restartBtn);
+  buttonContainer.appendChild(menuBtn);
   
-  const nextStageBtn = document.getElementById("next-stage-btn");
-  if (nextStageBtn) {
-    nextStageBtn.addEventListener("click", () => {
-      window.location.href = '/src/pages/stage2/stage2.html'; // Navigate to stage 2
-    });
-  }
+  overlay.appendChild(title);
+  overlay.appendChild(message);
+  overlay.appendChild(buttonContainer);
+  document.body.appendChild(overlay);
+  
+  // Add fade in animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes bloodPulse {
+      0% { text-shadow: 0 0 10px rgba(139, 0, 0, 0.5); }
+      100% { text-shadow: 0 0 25px rgba(139, 0, 0, 0.9); }
+    }
+  `;
+  document.head.appendChild(style);
 }
 
 // Helper function to create physics colliders from mesh
@@ -565,10 +673,6 @@ window.addEventListener('keydown', (e) => {
   if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
   if (e.key === 'Shift') keys.Shift = true;
   
-  // ESC to toggle pause
-  if (e.key === 'Escape' && !isGameOver) {
-    togglePause();
-  }
 });
 window.addEventListener('keyup', (e) => { 
   if (keys.hasOwnProperty(e.key)) keys[e.key] = false;
@@ -675,7 +779,7 @@ function animate() {
   if (!physicsReady || !loadingComplete) return;
   
   // If paused, just render and return
-  if (isPaused) {
+  if (gamePaused) {
     renderer.render(scene, camera);
     return;
   }
@@ -733,10 +837,16 @@ function animate() {
     if (!bibleCollected) {
       if (remainingTime < 30000) { // Last 30 seconds
         timerElement.style.color = '#ff0000';
+        timerElement.style.borderColor = 'rgba(255, 0, 0, 0.6)';
+        timerElement.style.textShadow = '0 0 15px rgba(255, 0, 0, 0.8)';
       } else if (remainingTime < 60000) { // Last minute
         timerElement.style.color = '#ffaa00';
+        timerElement.style.borderColor = 'rgba(255, 170, 0, 0.6)';
+        timerElement.style.textShadow = '0 0 15px rgba(255, 170, 0, 0.8)';
       } else {
-        timerElement.style.color = 'white';
+        timerElement.style.color = '#8b0000';
+        timerElement.style.borderColor = 'rgba(139, 0, 0, 0.4)';
+        timerElement.style.textShadow = '0 0 10px rgba(139, 0, 0, 0.8)';
       }
     }
     
@@ -746,7 +856,21 @@ function animate() {
     const bibleInstruction = !bibleCollected && bibleMesh 
       ? ' | Press Shift+E near Bible to collect | ESC to Pause'
       : ' | ESC to Pause';
-    subtitleElement.innerText = `Player Position: X:${pos.x.toFixed(1)} Y:${pos.y.toFixed(1)} Z:${pos.z.toFixed(1)} | Use Arrow Keys to move${bibleInstruction}`;
+    subtitleElement.style.cssText = `
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      color: #8b0000;
+      font-family: 'Dudu Calligraphy', cursive;
+      font-size: 1.2em;
+      text-shadow: 0 0 10px rgba(139, 0, 0, 0.5);
+      background: rgba(10, 10, 10, 0.7);
+      padding: 8px 12px;
+      border-radius: 5px;
+      z-index: 1000;
+    `;
+    subtitleElement.innerText = `Position: X:${pos.x.toFixed(1)} Y:${pos.y.toFixed(1)} Z:${pos.z.toFixed(1)}${bibleInstruction}`;
+
   }
   
   mixers.forEach(mixer => mixer.update(delta));
