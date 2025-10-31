@@ -299,11 +299,31 @@ const keys = {
 };
 
 window.addEventListener('keydown', (e) => {
-  if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
+  let key = e.key;
+  
+  // Convert alphabetic keys to lowercase
+  if (/^[a-zA-Z]$/.test(key)) {
+    key = key.toLowerCase();
+  }
+
+  if (keys.hasOwnProperty(key)) {
+    keys[key] = true;
+  }
 });
+
 window.addEventListener('keyup', (e) => {
-  if (keys.hasOwnProperty(e.key)) keys[e.key] = false;
+  let key = e.key;
+  
+  // Convert alphabetic keys to lowercase
+  if (/^[a-zA-Z]$/.test(key)) {
+    key = key.toLowerCase();
+  }
+
+  if (keys.hasOwnProperty(key)) {
+    keys[key] = false;
+  }
 });
+
 window.addEventListener('resize', () => {
   camera.aspect = window.innerWidth / window.innerHeight;
   camera.updateProjectionMatrix();
