@@ -14,7 +14,20 @@ import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_A
 import witch from "../../../public/models/witch/witch_Idle.fbx";
 import kid from "../../../public/models/kid2/Idle.fbx";
 import groundTexture from "../../../public/2025-10-23 123028.png";
-import fireball from "../../../public/models/projectiles/rasengan.glb";
+
+import powerP from "../../../public/models/projectiles/low_poly_water_drop.glb";
+import powerL from "../../../public/models/projectiles/speakerman_cross_effect.glb";
+import powerO from "../../../public/models/projectiles/speakerman_cross_effect.glb";
+import powerK from "../../../public/models/projectiles/low_poly_water_drop.glb";
+import powerI from "../../../public/models/projectiles/low_poly_water_drop.glb";
+import powerJ from "../../../public/models/projectiles/low_poly_water_drop.glb";
+
+import power0 from "../../../public/models/projectiles/water_orb.glb";
+import power1 from "../../../public/models/projectiles/water_orb.glb";
+import power2 from "../../../public/models/projectiles/water_orb.glb";
+import power3 from "../../../public/models/projectiles/water_orb.glb";
+import power4 from "../../../public/models/projectiles/water_orb.glb";
+import power5 from "../../../public/models/projectiles/water_orb.glb";
 
 // === LOADING SCREEN & UI ===
 const loadingScreen = document.getElementById('loadingScreen');
@@ -36,7 +49,11 @@ let indoorOffset = -120;
 let outsideOffset = 50;
 let doorOffset = -15;
 let loadingComplete = false;
-let gameOver = false; // Track if game has ended
+let gameOver = false;
+
+// Preload cache for projectile models - MAKE GLOBALLY ACCESSIBLE
+const projectileModelCache = new Map();
+window.projectileModelCache = projectileModelCache;
 
 // === INITIALIZE RAPIER ===
 await RAPIER.init();
@@ -44,7 +61,7 @@ await RAPIER.init();
 // === SCENE SETUP ===
 const scene = new THREE.Scene();
 scene.background = new THREE.Color(0x070e17);
-scene.fog = new THREE.FogExp2(0x0e1c2e,0.0025);
+scene.fog = new THREE.FogExp2(0x0e1c2e, 0.0025);
 
 const camera = new THREE.PerspectiveCamera(90, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(0, 15, 15);
@@ -121,6 +138,65 @@ gltfLoader.setDRACOLoader(dracoLoader);
 
 function getFileExtension(path) {
   return path.split('.').pop().toLowerCase();
+}
+
+// Special load function for preloading (doesn't add to scene)
+async function loadModelForCache(path) {
+  return new Promise((resolve, reject) => {
+    const extension = getFileExtension(path);
+    
+    const onLoad = (object) => {
+      if (object.scene) {
+        object = object.scene;
+      }
+      // Deep clone to ensure materials/geometries are independent
+      const clonedModel = object.clone(true);
+      resolve(clonedModel);
+    };
+    
+    const onError = (error) => {
+      reject(error);
+    };
+    
+    switch (extension) {
+      case 'glb':
+      case 'gltf':
+        gltfLoader.load(path, onLoad, undefined, onError);
+        break;
+      default:
+        reject(new Error(`Unsupported file format: ${extension}`));
+    }
+  });
+}
+
+// Preload all projectile models
+async function preloadProjectileModels() {
+  const projectileModels = [
+    powerP, powerL, powerO, powerK, powerI, powerJ,  // Player projectiles
+    power0, power1, power2, power3, power4, power5   // Witch projectiles
+  ];
+  
+  console.log('Preloading projectile models...');
+  
+  const loadPromises = projectileModels.map(async (modelPath) => {
+    try {
+      const model = await loadModelForCache(modelPath);
+      // Ensure shadows are enabled on cached model
+      model.traverse((child) => {
+        if (child.isMesh) {
+          child.castShadow = true;
+          child.receiveShadow = true;
+        }
+      });
+      projectileModelCache.set(modelPath, model);
+      console.log(`Preloaded: ${modelPath}`);
+    } catch (error) {
+      console.warn(`Failed to preload ${modelPath}:`, error);
+    }
+  });
+  
+  await Promise.all(loadPromises);
+  console.log('All projectile models preloaded!');
 }
 
 async function loadModel(path, scale = 1, rotation = new THREE.Euler(0, Math.PI, 0), position = new THREE.Vector3(0, 0, 0)) {
@@ -274,7 +350,7 @@ function checkGameOver() {
     
     // Show game over after 5 seconds
     setTimeout(() => {
-      showGameOverScreen(false); // false = player lost
+      showGameOverScreen(false);
     }, 5000);
   }
   
@@ -285,7 +361,7 @@ function checkGameOver() {
     
     // Show victory screen after 5 seconds
     setTimeout(() => {
-      showGameOverScreen(true); // true = player won
+      showGameOverScreen(true);
     }, 5000);
   }
 }
@@ -388,6 +464,8 @@ function showGameOverScreen(playerWon) {
 // === GAME INITIALIZATION ===
 async function initGame() {
   try {
+    // Preload projectile models first
+    await preloadProjectileModels();
 
     building = new Building({
       position: { x: -5, y: 13, z: 0 },
@@ -438,15 +516,7 @@ async function initGame() {
       entityManager,
       loadModel,
       loadAnimation,
-      projectiles,
-      projectileConfig: {
-        pattern: 'single',
-        modelPath: fireball,
-        loadModel: loadModel,
-        scale: 10,
-        speed: 25,
-        offsetY: 5
-      }
+      projectiles
     });
 
     await Promise.all([
@@ -490,8 +560,7 @@ function animate() {
 
   // Update projectiles with collision detection
   for (let i = projectiles.length - 1; i >= 0; i--) {
-    // Pass player and enemies array to check collisions
-    const enemies = [npc2]; // Add all enemy NPCs to this array
+    const enemies = [npc2];
     if (projectiles[i].update(player, enemies)) {
       projectiles[i].dispose();
       projectiles.splice(i, 1);

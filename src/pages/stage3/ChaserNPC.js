@@ -15,12 +15,12 @@ import witchHit from "../../../public/models/witch/Zombie Reaction Hit.fbx";
 import witchDying from "../../../public/models/witch/Zombie Dying.fbx";
 import witchPowerup from "../../../public/models/witch/Standing Taunt Battlecry.fbx";
 
-import power0 from "../../../public/models/projectiles/hand_monster.glb";
-import power1 from "../../../public/models/projectiles/blood_moon_grin.glb";
-import power2 from "../../../public/models/projectiles/loading.glb";
-import power3 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
-import power4 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
-import power5 from "../../../public/models/projectiles/packwar_blood_edition.glb";
+import power0 from "../../../public/models/projectiles/water_orb.glb";
+import power1 from "../../../public/models/projectiles/water_orb.glb";
+import power2 from "../../../public/models/projectiles/water_orb.glb";
+import power3 from "../../../public/models/projectiles/water_orb.glb";
+import power4 from "../../../public/models/projectiles/water_orb.glb";
+import power5 from "../../../public/models/projectiles/water_orb.glb";
 
 export class ChaserNPC {
   constructor({ 
@@ -64,56 +64,68 @@ export class ChaserNPC {
     this.attackProjectileConfigs = attackProjectileConfigs || {
       0: { // Attack 1 - Single purple
         pattern: 'single',
-        color: 0x9d00ff,
+        // color: 0x9d00ff,
         speed: 30,
         offsetY: 15,
         scale: 1,
-        damage: 50
+        damage: 50,
+        modelPath: power0,
+        loadModel: loadModel
       },
       1: { // Attack 2 - Triple dark
         pattern: 'triple',
-        color: 0x6600cc,
+        // color: 0x6600cc,
         speed: 22,
         spreadAngle: 0.4,
         offsetY: 15,
         scale: 1,
-        damage: 30
+        damage: 30,
+        modelPath: power1,
+        loadModel: loadModel
       },
       2: { // Attack 3 - Fast single
         pattern: 'single',
-        color: 0xaa00ff,
+        // color: 0xaa00ff,
         speed: 50,
         offsetY: 15,
         scale: 2,
-        damage: 100
+        damage: 100,
+        modelPath: power2,
+        loadModel: loadModel
       },
       3: { // Attack 4 - Spread
         pattern: 'spread',
         count: 6,
-        color: 0x8800dd,
+        // color: 0x8800dd,
         speed: 40,
         spreadAngle: 0.2,
         offsetY: 15,
         scale: 1,
-        damage: 60
+        damage: 60,
+        modelPath: power3,
+        loadModel: loadModel
       },
       4: { // Attack 5 - Circle burst
         pattern: 'spread',
         count: 10,
-        color: 0xbb00ff,
+        // color: 0xbb00ff,
         speed: 80,
         offsetY: 15,
         scale: 1,
-        damage: 20
+        damage: 20,
+        modelPath: power4,
+        loadModel: loadModel
       },
       5: { // Attack 6 - Powerful single
         pattern: 'triple',
-        color: 0xff00ff,
+        // color: 0xff00ff,
         spreadAngle: 0.1,
         speed: 35,
         offsetY: 15,
         scale: 2,
-        damage: 80
+        damage: 80,
+        modelPath: power5,
+        loadModel: loadModel
       }
     };
     

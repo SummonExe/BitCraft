@@ -11,11 +11,11 @@ export class Projectile {
     this.maxDistance = maxDistance;
     this.speed = speed;
     this.direction = direction.clone().normalize();
-    this.damage = damage; // Damage dealt on hit
-    this.team = team; // 'player', 'enemy', or 'neutral'
-    this.hasHit = false; // Track if projectile has already hit something
-    this.spawnTime = performance.now(); // Track when projectile was created
-    this.lifetime = lifetime; // Seconds before auto-expiry (configurable per role)
+    this.damage = damage;
+    this.team = team;
+    this.hasHit = false;
+    this.spawnTime = performance.now();
+    this.lifetime = lifetime;
     
     try {
       // Setup physics first
@@ -65,10 +65,36 @@ export class Projectile {
       const angle = Math.atan2(this.direction.x, this.direction.z);
       const rotation = customRotation || new THREE.Euler(0, angle, 0);
       
-      this.mesh = await loadModel(modelPath, scale, rotation, position);
-      this.mesh.castShadow = true;
-      this.mesh.receiveShadow = true;
-      this.isModelLoaded = true;
+      // IMPORTANT: Clone from cache if available, otherwise load fresh
+      let model;
+      if (window.projectileModelCache && window.projectileModelCache.has(modelPath)) {
+        // Clone the cached model
+        const cachedModel = window.projectileModelCache.get(modelPath);
+        model = cachedModel.clone(true); // Deep clone with materials
+        
+        // Apply transformations
+        model.scale.set(scale, scale, scale);
+        model.rotation.copy(rotation);
+        model.position.copy(position);
+        
+        // Ensure shadows are enabled on cloned model
+        model.traverse((child) => {
+          if (child.isMesh) {
+            child.castShadow = true;
+            child.receiveShadow = true;
+          }
+        });
+        
+        this.scene.add(model);
+        this.mesh = model;
+        this.isModelLoaded = true;
+      } else {
+        // Fallback to regular loading if not cached
+        this.mesh = await loadModel(modelPath, scale, rotation, position);
+        this.mesh.castShadow = true;
+        this.mesh.receiveShadow = true;
+        this.isModelLoaded = true;
+      }
       
       // Update initial position from physics
       const physicsPos = this.rigidBody.translation();
@@ -106,11 +132,11 @@ export class Projectile {
         Math.pow(projectilePos.z - playerPos.z, 2)
       );
       
-      // Collision radius (sum of both colliders)
-      if (distance < 3) { // Adjust this value based on your game scale
+      // FIXED: More reasonable collision radius
+      if (distance < 2.5) {
         player.takeDamage(this.damage);
         this.hasHit = true;
-        return true; // Signal to remove projectile
+        return true;
       }
     }
     
@@ -126,11 +152,11 @@ export class Projectile {
           Math.pow(projectilePos.z - enemyPos.z, 2)
         );
         
-        // Collision radius
-        if (distance < 5) { // Adjust based on enemy size
+        // FIXED: More reasonable collision radius
+        if (distance < 4) {
           enemy.takeDamage(this.damage);
           this.hasHit = true;
-          return true; // Signal to remove projectile
+          return true;
         }
       }
     }
@@ -178,14 +204,20 @@ export class Projectile {
     try {
       if (this.scene && this.mesh) {
         this.scene.remove(this.mesh);
-        if (this.mesh.geometry) this.mesh.geometry.dispose();
-        if (this.mesh.material) {
-          if (Array.isArray(this.mesh.material)) {
-            this.mesh.material.forEach(mat => mat.dispose());
-          } else {
-            this.mesh.material.dispose();
+        
+        // Properly dispose of geometry and materials
+        this.mesh.traverse((child) => {
+          if (child.isMesh) {
+            if (child.geometry) child.geometry.dispose();
+            if (child.material) {
+              if (Array.isArray(child.material)) {
+                child.material.forEach(mat => mat.dispose());
+              } else {
+                child.material.dispose();
+              }
+            }
           }
-        }
+        });
       }
       if (this.world && this.rigidBody) {
         this.world.removeRigidBody(this.rigidBody);

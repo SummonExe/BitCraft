@@ -17,12 +17,12 @@ import heroHitI from "../../../public/models/cop/Magic Spell Pack/Standing 2H Ma
 import heroHitJ from "../../../public/models/cop/Magic Spell Pack/Standing 1H Magic Attack 03.fbx";
 import heroBlock from "../../../public/models/cop/Magic Spell Pack/Standing Block React Large.fbx";
 
-import powerP from "../../../public/models/projectiles/exoplanet_sg10446623.glb";
-import powerL from "../../../public/models/projectiles/appearance_effect_light_beam.glb";
-import powerO from "../../../public/models/projectiles/rasengan.glb";
-import powerK from "../../../public/models/projectiles/trail.glb";
-import powerI from "../../../public/models/projectiles/dotlings.glb";
-import powerJ from "../../../public/models/projectiles/magical_orb.glb";
+import powerP from "../../../public/models/projectiles/low_poly_water_drop.glb";
+import powerL from "../../../public/models/projectiles/speakerman_cross_effect.glb";
+import powerO from "../../../public/models/projectiles/speakerman_cross_effect.glb";
+import powerK from "../../../public/models/projectiles/low_poly_water_drop.glb";
+import powerI from "../../../public/models/projectiles/low_poly_water_drop.glb";
+import powerJ from "../../../public/models/projectiles/low_poly_water_drop.glb";
 
 export class Player {
   constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles, attackProjectileConfigs = null }) {
@@ -60,56 +60,60 @@ export class Player {
     this.attackProjectileConfigs = attackProjectileConfigs || {
       'p': {
         pattern: 'single',
-        color: 0xff0000,
         speed: 35,
         offsetY: 15,
-        scale: 1,
-        damage: 50 // Damage amount
+        scale: 8,
+        damage: 50, // Damage amount
+        modelPath: powerP,
+        loadModel: loadModel
       },
       'l': {
         pattern: 'triple',
-        color: 0x00ff00,
         speed: 30,
-        spreadAngle: 0.4,
+        spreadAngle: 0.2,
         offsetY: 15,
-        scale: 1,
-        damage: 40
+        scale: 0.5,
+        damage: 40,
+        modelPath: powerL,
+        loadModel: loadModel
       },
       'o': {
         pattern: 'triple',
-        color: 0x0000ff,
         speed: 30,
         offsetY: 15,
-        scale: 1.5,
-        damage: 60
+        scale: 0.5,
+        damage: 60,
+        modelPath: powerO,
+        loadModel: loadModel
       },
       'k': {
         pattern: 'single',
-        color: 0xffff00,
-        speed: 60,
+        speed: 45,
         offsetY: 15,
-        scale: 1,
-        damage: 80
+        scale: 8,
+        damage: 80,
+        modelPath: powerK,
+        loadModel: loadModel
       },
       'i': {
-        pattern: 'spread',
-        count: 6,
-        color: 0xff00ff,
-        spreadAngle: 0.3,
+        pattern: 'triple',
+        spreadAngle: 0.1,
         speed: 50,
         offsetY: 15,
-        scale: 1,
-        damage: 100
+        scale: 8,
+        damage: 100,
+        modelPath: powerI,
+        loadModel: loadModel
       },
       'j': {
-        pattern: 'spread',
-        count: 6,
-        color: 0x00ffff,
+        pattern: 'triple',
         spreadAngle: 0.5,
         speed: 35,
         offsetY: 15,
-        scale: 2,
-        damage: 80
+        scale: 8,
+        damage: 80,
+        modelPath: powerJ,
+        loadModel: loadModel
       }
     };
     
