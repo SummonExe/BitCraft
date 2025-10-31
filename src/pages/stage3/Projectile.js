@@ -3,7 +3,7 @@ import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
 
 export class Projectile {
-  constructor({ position, direction }, { world, scene, color = 0xff0000, modelPath = null, loadModel = null, scale = 1, speed = 30, maxDistance = 80, colliderRadius = 0.6, rotation = null, damage = 50, team = 'neutral', lifetime = 5.0 }) {
+  constructor({ position, direction }, { world, scene, color = 0xff0000, modelPath = null, loadModel = null, scale = 1, speed = 30, maxDistance = 80, colliderRadius = 0.8, rotation = null, damage = 50, team = 'neutral', lifetime = 5.0 }) {
     this.world = world;
     this.scene = scene;
     this.mesh = null;
@@ -16,21 +16,45 @@ export class Projectile {
     this.hasHit = false;
     this.spawnTime = performance.now();
     this.lifetime = lifetime;
+    this.scale = scale; // Store scale for collision radius calculation
+    
+    // Calculate effective collision radius based on scale
+    this.effectiveCollisionRadius = colliderRadius * Math.max(1, scale * 0.15);
+    
+    // Debug sphere (optional - set to true to visualize collision bounds)
+    this.debugMode = false;
+    this.debugSphere = null;
     
     try {
-      // Setup physics first
+      // Setup physics first with CCD (Continuous Collision Detection) for fast projectiles
       const bodyDesc = RAPIER.RigidBodyDesc.dynamic()
         .setTranslation(position.x, position.y, position.z)
-        .setLinearDamping(0.0);
+        .setLinearDamping(0.0)
+        .setCcdEnabled(true); // CRITICAL: Enable CCD to prevent tunneling
       this.rigidBody = world.createRigidBody(bodyDesc);
       
-      const colliderDesc = RAPIER.ColliderDesc.ball(colliderRadius);
+      // Use the effective collision radius
+      const colliderDesc = RAPIER.ColliderDesc.ball(this.effectiveCollisionRadius)
+        .setSensor(true); // Make it a sensor so it doesn't physically collide but still detects
       this.collider = world.createCollider(colliderDesc, this.rigidBody);
       
       const impulse = { x: this.direction.x * speed, y: 0, z: this.direction.z * speed };
       this.rigidBody.applyImpulse(impulse, true);
       
       this.startPosition = position.clone();
+      
+      // Create debug visualization if enabled
+      if (this.debugMode) {
+        const debugGeometry = new THREE.SphereGeometry(this.effectiveCollisionRadius, 8, 8);
+        const debugMaterial = new THREE.MeshBasicMaterial({ 
+          color: team === 'player' ? 0x00ff00 : 0xff0000,
+          wireframe: true,
+          transparent: true,
+          opacity: 0.3
+        });
+        this.debugSphere = new THREE.Mesh(debugGeometry, debugMaterial);
+        scene.add(this.debugSphere);
+      }
       
       // If model path provided, load model asynchronously
       if (modelPath && loadModel) {
@@ -126,14 +150,23 @@ export class Projectile {
     // Check collision with player (if projectile is from enemy)
     if (this.team === 'enemy' && player && !player.isDead) {
       const playerPos = player.rigidBody.translation();
-      const distance = Math.sqrt(
+      
+      // FIXED: Only check horizontal (XZ plane) distance, ignore Y
+      // This prevents projectiles from missing due to height differences
+      const distanceXZ = Math.sqrt(
         Math.pow(projectilePos.x - playerPos.x, 2) +
-        Math.pow(projectilePos.y - playerPos.y, 2) +
         Math.pow(projectilePos.z - playerPos.z, 2)
       );
       
-      // FIXED: More reasonable collision radius
-      if (distance < 2.5) {
+      // Check Y distance separately with more lenient bounds
+      const distanceY = Math.abs(projectilePos.y - playerPos.y);
+      
+      // Player collision: 3 units horizontal, 5 units vertical tolerance
+      const horizontalRange = 3.0 + this.effectiveCollisionRadius;
+      const verticalRange = 5.0;
+      
+      if (distanceXZ < horizontalRange && distanceY < verticalRange) {
+        console.log(`🎯 Player HIT by ${this.team} projectile! Distance: ${distanceXZ.toFixed(2)}, Damage: ${this.damage}`);
         player.takeDamage(this.damage);
         this.hasHit = true;
         return true;
@@ -146,14 +179,22 @@ export class Projectile {
         if (enemy.isDead) continue;
         
         const enemyPos = enemy.rigidBody.translation();
-        const distance = Math.sqrt(
+        
+        // FIXED: Only check horizontal (XZ plane) distance
+        const distanceXZ = Math.sqrt(
           Math.pow(projectilePos.x - enemyPos.x, 2) +
-          Math.pow(projectilePos.y - enemyPos.y, 2) +
           Math.pow(projectilePos.z - enemyPos.z, 2)
         );
         
-        // FIXED: More reasonable collision radius
-        if (distance < 4) {
+        // Check Y distance separately
+        const distanceY = Math.abs(projectilePos.y - enemyPos.y);
+        
+        // Enemy collision: 5 units horizontal (larger hitbox), 8 units vertical
+        const horizontalRange = 5.0 + this.effectiveCollisionRadius;
+        const verticalRange = 8.0;
+        
+        if (distanceXZ < horizontalRange && distanceY < verticalRange) {
+          console.log(`🎯 Enemy HIT by ${this.team} projectile! Distance: ${distanceXZ.toFixed(2)}, Damage: ${this.damage}`);
           enemy.takeDamage(this.damage);
           this.hasHit = true;
           return true;
@@ -171,7 +212,7 @@ export class Projectile {
         return true; // Auto-remove after lifetime
       }
 
-      // Check for collisions
+      // Check for collisions BEFORE updating position (prevent skipping frames)
       if (this.checkCollision(player, enemies)) {
         return true; // Dispose projectile
       }
@@ -180,6 +221,11 @@ export class Projectile {
       if (this.isModelLoaded && this.mesh) {
         const physicsPos = this.rigidBody.translation();
         this.mesh.position.set(physicsPos.x, physicsPos.y, physicsPos.z);
+        
+        // Update debug sphere position if enabled
+        if (this.debugMode && this.debugSphere) {
+          this.debugSphere.position.set(physicsPos.x, physicsPos.y, physicsPos.z);
+        }
         
         // Optional: Rotate model to face direction of travel
         const velocity = this.rigidBody.linvel();
@@ -219,6 +265,14 @@ export class Projectile {
           }
         });
       }
+      
+      // Remove debug sphere if exists
+      if (this.debugMode && this.debugSphere) {
+        this.scene.remove(this.debugSphere);
+        if (this.debugSphere.geometry) this.debugSphere.geometry.dispose();
+        if (this.debugSphere.material) this.debugSphere.material.dispose();
+      }
+      
       if (this.world && this.rigidBody) {
         this.world.removeRigidBody(this.rigidBody);
       }

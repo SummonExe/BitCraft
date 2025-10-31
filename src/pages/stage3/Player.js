@@ -17,10 +17,10 @@ import heroHitI from "../../../public/models/cop/Magic Spell Pack/Standing 2H Ma
 import heroHitJ from "../../../public/models/cop/Magic Spell Pack/Standing 1H Magic Attack 03.fbx";
 import heroBlock from "../../../public/models/cop/Magic Spell Pack/Standing Block React Large.fbx";
 
-import powerP from "../../../public/models/projectiles/low_poly_water_drop.glb";
+import powerP from "../../../public/models/projectiles/rasengan.glb";
 import powerL from "../../../public/models/projectiles/speakerman_cross_effect.glb";
 import powerO from "../../../public/models/projectiles/adorned_metal_sphere.glb";
-import powerK from "../../../public/models/projectiles/low_poly_water_drop.glb";
+import powerK from "../../../public/models/projectiles/adorned_metal_sphere.glb";
 import powerI from "../../../public/models/projectiles/speakerman_cross_effect.glb";
 import powerJ from "../../../public/models/projectiles/monocyte.glb";
 
@@ -47,6 +47,7 @@ export class Player {
     // ATTACK COOLDOWN
     this.attackCooldown = 0;
     this.attackCooldownDuration = 1.0;
+    this.baseAttackSpeed = 50;
     
     // HEALTH SYSTEM
     this.maxHealth = 1000;
@@ -59,60 +60,59 @@ export class Player {
     // Configure projectiles for each attack key
     this.attackProjectileConfigs = attackProjectileConfigs || {
       'p': {
-        pattern: 'single',
-        speed: 35,
-        offsetY: 15,
-        scale: 8,
+        pattern: 'triple',
+        speed: this.baseAttackSpeed + 120,
+        offsetY: 18,
+        scale: 10,
         damage: 50, // Damage amount
         modelPath: powerP,
         loadModel: loadModel
       },
       'l': {
-        pattern: 'spread',
-        count: 6,
-        speed: 30,
+        pattern: 'circle',
+        count: 10,
+        speed: this.baseAttackSpeed + 50,
         spreadAngle: 0.3,
-        offsetY: 10,
-        scale: 0.5,
+        offsetY: 15,
+        scale: 1,
         damage: 80,
         modelPath: powerL,
         loadModel: loadModel
       },
       'o': {
         pattern: 'single',
-        speed: 30,
-        offsetY: 15,
-        scale: 2,
+        speed: this.baseAttackSpeed + 100,
+        offsetY: 10,
+        scale: 5,
         damage: 50,
         modelPath: powerO,
         loadModel: loadModel
       },
       'k': {
         pattern: 'single',
-        speed: 45,
-        offsetY: 15,
+        speed: this.baseAttackSpeed + 500,
+        offsetY: 10,
         scale: 8,
         damage: 80,
         modelPath: powerK,
         loadModel: loadModel
       },
       'i': {
-        pattern: 'triple',
-        spreadAngle: 0.1,
-        speed: 50,
+        pattern: 'spread',
+        spreadAngle: 0.25,
+        count: 6,
+        speed: this.baseAttackSpeed + 30,
         offsetY: 15,
-        scale: 8,
+        scale: 2,
         damage: 100,
         modelPath: powerI,
         loadModel: loadModel
       },
       'j': {
-        pattern: 'spread',
-        spreadAngle: 0.6,
-        count: 10,
-        speed: 40,
-        offsetY: 25,
-        scale: 0.5,
+        pattern: 'single',
+        speed: this.baseAttackSpeed + 40,
+        offsetY: 12,
+        scale: 1.5,
         damage: 40,
         modelPath: powerJ,
         loadModel: loadModel

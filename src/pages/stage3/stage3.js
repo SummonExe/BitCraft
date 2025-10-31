@@ -15,7 +15,7 @@ import witch from "../../../public/models/witch/witch_Idle.fbx";
 import kid from "../../../public/models/kid2/Idle.fbx";
 import groundTexture from "../../../public/2025-10-23 123028.png";
 
-import powerP from "../../../public/models/projectiles/low_poly_water_drop.glb";
+import powerP from "../../../public/models/projectiles/rasengan.glb";
 import powerL from "../../../public/models/projectiles/speakerman_cross_effect.glb";
 import powerO from "../../../public/models/projectiles/adorned_metal_sphere.glb";
 import powerK from "../../../public/models/projectiles/low_poly_water_drop.glb";
@@ -508,7 +508,7 @@ async function initGame() {
       position: { x: -10, y: 0, z: 100 + outsideOffset },
       modelPath: witch,
       maxSpeed: 20,
-      stopDistance: 50,
+      stopDistance: 60,
       target: player,
       world,
       scene,
@@ -585,8 +585,8 @@ function animate() {
   // Camera follow
   const playerPos = player.rigidBody.translation();
   const playerForward = new THREE.Vector3(0, 0, 1).applyQuaternion(player.entity.rotation);
-  const cameraDistance = 20;
-  const cameraHeight = 15;
+  const cameraDistance = 25;
+  const cameraHeight = 25;
 
   const desiredPosition = new THREE.Vector3(
     playerPos.x - playerForward.x * cameraDistance,

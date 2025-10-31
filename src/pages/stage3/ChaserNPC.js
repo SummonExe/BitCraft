@@ -52,6 +52,7 @@ export class ChaserNPC {
     this.currentAction = null;
     this.attackCooldown = 5;
     this.cooldownDuration = 3;
+    this.baseAttackSpeed = 40;
     
     // HEALTH SYSTEM
     this.maxHealth = 1000;
@@ -64,8 +65,7 @@ export class ChaserNPC {
     this.attackProjectileConfigs = attackProjectileConfigs || {
       0: { // Attack 1 - Single purple
         pattern: 'single',
-        // color: 0x9d00ff,
-        speed: 30,
+        speed: this.baseAttackSpeed + 20,
         offsetY: 15,
         scale: 1,
         damage: 50,
@@ -74,9 +74,8 @@ export class ChaserNPC {
       },
       1: { // Attack 2 - Triple dark
         pattern: 'triple',
-        // color: 0x6600cc,
-        speed: 22,
-        spreadAngle: 0.4,
+        speed: this.baseAttackSpeed + 20,
+        spreadAngle: 0.3,
         offsetY: 15,
         scale: 1,
         damage: 30,
@@ -85,8 +84,7 @@ export class ChaserNPC {
       },
       2: { // Attack 3 - Fast single
         pattern: 'single',
-        // color: 0xaa00ff,
-        speed: 50,
+        speed: this.baseAttackSpeed + 30,
         offsetY: 15,
         scale: 2,
         damage: 100,
@@ -96,8 +94,7 @@ export class ChaserNPC {
       3: { // Attack 4 - Spread
         pattern: 'spread',
         count: 6,
-        // color: 0x8800dd,
-        speed: 40,
+        speed: this.baseAttackSpeed + 25,
         spreadAngle: 0.2,
         offsetY: 15,
         scale: 1.5,
@@ -108,8 +105,8 @@ export class ChaserNPC {
       4: { // Attack 5 - Circle burst
         pattern: 'spread',
         count: 8,
-        spreadAngle: 0.5,
-        speed: 30,
+        spreadAngle: 0.2,
+        speed: this.baseAttackSpeed + 30,
         offsetY: 15,
         scale: 1,
         damage: 40,
@@ -118,9 +115,8 @@ export class ChaserNPC {
       },
       5: { // Attack 6 - Powerful single
         pattern: 'triple',
-        // color: 0xff00ff,
         spreadAngle: 0.1,
-        speed: 35,
+        speed: this.baseAttackSpeed + 35,
         offsetY: 15,
         scale: 2,
         damage: 80,
