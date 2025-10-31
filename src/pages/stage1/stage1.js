@@ -349,7 +349,7 @@ function showGameOver(won = false) {
       nextStageBtn.style.transform = 'scale(1)';
     };
     nextStageBtn.onclick = () => {
-      window.location.href = '/src/pages/stage2/stage2.html';
+      window.location.href =  "../../../src/pages/stage2/stage2.html";
     };
     buttonContainer.appendChild(nextStageBtn);
   }
@@ -672,11 +672,15 @@ const keys = { ArrowUp: false, ArrowDown: false, ArrowLeft: false, ArrowRight: f
 window.addEventListener('keydown', (e) => { 
   if (keys.hasOwnProperty(e.key)) keys[e.key] = true;
   if (e.key === 'Shift') keys.Shift = true;
+  // Handle both 'e' and 'E' for interaction
+  if (e.key === 'e' || e.key === 'E') keys.e = true;
   
 });
 window.addEventListener('keyup', (e) => { 
   if (keys.hasOwnProperty(e.key)) keys[e.key] = false;
   if (e.key === 'Shift') keys.Shift = false;
+  // Handle both 'e' and 'E' for interaction
+  if (e.key === 'e' || e.key === 'E') keys.e = false;
 });
 
 // Handle window resize
@@ -733,7 +737,7 @@ async function initGame() {
     player = new Player({
       position: { x: 1022, y: 15, z: -280 },
       modelPath: hero,
-      maxSpeed: 8,
+      maxSpeed: 15,
       moveForce: 30,
       world,
       scene,
@@ -852,10 +856,10 @@ function animate() {
     
     timerElement.innerText = timeDisplay;
     
-    // Update subtitle with position and instructions
+    // Update subtitle with instructions only (no coordinates)
     const bibleInstruction = !bibleCollected && bibleMesh 
-      ? ' | Press Shift+E near Bible to collect | ESC to Pause'
-      : ' | ESC to Pause';
+      ? 'Press Shift+E near Bible to collect | ESC to Pause'
+      : 'ESC to Pause';
     subtitleElement.style.cssText = `
       position: absolute;
       bottom: 20px;
@@ -869,7 +873,7 @@ function animate() {
       border-radius: 5px;
       z-index: 1000;
     `;
-    subtitleElement.innerText = `Position: X:${pos.x.toFixed(1)} Y:${pos.y.toFixed(1)} Z:${pos.z.toFixed(1)}${bibleInstruction}`;
+    subtitleElement.innerText = bibleInstruction;
 
   }
   

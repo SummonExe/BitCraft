@@ -24,6 +24,53 @@ import kid from "../../../public/models/kid2/Idle.fbx";
 import GhostSound from "../../../src/assets/sounds/ghost-screaming.mp3";
 import GirlScream from "../../../src/assets/sounds/kid-screaming.mp3";
 
+// === CACHE SETUP ===
+const CACHE_NAME = 'stage2-game-cache-v1';
+const ASSET_URLS = [
+  FlashingModel,
+  DoorModel,
+  Coin,
+  NPCModel,
+  Outside,
+  Building,
+  bedroom,
+  kid,
+  GhostSound,
+  GirlScream,
+  "https://play.rosebud.ai/assets/windy_day_ambience_01.wav?gq3B"
+];
+
+// Cache all assets
+async function cacheAssets() {
+  if (!('caches' in window)) {
+    console.warn('Cache API not supported');
+    return false;
+  }
+  
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.addAll(ASSET_URLS);
+    console.log('All assets cached successfully');
+    return true;
+  } catch (error) {
+    console.warn('Failed to cache assets:', error);
+    return false;
+  }
+}
+
+// Check if assets are cached
+async function areAssetsCached() {
+  if (!('caches' in window)) return false;
+  
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    const keys = await cache.keys();
+    return keys.length >= ASSET_URLS.length;
+  } catch {
+    return false;
+  }
+}
+
 // === LOADING SCREEN ===
 const loadingScreen = document.getElementById('loadingScreen');
 if (!loadingScreen) {
@@ -234,7 +281,7 @@ function showGameOverScreen(playerWon) {
       nextStageBtn.style.transform = 'scale(1)';
     };
     nextStageBtn.onclick = () => {
-      window.location.href = '/src/pages/stage3/stage3.html';
+      window.location.href = '../../../src/pages/stage3/stage3.html';
     };
     buttonContainer.appendChild(nextStageBtn);
   }
@@ -1094,6 +1141,10 @@ async function init() {
     try {
       console.log("Starting game initialization...");
       
+      // Check if assets are cached
+      const isCached = await areAssetsCached();
+      console.log(isCached ? "Loading from cache..." : "Loading fresh assets (will cache for next time)...");
+      
       await Promise.all([
         loadInitialScene(),
         loadMansionObjects()
@@ -1102,6 +1153,13 @@ async function init() {
       initMiniMap();
       
       console.log("All assets loaded successfully!");
+      
+      // Cache assets for next time if not already cached
+      if (!isCached) {
+        console.log("Caching assets for faster future loads...");
+        await cacheAssets();
+      }
+      
       loadingComplete = true;
       
       if (loadingScreen) {
