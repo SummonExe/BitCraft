@@ -148,6 +148,182 @@ if (objectiveScreen) {
   });
 }
 
+// === SHOW GAME OVER SCREEN ===
+function showGameOverScreen(playerWon) {
+  // Create game over overlay
+  const overlay = document.createElement('div');
+  overlay.id = 'gameOverScreen';
+  overlay.style.cssText = `
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.95);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000;
+    animation: fadeIn 1s ease-in;
+  `;
+  
+  // Title
+  const title = document.createElement('h1');
+  title.style.cssText = `
+    font-family: 'DK Okiku', sans-serif;
+    font-size: 5em;
+    margin-bottom: 30px;
+    color: ${playerWon ? '#8b0000' : '#8a00e6'};
+    text-transform: uppercase;
+    letter-spacing: 6px;
+    text-shadow: 0 0 30px ${playerWon ? 'rgba(139, 0, 0, 0.8)' : 'rgba(138, 0, 230, 0.8)'};
+    animation: bloodPulse 2s ease-in-out infinite alternate;
+  `;
+  title.textContent = playerWon ? '† VICTORY †' : '† DEFEAT †';
+  
+  // Message
+  const message = document.createElement('p');
+  message.style.cssText = `
+    font-family: 'Dudu Calligraphy', cursive;
+    font-size: 2em;
+    margin-bottom: 50px;
+    color: #666;
+    text-align: center;
+    max-width: 600px;
+  `;
+  message.textContent = playerWon 
+    ? `You rescued your child and now escape the mansion! Holy Water Collected: ${score}`
+    : 'The creatures have claimed you. Darkness falls eternal.';
+  
+  // Button container
+  const buttonContainer = document.createElement('div');
+  buttonContainer.style.cssText = `
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  `;
+  
+  // Next Stage button (only for victory)
+  if (playerWon) {
+    const nextStageBtn = document.createElement('button');
+    nextStageBtn.style.cssText = `
+      font-family: 'Dudu Calligraphy', cursive;
+      font-size: 1.5em;
+      padding: 15px 50px;
+      background: rgba(20, 20, 20, 0.8);
+      color: #8b0000;
+      border: 2px solid rgba(139, 0, 0, 0.6);
+      border-radius: 3px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 0 20px rgba(139, 0, 0, 0.3);
+    `;
+    nextStageBtn.textContent = '† Next Stage †';
+    nextStageBtn.onmouseover = () => {
+      nextStageBtn.style.background = 'rgba(30, 0, 0, 0.9)';
+      nextStageBtn.style.borderColor = 'rgba(139, 0, 0, 1)';
+      nextStageBtn.style.boxShadow = '0 0 30px rgba(139, 0, 0, 0.6)';
+      nextStageBtn.style.transform = 'scale(1.05)';
+    };
+    nextStageBtn.onmouseout = () => {
+      nextStageBtn.style.background = 'rgba(20, 20, 20, 0.8)';
+      nextStageBtn.style.borderColor = 'rgba(139, 0, 0, 0.6)';
+      nextStageBtn.style.boxShadow = '0 0 20px rgba(139, 0, 0, 0.3)';
+      nextStageBtn.style.transform = 'scale(1)';
+    };
+    nextStageBtn.onclick = () => {
+      window.location.href = '/src/pages/stage3/stage3.html';
+    };
+    buttonContainer.appendChild(nextStageBtn);
+  }
+  
+  // Restart button
+  const restartBtn = document.createElement('button');
+  restartBtn.style.cssText = `
+    font-family: 'Dudu Calligraphy', cursive;
+    font-size: 1.5em;
+    padding: 15px 50px;
+    background: rgba(20, 20, 20, 0.8);
+    color: #8b0000;
+    border: 2px solid rgba(139, 0, 0, 0.6);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(139, 0, 0, 0.3);
+  `;
+  restartBtn.textContent = '† Restart †';
+  restartBtn.onmouseover = () => {
+    restartBtn.style.background = 'rgba(30, 0, 0, 0.9)';
+    restartBtn.style.borderColor = 'rgba(139, 0, 0, 1)';
+    restartBtn.style.boxShadow = '0 0 30px rgba(139, 0, 0, 0.6)';
+    restartBtn.style.transform = 'scale(1.05)';
+  };
+  restartBtn.onmouseout = () => {
+    restartBtn.style.background = 'rgba(20, 20, 20, 0.8)';
+    restartBtn.style.borderColor = 'rgba(139, 0, 0, 0.6)';
+    restartBtn.style.boxShadow = '0 0 20px rgba(139, 0, 0, 0.3)';
+    restartBtn.style.transform = 'scale(1)';
+  };
+  restartBtn.onclick = () => {
+    window.location.reload();
+  };
+  
+  // Main Menu button
+  const menuBtn = document.createElement('button');
+  menuBtn.style.cssText = `
+    font-family: 'Dudu Calligraphy', cursive;
+    font-size: 1.5em;
+    padding: 15px 50px;
+    background: rgba(20, 20, 20, 0.8);
+    color: #8b0000;
+    border: 2px solid rgba(139, 0, 0, 0.6);
+    border-radius: 3px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px rgba(139, 0, 0, 0.3);
+  `;
+  menuBtn.textContent = '† Main Menu †';
+  menuBtn.onmouseover = () => {
+    menuBtn.style.background = 'rgba(30, 0, 0, 0.9)';
+    menuBtn.style.borderColor = 'rgba(139, 0, 0, 1)';
+    menuBtn.style.boxShadow = '0 0 30px rgba(139, 0, 0, 0.6)';
+    menuBtn.style.transform = 'scale(1.05)';
+  };
+  menuBtn.onmouseout = () => {
+    menuBtn.style.background = 'rgba(20, 20, 20, 0.8)';
+    menuBtn.style.borderColor = 'rgba(139, 0, 0, 0.6)';
+    menuBtn.style.boxShadow = '0 0 20px rgba(139, 0, 0, 0.3)';
+    menuBtn.style.transform = 'scale(1)';
+  };
+  menuBtn.onclick = () => {
+    window.location.href = '../../../index.html';
+  };
+  
+  buttonContainer.appendChild(restartBtn);
+  buttonContainer.appendChild(menuBtn);
+  
+  overlay.appendChild(title);
+  overlay.appendChild(message);
+  overlay.appendChild(buttonContainer);
+  document.body.appendChild(overlay);
+  
+  // Add fade in animation
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    @keyframes bloodPulse {
+      0% { text-shadow: 0 0 10px rgba(139, 0, 0, 0.5); }
+      100% { text-shadow: 0 0 25px rgba(139, 0, 0, 0.9); }
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 async function init() {
   await RAPIER.init();
 
@@ -484,115 +660,7 @@ async function init() {
   function showGameOver(won = false) {
     isGameOver = true;
     character.canMove = () => false;
-    
-    const gameOverDiv = document.createElement("div");
-    gameOverDiv.style.position = "absolute";
-    gameOverDiv.style.top = "50%";
-    gameOverDiv.style.left = "50%";
-    gameOverDiv.style.transform = "translate(-50%, -50%)";
-    gameOverDiv.style.padding = "40px 60px";
-    gameOverDiv.style.background = won ? "rgba(0, 139, 0, 0.95)" : "rgba(139, 0, 0, 0.95)";
-    gameOverDiv.style.border = won ? "3px solid #00ff00" : "3px solid #ff0000";
-    gameOverDiv.style.borderRadius = "15px";
-    gameOverDiv.style.color = "#fff";
-    gameOverDiv.style.fontSize = "48px";
-    gameOverDiv.style.fontWeight = "bold";
-    gameOverDiv.style.textAlign = "center";
-    gameOverDiv.style.zIndex = "3000";
-    
-    if (won) {
-      gameOverDiv.innerHTML = `
-        <div style="margin-bottom: 20px;">🎉 YOU ESCAPED! 🎉</div>
-        <div style="font-size: 20px; margin-bottom: 10px;">You made it to safety!</div>
-        <div style="font-size: 18px; margin-bottom: 30px;">Holy Water Collected: ${score}</div>
-        <button id="next-stage-btn" style="
-          padding: 15px 40px;
-          font-size: 24px;
-          background: #00ff00;
-          color: black;
-          border: 2px solid #fff;
-          border-radius: 8px;
-          cursor: pointer;
-          margin: 10px;
-          font-weight: bold;
-        ">Next Stage ➜</button>
-        <br>
-        <button id="restart-btn" style="
-          padding: 15px 40px;
-          font-size: 24px;
-          background: #4CAF50;
-          color: white;
-          border: 2px solid #fff;
-          border-radius: 8px;
-          cursor: pointer;
-          margin: 10px;
-          font-weight: bold;
-        ">Play Again</button>
-        <br>
-        <button id="menu-btn" style="
-          padding: 15px 40px;
-          font-size: 24px;
-          background: #ff9800;
-          color: white;
-          border: 2px solid #fff;
-          border-radius: 8px;
-          cursor: pointer;
-          margin: 10px;
-          font-weight: bold;
-        ">Main Menu</button>
-      `;
-    } else {
-      gameOverDiv.innerHTML = `
-        <div style="margin-bottom: 20px;">YOU DIED</div>
-        <div style="font-size: 20px; margin-bottom: 30px;">The creature caught you...</div>
-        <button id="restart-btn" style="
-          padding: 15px 40px;
-          font-size: 24px;
-          background: #ff0000;
-          color: white;
-          border: 2px solid #fff;
-          border-radius: 8px;
-          cursor: pointer;
-          margin: 10px;
-          font-weight: bold;
-        ">Try Again</button>
-        <br>
-        <button id="menu-btn" style="
-          padding: 15px 40px;
-          font-size: 24px;
-          background: #ff9800;
-          color: white;
-          border: 2px solid #fff;
-          border-radius: 8px;
-          cursor: pointer;
-          margin: 10px;
-          font-weight: bold;
-        ">Main Menu</button>
-      `;
-    }
-    
-    document.body.appendChild(gameOverDiv);
-    
-    const restartBtn = document.getElementById("restart-btn");
-    if (restartBtn) {
-      restartBtn.addEventListener("click", () => {
-        location.reload();
-      });
-    }
-    
-    const menuBtn = document.getElementById("menu-btn");
-    if (menuBtn) {
-      menuBtn.addEventListener("click", () => {
-        window.location.href = '/';
-      });
-    }
-    
-    const nextStageBtn = document.getElementById("next-stage-btn");
-    if (nextStageBtn) {
-      nextStageBtn.addEventListener("click", () => {
-        window.location.href = '/src/pages/stage3/stage3.html';
-      });
-    }
+    showGameOverScreen(won);
   }
 
   // --------------------------
