@@ -346,7 +346,7 @@ canvas {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 15px;
+  padding: 12px;
   background: rgba(30, 0, 0, 0.6);
   border: 1px solid rgba(139, 0, 0, 0.4);
   border-radius: 3px;
@@ -367,14 +367,15 @@ canvas {
   background: rgba(10, 10, 10, 0.9);
   border: 1px solid rgba(139, 0, 0, 0.6);
   border-radius: 3px;
-  min-width: 60px;
+  min-width: 45px;
   text-align: center;
 }
 
 .control-desc {
   font-family: 'Dudu Calligraphy', cursive;
   color: #ccc;
-  font-size: 1.1em;
+  font-size: 1em;
+  text-align: center;
 }
 
 /* Objective Text */
