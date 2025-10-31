@@ -163,7 +163,7 @@ export class Projectile {
       
       // Player collision: 3 units horizontal, 5 units vertical tolerance
       const horizontalRange = 3.0 + this.effectiveCollisionRadius;
-      const verticalRange = 5.0;
+      const verticalRange = 5.0 + this.effectiveCollisionRadius;
       
       if (distanceXZ < horizontalRange && distanceY < verticalRange) {
         console.log(`🎯 Player HIT by ${this.team} projectile! Distance: ${distanceXZ.toFixed(2)}, Damage: ${this.damage}`);

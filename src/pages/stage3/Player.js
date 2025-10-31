@@ -22,7 +22,7 @@ import powerL from "../../../public/models/projectiles/speakerman_cross_effect.g
 import powerO from "../../../public/models/projectiles/adorned_metal_sphere.glb";
 import powerK from "../../../public/models/projectiles/adorned_metal_sphere.glb";
 import powerI from "../../../public/models/projectiles/speakerman_cross_effect.glb";
-import powerJ from "../../../public/models/projectiles/monocyte.glb";
+import powerJ from "../../../public/models/projectiles/exoplanet_sg10446623.glb";
 
 export class Player {
   constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles, attackProjectileConfigs = null }) {
@@ -70,11 +70,11 @@ export class Player {
       },
       'l': {
         pattern: 'circle',
-        count: 10,
-        speed: this.baseAttackSpeed + 50,
-        spreadAngle: 0.3,
-        offsetY: 15,
-        scale: 1,
+        count: 25,
+        speed: this.baseAttackSpeed + 60,
+        spreadAngle: 0.05,
+        offsetY: 10,
+        scale: 1.5,
         damage: 80,
         modelPath: powerL,
         loadModel: loadModel
@@ -110,9 +110,9 @@ export class Player {
       },
       'j': {
         pattern: 'single',
-        speed: this.baseAttackSpeed + 40,
-        offsetY: 12,
-        scale: 1.5,
+        speed: this.baseAttackSpeed + 80,
+        offsetY: 15,
+        scale: 5,
         damage: 40,
         modelPath: powerJ,
         loadModel: loadModel

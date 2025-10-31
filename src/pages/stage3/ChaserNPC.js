@@ -16,7 +16,7 @@ import witchDying from "../../../public/models/witch/Zombie Dying.fbx";
 import witchPowerup from "../../../public/models/witch/Standing Taunt Battlecry.fbx";
 
 import power0 from "../../../public/models/projectiles/blood_moon_grin.glb";
-import power1 from "../../../public/models/projectiles/water_orb.glb";
+import power1 from "../../../public/models/projectiles/magical_orb.glb";
 import power2 from "../../../public/models/projectiles/blood_moon_grin.glb";
 import power3 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
 import power4 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
@@ -490,8 +490,8 @@ export class ChaserNPC {
 
       // TRIGGER NEXT ATTACK
       if (this.attackCooldown <= 0 && !isAttacking) {
-        const attackIndex = Math.floor(Math.random() * this.attacks.length);
-        // const attackIndex = 5;
+        // const attackIndex = Math.floor(Math.random() * this.attacks.length);
+        const attackIndex = 1;
         const selectedAction = this.attacks[attackIndex];
 
         if (this.currentAction !== selectedAction) {

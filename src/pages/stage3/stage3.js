@@ -18,12 +18,12 @@ import groundTexture from "../../../public/2025-10-23 123028.png";
 import powerP from "../../../public/models/projectiles/rasengan.glb";
 import powerL from "../../../public/models/projectiles/speakerman_cross_effect.glb";
 import powerO from "../../../public/models/projectiles/adorned_metal_sphere.glb";
-import powerK from "../../../public/models/projectiles/low_poly_water_drop.glb";
+import powerK from "../../../public/models/projectiles/adorned_metal_sphere.glb";
 import powerI from "../../../public/models/projectiles/speakerman_cross_effect.glb";
-import powerJ from "../../../public/models/projectiles/monocyte.glb";
+import powerJ from "../../../public/models/projectiles/exoplanet_sg10446623.glb";
 
 import power0 from "../../../public/models/projectiles/blood_moon_grin.glb";
-import power1 from "../../../public/models/projectiles/water_orb.glb";
+import power1 from "../../../public/models/projectiles/magical_orb.glb";
 import power2 from "../../../public/models/projectiles/blood_moon_grin.glb";
 import power3 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
 import power4 from "../../../public/models/projectiles/flying_crow_-_blacksmiths_workshop_assets.glb";
@@ -411,7 +411,7 @@ function showGameOverScreen(playerWon) {
     max-width: 600px;
   `;
   message.textContent = playerWon 
-    ? 'The witch has been vanquished. Your soul remains your own... for now.'
+    ? 'The witch has been vanquished. Your child remains your alive... for now.'
     : 'The witch claims another soul. Darkness falls eternal.';
   
   // Restart button
