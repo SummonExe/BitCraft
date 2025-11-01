@@ -380,8 +380,14 @@ if (showObjectiveBtn) {
 if (closeBtns) {
   closeBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      if (controlsScreen) controlsScreen.style.display = 'none';
-      if (objectiveScreen) objectiveScreen.style.display = 'none';
+      if(loadingComplete){
+        if (controlsScreen) controlsScreen.style.display = 'none';
+        if (objectiveScreen) objectiveScreen.style.display = 'none';
+      }else{
+        if (controlsScreen) controlsScreen.style.display = 'none';
+        if (objectiveScreen) objectiveScreen.style.display = 'none';
+        if (loadingScreen) loadingScreen.style.display = 'flex';
+      }
     });
   });
 }
@@ -687,13 +693,13 @@ async function initGame() {
 
     console.log("All models loaded. Starting game...");
     loadingComplete = true;
-    loadingScreen.style.display = 'none';
-    healthUI.style.display = 'block';
+    // loadingScreen.style.display = 'none';
+    // healthUI.style.display = 'block';
     
     // Initial health UI update
     updateHealthUI();
 
-    animate();
+    // animate();
 
   } catch (error) {
     console.error("Failed to load assets:", error);
@@ -759,4 +765,64 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-initGame();
+// ----- HELPER -------------------------------------------------
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+// ------------------------------------------------------------------
+
+// === START GAME – OBJECTIVE IS PART OF LOADING ==================
+(async () => {
+  try {
+    const objectiveScreen = document.getElementById('objectiveScreen');
+    const loadingScreen   = document.getElementById('loadingScreen');
+    const healthUI        = document.getElementById('healthUI');
+
+    // --------------------------------------------------------------
+    // 1. Hide the default loading screen (it is visible in HTML)
+    // --------------------------------------------------------------
+    if (loadingScreen) loadingScreen.style.display = 'none';
+
+    // --------------------------------------------------------------
+    // 2. Show Objective – this is the first loading phase
+    // --------------------------------------------------------------
+    if (objectiveScreen) objectiveScreen.style.display = 'flex';
+
+    // --------------------------------------------------------------
+    // 3. Kick off asset loading **in parallel**
+    // --------------------------------------------------------------
+    const loadingPromise = initGame();   // <-- your existing initGame()
+
+    // --------------------------------------------------------------
+    // 4. Wait **exactly** 30 seconds for the objective phase
+    // --------------------------------------------------------------
+    await wait(10_000);
+
+    // --------------------------------------------------------------
+    // 5. Objective phase finished – hide it
+    // --------------------------------------------------------------
+    if (objectiveScreen) objectiveScreen.style.display = 'none';
+
+    // --------------------------------------------------------------
+    // 6. If assets are not ready yet → show the real loading screen
+    // --------------------------------------------------------------
+    if (!loadingComplete) {
+      if (loadingScreen) loadingScreen.style.display = 'flex';
+      await loadingPromise;          // wait for the rest
+    }
+
+    // --------------------------------------------------------------
+    // 7. Everything is ready – hide loading UI, show game UI,
+    //     and finally start the render loop
+    // --------------------------------------------------------------
+    if (loadingScreen) loadingScreen.style.display = 'none';
+    if (healthUI) healthUI.style.display = 'block';
+
+    animate();   // <-- ONLY HERE the game actually starts
+  } catch (err) {
+    console.error('Game init failed:', err);
+    const ls = document.getElementById('loadingScreen');
+    if (ls) {
+      ls.style.display = 'flex';
+      ls.innerHTML = `<h2>Loading Failed</h2><p>Please refresh.</p>`;
+    }
+  }
+})();

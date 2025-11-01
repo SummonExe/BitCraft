@@ -172,8 +172,14 @@ if (showObjectiveBtn) {
 if (closeBtns) {
   closeBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      if (controlsScreen) controlsScreen.style.display = 'none';
-      if (objectiveScreen) objectiveScreen.style.display = 'none';
+      if(loadingComplete){
+        if (controlsScreen) controlsScreen.style.display = 'none';
+        if (objectiveScreen) objectiveScreen.style.display = 'none';
+      }else{
+        if (controlsScreen) controlsScreen.style.display = 'none';
+        if (objectiveScreen) objectiveScreen.style.display = 'none';
+        if (loadingScreen) loadingScreen.style.display = 'flex';
+      }
     });
   });
 }
