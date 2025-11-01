@@ -25,22 +25,58 @@
 			"file": ["church_of_st_peter_stourton.glb"]
 		},
 		{
-			"resource": "Beast Hunter Character Model",
-			"link": "https://skfb.ly/ooJIJ",
-			"credit": "\"Beast Hunter Character Model\" (https://skfb.ly/ooJIJ) by RedDevon is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
-			"file": ["beast_hunter_character_model.glb"]
+			"resource": "Graveyard Fog eyeball",
+			"link": "https://skfb.ly/oOqvu",
+			"credit": "\"Graveyard Fog eyeball\" (https://skfb.ly/oOqvu) by gamnok is licensed under Creative Commons Attribution-NonCommercial (http://creativecommons.org/licenses/by-nc/4.0/).",
+			"file": ["graveyard_fog_eyeball.glb"]
 		},
 		{
-			"resource": "Jack Of Blade",
-			"link": "https://skfb.ly/oxyq9",
-			"credit": "\"Jack Of Blades\" (https://skfb.ly/oxyq9) by FrancisLam. is licensed under CC Attribution-NonCommercial-ShareAlike (http://creativecommons.org/licenses/by-nc-sa/4.0/).",
-			"file": ["jack_of_blades.glb", "jack-of-blades.zip"]
+			"resource": "Magical orb",
+			"link": "https://skfb.ly/oCyJR",
+			"credit": "\"Magical orb\" (https://skfb.ly/oCyJR) by tamminen is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["magical_orb.glb"]
 		},
 		{
-			"resource": "Undercover Cop - Animated",
-			"link": "https://skfb.ly/o87Uu",
-			"credit": "\"Undercover Cop - Animated\" (https://skfb.ly/o87Uu) by tonyflanagan is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
-			"file": ["undercover_cop_-_animated.glb", "undercover_cop_-_animated.zip"]
+			"resource": "Blood_Moon_Grin",
+			"link": "https://skfb.ly/pzKuZ",
+			"credit": "\"Blood_Moon_Grin\" (https://skfb.ly/pzKuZ) by bermudesdelgado00 is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["blood_moon_grin.glb"]
+		},
+		{
+			"resource": "RASENGAN",
+			"link": "https://skfb.ly/oYCEW",
+			"credit": "\"RASENGAN\" (https://skfb.ly/oYCEW) by OPREXT is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["rasengan.glb"]
+		},
+		{
+			"resource": "Low Poly Water Drop",
+			"link": "https://skfb.ly/oCVnO",
+			"credit": "\"Low Poly Water Drop\" (https://skfb.ly/oCVnO) by m53studio is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["low_poly_water_drop.glb"]
+		},
+		{
+			"resource": "speakerman Cross effect",
+			"link": "https://skfb.ly/pw8u6",
+			"credit": "\"speakerman Cross effect\" (https://skfb.ly/pw8u6) by photon (that one larry) is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["speakerman_cross_effect.glb"]
+		},
+		{
+			"resource": "Adorned Metal Sphere",
+			"link": "https://skfb.ly/6WTNn",
+			"credit": "\"Adorned Metal Sphere\" (https://skfb.ly/6WTNn) by Heferum Games is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["adorned_metal_sphere.glb"]
+		},
+		{
+			"resource": "Fireball | energy sphere",
+			"link": "https://skfb.ly/6WTS8",
+			"credit": "\"Fireball | energy sphere\" (https://skfb.ly/6WTS8) by dabori is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["fireball_energy_sphere.glb"]
+		},
+		{
+			"resource": "Flying Crow - Blacksmith's workshop assets",
+			"link": "https://skfb.ly/69AwO",
+			"credit": "\"Flying Crow - Blacksmith's workshop assets\" (https://skfb.ly/69AwO) by Kyan0s is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["flying_crow_blacksmith_workshop_assets.glb"]
 		},
 		{
 			"resource": "Stone Pavement Ground Tile",
@@ -71,12 +107,6 @@
 			"link": "https://sketchfab.com/3d-models/horror-corridor-3-e03a192de67d442ebdf42f43a8a2d37a",
 			"credit": "\"Horror corridor 3\" (https://sketchfab.com/3d-models/horror-corridor-3-e03a192de67d442ebdf42f43a8a2d37a) by Katydid is licensed under Free Standard",
 			"file": ["horror_corridor_3.glb"]
-		},
-		{
-			"resource": "Horror corridor for game developers",
-			"link": "https://skfb.ly/pAQCE",
-			"credit": "\"Horror corridor for game developers\" (https://skfb.ly/pAQCE) by Katydid is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
-			"file": ["horror_corridor_for_game_developers.glb"]
 		},
 		{
 			"resource": "little-girl-stylised",
@@ -145,7 +175,7 @@
 			"file": ["holy_water.glb"]
 		},
 		{
-			"resource": "ARROW" ,
+			"resource": "ARROW",
 			"link": "https://skfb.ly/oEtUY",
 			"credit": "by PropShop™ is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
 			"file": ["arrow.glb"]
