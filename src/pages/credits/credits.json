@@ -149,6 +149,27 @@
 			"link": "https://skfb.ly/oEtUY",
 			"credit": "by PropShop™ is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
 			"file": ["arrow.glb"]
+		},
+		{
+			"resource": "PSX Abandoned Church",
+			"link": "https://skfb.ly/oU7CH",
+			"credit": "by IIShazlyII is licensed under Creative Common Attribution (https://creativecommons.org/licenses/by/4.0/).",
+			"file": ["final_church.glb"]
+
+		},
+		{
+			"resource":"Middle aged orthodox priest with long beard",
+			"link": "https://skfb.ly/p8G89",
+			"credit": "by Tiamath is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).",
+			"file": ["priest.glb"]
+		},
+
+		{
+			"resource": "Old Bible",
+			"link": "https://skfb.ly/QHQv",
+			"credit": "by DarksProducer is licensed under Creative Commons Attribution (https://creativecommons.org/licenses/by/4.0/).",
+			"file": ["bible.glb"]
 		}
+
 	]
 }
