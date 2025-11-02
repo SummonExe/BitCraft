@@ -478,6 +478,10 @@ const keys = {
   ArrowDown: false,
   ArrowLeft: false,
   ArrowRight: false,
+  w: false,
+  a: false,
+  s: false,
+  d: false,
   Shift: false,
   i: false,
   j: false,
@@ -485,9 +489,9 @@ const keys = {
   o: false,
   p: false,
   l: false,
-  Escape: false  // Add Escape key
+  Escape: false,
+  c: false  // Add C key for control toggle
 };
-
 // Pause menu state
 let gamePaused = false;
 let lastDeltaTime = 0;
@@ -518,7 +522,58 @@ function togglePauseMenu() {
   }
 }
 
-// Event listeners for pause menu
+// Add this function after the togglePauseMenu function
+function toggleControlMode() {
+  if (!player || !loadingComplete || gameOver) return;
+  
+  const newMode = player.toggleControlMode();
+  
+  // Show notification
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(20, 20, 20, 0.95);
+    color: #8b0000;
+    font-family: 'DK Okiku', sans-serif;
+    font-size: 2em;
+    padding: 30px 60px;
+    border: 3px solid rgba(139, 0, 0, 0.7);
+    border-radius: 5px;
+    box-shadow: 0 0 50px rgba(139, 0, 0, 0.4);
+    text-shadow: 0 0 10px rgba(139, 0, 0, 0.8);
+    z-index: 9998;
+    animation: fadeInOut 2s ease-in-out;
+  `;
+  notification.textContent = newMode === 'keyboard' 
+    ? '☠ KEYBOARD MODE ☠' 
+    : '☠ ORBIT MODE ☠';
+  
+  document.body.appendChild(notification);
+  
+  // Add animation style if not already present
+  if (!document.getElementById('controlToggleStyle')) {
+    const style = document.createElement('style');
+    style.id = 'controlToggleStyle';
+    style.textContent = `
+      @keyframes fadeInOut {
+        0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  setTimeout(() => {
+    notification.remove();
+  }, 2000);
+}
+
+// Update the keydown event listener
 window.addEventListener('keydown', (e) => {
   let key = e.key;
   
@@ -534,9 +589,16 @@ window.addEventListener('keydown', (e) => {
   // Escape key to toggle pause
   if (key === 'Escape' || key === 'Esc') {
     e.preventDefault();
-    // Only allow pausing after loading is complete
     if (loadingComplete && !gameOver) {
       togglePauseMenu();
+    }
+  }
+  
+  // C key to toggle control mode
+  if (key === 'c') {
+    e.preventDefault();
+    if (loadingComplete && !gameOver && !gamePaused) {
+      toggleControlMode();
     }
   }
 });
@@ -585,15 +647,28 @@ if (closeBtns) {
 if (controlsScreen) {
   controlsScreen.addEventListener('click', (e) => {
     if (e.target === controlsScreen) {
-      controlsScreen.style.display = 'none';
+      if(loadingComplete){
+        if (controlsScreen) controlsScreen.style.display = 'none';
+      }else{
+        if (controlsScreen) controlsScreen.style.display = 'none';
+        if (objectiveScreen) objectiveScreen.style.display = 'none';
+        if (loadingScreen) loadingScreen.style.display = 'flex';
+      };
     }
+    
   });
 }
 
 if (objectiveScreen) {
   objectiveScreen.addEventListener('click', (e) => {
     if (e.target === objectiveScreen) {
-      objectiveScreen.style.display = 'none';
+      if(loadingComplete){
+        if (objectiveScreen) objectiveScreen.style.display = 'none';
+      }else{
+        if (controlsScreen) controlsScreen.style.display = 'none';
+        if (objectiveScreen) objectiveScreen.style.display = 'none';
+        if (loadingScreen) loadingScreen.style.display = 'flex';
+      }
     }
   });
 }
@@ -830,18 +905,19 @@ async function initGame() {
     });
 
     player = new Player({
-      position: { x: 0, y: 0, z: 0 + outsideOffset },
-      modelPath: hero,
-      maxSpeed: 4,
-      moveForce: 7,
-      world,
-      scene,
-      mixers,
-      entityManager,
-      loadModel,
-      loadAnimation,
-      projectiles
-    });
+          position: { x: 0, y: 0, z: 0 + outsideOffset },
+          modelPath: hero,
+          maxSpeed: 4,
+          moveForce: 7,
+          world,
+          scene,
+          mixers,
+          entityManager,
+          loadModel,
+          loadAnimation,
+          projectiles,
+          camera: camera  // Add camera reference
+        });
 
     npc1 = new FollowerNPC({
       position: { x: -5, y: 0, z: -8 + outsideOffset },

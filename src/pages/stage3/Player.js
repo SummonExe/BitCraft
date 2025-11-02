@@ -7,15 +7,15 @@ import points from "../../../public/gamestate.json";
 // Load gamestate from localStorage (fallback to imported points if no save)
 const gamestate = JSON.parse(localStorage.getItem('gamestate')) || points;
 // Extract values
-const timeTaken = gamestate.time; // If this is ms, use: gamestate.time / 1000;
+const timeTaken = gamestate.time;
 const score = gamestate['holy-water'];
 
 // Define max values
-const maxTime = 130; // seconds
+const maxTime = 130;
 const maxScore = 20;
 // Compute mapped values (linear interpolation)
-const value1 = (timeTaken / maxTime) * 2; // 0 to 2 (time penalty)
-const value2 = (score / maxScore) * 1.5; // 0 to 1.5 (score bonus)
+const value1 = (timeTaken / maxTime) * 2;
+const value2 = (score / maxScore) * 1.5;
 
 // Clamp to valid ranges (prevent negative/extreme values)
 const clampedValue1 = Math.max(0, Math.min(value1, 2));
@@ -46,7 +46,7 @@ import powerI from "../../../public/models/projectiles/speakerman_cross_effect.g
 import powerJ from "../../../public/models/projectiles/exoplanet_sg10446623.glb";
 
 export class Player {
-  constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles, attackProjectileConfigs = null }) {
+  constructor({ position, modelPath, maxSpeed, moveForce, world, scene, mixers, entityManager, loadModel, loadAnimation, projectiles, attackProjectileConfigs = null, camera }) {
     this.baseMoveForce = moveForce;
     this.moveForce = moveForce;
     this.modelPath = modelPath;
@@ -54,7 +54,7 @@ export class Player {
     this.isRunning = false;
     this.mixer = null;
     this.actions = { idle: null, walk: null, run: null, hit: null, dying: null };
-    this.attacks = {}; // Will hold: p, l, o, k, i, j
+    this.attacks = {};
     this.currentAction = null;
     this.world = world;
     this.scene = scene;
@@ -64,33 +64,35 @@ export class Player {
     this.rotationSpeed = 0.05;
     this.modelLoader = loadModel;
     this.animationLoader = loadAnimation;
+    this.camera = camera;
+    
+    // Control mode: 'keyboard' or 'orbit'
+    this.controlMode = 'keyboard';
     
     // ATTACK COOLDOWN
     this.attackCooldown = 0;
     this.attackCooldownDuration = 1.0;
     this.baseAttackSpeed = 50;
     
-    // In Player constructor, add individual cooldowns:
     this.attackCooldowns = {
-      'p': { duration: Math.max(0.0,2.0 + adjustment), remaining: 0 },
-      'l': { duration: Math.max(0.0,4.0 + adjustment), remaining: 0 },
-      'o': { duration: Math.max(0.0,2.0 + adjustment), remaining: 0 },
-      'k': { duration: Math.max(0.0,4.0 + adjustment), remaining: 0 },
-      'i': { duration: Math.max(0.0,8.0 + adjustment), remaining: 0 },
-      'j': { duration: Math.max(0.0,1.0 + adjustment), remaining: 0 }
+      'p': { duration: Math.max(0.0, 2.0 + adjustment), remaining: 0 },
+      'l': { duration: Math.max(0.0, 4.0 + adjustment), remaining: 0 },
+      'o': { duration: Math.max(0.0, 2.0 + adjustment), remaining: 0 },
+      'k': { duration: Math.max(0.0, 4.0 + adjustment), remaining: 0 },
+      'i': { duration: Math.max(0.0, 8.0 + adjustment), remaining: 0 },
+      'j': { duration: Math.max(0.0, 1.0 + adjustment), remaining: 0 }
     };
     
-    // Remove or keep global cooldown as a minimum delay between any attacks
     this.globalCooldown = 0;
-    this.globalCooldownDuration = 0.3; // Minimum 0.3s between any attacks
+    this.globalCooldownDuration = 0.3;
     
     // HEALTH SYSTEM
     this.maxHealth = 1000;
     this.health = 1000;
     this.isDead = false;
-    this.isHit = false; // Track if currently playing hit animation
-    this.isAttacking = false; // Track if currently playing attack animation
-    this.team = 'player'; // Used for collision detection
+    this.isHit = false;
+    this.isAttacking = false;
+    this.team = 'player';
     
     // Configure projectiles for each attack key
     this.attackProjectileConfigs = attackProjectileConfigs || {
@@ -99,7 +101,7 @@ export class Player {
         speed: this.baseAttackSpeed + 120,
         offsetY: 18,
         scale: 10,
-        damage: 50, // Damage amount
+        damage: 50,
         modelPath: powerP,
         loadModel: loadModel
       },
@@ -185,7 +187,6 @@ export class Player {
       this.mixer = new THREE.AnimationMixer(this.model);
       mixers.push(this.mixer);
       
-      // === Load Base Animations ===
       const idleClip = await this.animationLoader(heroIdle);
       this.actions.idle = this.mixer.clipAction(idleClip);
       this.actions.idle.play();
@@ -199,19 +200,16 @@ export class Player {
       this.actions.run = this.mixer.clipAction(runClip);
       this.actions.run.timeScale = 0.6;
       
-      // === Load Hit Animation ===
       const hitClip = await this.animationLoader(heroAttacked);
       this.actions.hit = this.mixer.clipAction(hitClip);
       this.actions.hit.setLoop(THREE.LoopOnce);
       this.actions.hit.clampWhenFinished = true;
       
-      // === Load Death Animation ===
       const dyingClip = await this.animationLoader(heroDying);
       this.actions.dying = this.mixer.clipAction(dyingClip);
       this.actions.dying.setLoop(THREE.LoopOnce);
       this.actions.dying.clampWhenFinished = true;
       
-      // === Load All Attack Animations ===
       const attackMap = {
         p: heroHitP,
         l: heroHitL,
@@ -229,27 +227,22 @@ export class Player {
         this.attacks[key] = action;
       }
 
-      // === Animation Finish Handler ===
       this.mixer.addEventListener('finished', (e) => {
         const finishedAction = e.action;
         
-        // Handle attack animations
         if (Object.values(this.attacks).includes(finishedAction)) {
-          this.isAttacking = false; // Allow next attack
+          this.isAttacking = false;
           finishedAction.fadeOut(0.3);
           this.actions.idle.reset().fadeIn(0.3).play();
           this.currentAction = this.actions.idle;
         }
         
-        // Handle hit animation - return to idle
         if (finishedAction === this.actions.hit) {
           this.isHit = false;
           finishedAction.fadeOut(0.2);
           this.actions.idle.reset().fadeIn(0.2).play();
           this.currentAction = this.actions.idle;
         }
-        
-        // Death animation stays frozen at last frame (clampWhenFinished handles this)
       });
       
       this.entity.setRenderComponent(this.model, this.sync);
@@ -264,6 +257,12 @@ export class Player {
     renderComponent.quaternion.copy(entity.rotation);
   }
   
+  toggleControlMode() {
+    this.controlMode = this.controlMode === 'keyboard' ? 'orbit' : 'keyboard';
+    console.log(`Control mode switched to: ${this.controlMode}`);
+    return this.controlMode;
+  }
+  
   takeDamage(amount) {
     if (this.isDead || this.isHit) return;
     
@@ -274,7 +273,6 @@ export class Player {
       this.health = 0;
       this.die();
     } else {
-      // Play hit animation if not dead
       this.playHitAnimation();
     }
   }
@@ -292,14 +290,12 @@ export class Player {
     if (this.isDead) return;
     
     this.isDead = true;
-    this.isHit = false; // Clear hit flag if dying
-    this.isAttacking = false; // Clear attacking flag
+    this.isHit = false;
+    this.isAttacking = false;
     console.log('Player died!');
     
-    // Stop movement
     this.rigidBody.setLinvel({ x: 0, y: this.rigidBody.linvel().y, z: 0 }, true);
     
-    // Play death animation - will freeze at last frame due to clampWhenFinished
     if (this.actions.dying) {
       if (this.currentAction) this.currentAction.stop();
       this.actions.dying.reset().play();
@@ -316,13 +312,11 @@ export class Player {
     forward.y = 0;
     forward.normalize();
     
-    // Custom pattern function
     if (config.pattern === 'custom' && config.customPattern) {
       config.customPattern(this, physicsPos, forward);
       return;
     }
     
-    // Get projectile directions based on pattern
     const projectileDirections = this.getProjectileDirections(forward, config.pattern, config.count || 1, config.spreadAngle || 0.3);
     
     projectileDirections.forEach(direction => {
@@ -338,11 +332,10 @@ export class Player {
         color: config.color || 0xff0000,
         speed: config.speed || 20,
         scale: config.scale || 1,
-        damage: config.damage || 50, // Pass damage to projectile
-        team: 'player' // Team identification
+        damage: config.damage || 50,
+        team: 'player'
       };
       
-      // Add model parameters if model path is provided
       if (config.modelPath && config.loadModel) {
         projectileOptions.modelPath = config.modelPath;
         projectileOptions.loadModel = config.loadModel;
@@ -401,12 +394,10 @@ export class Player {
   update(delta) {
     if (this.isDead) return;
     
-    // Update global cooldown
     if (this.globalCooldown > 0) {
       this.globalCooldown -= delta;
     }
       
-    // Update individual power cooldowns
     for (const key in this.attackCooldowns) {
       if (this.attackCooldowns[key].remaining > 0) {
         this.attackCooldowns[key].remaining -= delta;
@@ -416,7 +407,6 @@ export class Player {
     if (this.mixer && this.actions.idle && this.actions.walk && this.actions.run) {
       const isAttacking = this.currentAction && Object.values(this.attacks).includes(this.currentAction);
       
-      // Don't interrupt hit animation
       if (this.isHit) {
         this.mixer.update(delta);
         return;
@@ -441,52 +431,84 @@ export class Player {
   }
   
   handleInput(keys, delta) {
-    if (this.isDead || this.isHit) return; // Can't control during hit or death
+    if (this.isDead || this.isHit) return;
     
     const velocity = new THREE.Vector3();
     let rotationInput = 0;
     
-    if (keys.ArrowUp) velocity.z = 1;
-    if (keys.ArrowDown) velocity.z = -1;
-    if (keys.ArrowLeft) rotationInput += 1;
-    if (keys.ArrowRight) rotationInput -= 1;
+    if (this.controlMode === 'keyboard') {
+      // Original keyboard controls (Arrow keys)
+      if (keys.ArrowUp) velocity.z = 1;
+      if (keys.ArrowDown) velocity.z = -1;
+      if (keys.ArrowLeft) rotationInput += 1;
+      if (keys.ArrowRight) rotationInput -= 1;
+      
+      // WASD controls
+      if (keys.w) velocity.z = 1;
+      if (keys.s) velocity.z = -1;
+      if (keys.a) rotationInput += 1;
+      if (keys.d) rotationInput -= 1;
+      
+    } else if (this.controlMode === 'orbit') {
+      // Orbit mode: WASD movement relative to camera
+      const cameraDirection = new THREE.Vector3();
+      this.camera.getWorldDirection(cameraDirection);
+      cameraDirection.y = 0;
+      cameraDirection.normalize();
+      
+      const cameraRight = new THREE.Vector3();
+      cameraRight.crossVectors(this.camera.up, cameraDirection).normalize();
+      
+      const moveDirection = new THREE.Vector3();
+      
+      if (keys.w || keys.ArrowUp) moveDirection.add(cameraDirection);
+      if (keys.s || keys.ArrowDown) moveDirection.sub(cameraDirection);
+      if (keys.a || keys.ArrowLeft) moveDirection.add(cameraRight);
+      if (keys.d || keys.ArrowRight) moveDirection.sub(cameraRight);
+      
+      if (moveDirection.length() > 0) {
+        moveDirection.normalize();
+        velocity.copy(moveDirection);
+        
+        // Auto-rotate player to face movement direction
+        const targetAngle = Math.atan2(moveDirection.x, moveDirection.z);
+        this.targetRotation = targetAngle;
+      }
+    }
     
     this.isMoving = velocity.length() > 0 || rotationInput !== 0;
     this.isRunning = keys.Shift && this.isMoving;
     this.moveForce = this.isRunning ? this.baseMoveForce + 10 : this.baseMoveForce;
     
-    // === Handle Attack Keys with Individual Cooldowns ===
-     if (this.globalCooldown <= 0) {
-       const attackKeyMap = { 'p': 'p', 'l': 'l', 'o': 'o', 'k': 'k', 'i': 'i', 'j': 'j' };
-       let triggeredAttack = null;
-       let attackKey = null;
-   
-       for (const [inputKey, key] of Object.entries(attackKeyMap)) {
-         // Check if key is pressed AND power is off cooldown
-         if (keys[inputKey] && 
-             this.attacks[key] && 
-             this.attackCooldowns[key].remaining <= 0) {
-           triggeredAttack = this.attacks[key];
-           attackKey = key;
-           break;
-         }
-       }
-   
-       if (triggeredAttack && this.currentAction !== triggeredAttack) {
-         if (this.currentAction) this.currentAction.fadeOut(0.3);
-         triggeredAttack.reset().fadeIn(0.3).play();
-         this.currentAction = triggeredAttack;
-         
-         // Fire projectiles
-         this.fireProjectiles(attackKey);
-         
-         // Start cooldowns
-         this.globalCooldown = this.globalCooldownDuration;
-         this.attackCooldowns[attackKey].remaining = this.attackCooldowns[attackKey].duration;
-       }
-     }
+    // Handle Attack Keys with Individual Cooldowns
+    if (this.globalCooldown <= 0) {
+      const attackKeyMap = { 'p': 'p', 'l': 'l', 'o': 'o', 'k': 'k', 'i': 'i', 'j': 'j' };
+      let triggeredAttack = null;
+      let attackKey = null;
+  
+      for (const [inputKey, key] of Object.entries(attackKeyMap)) {
+        if (keys[inputKey] && 
+            this.attacks[key] && 
+            this.attackCooldowns[key].remaining <= 0) {
+          triggeredAttack = this.attacks[key];
+          attackKey = key;
+          break;
+        }
+      }
+  
+      if (triggeredAttack && this.currentAction !== triggeredAttack) {
+        if (this.currentAction) this.currentAction.fadeOut(0.3);
+        triggeredAttack.reset().fadeIn(0.3).play();
+        this.currentAction = triggeredAttack;
+        
+        this.fireProjectiles(attackKey);
+        
+        this.globalCooldown = this.globalCooldownDuration;
+        this.attackCooldowns[attackKey].remaining = this.attackCooldowns[attackKey].duration;
+      }
+    }
     
-    // === Rotation ===
+    // Rotation
     if (rotationInput !== 0) {
       this.targetRotation += rotationInput * delta * 4;
     }
@@ -496,9 +518,11 @@ export class Player {
     this.currentRotation += normalizedDiff * this.rotationSpeed;
     this.entity.rotation.fromEuler(0, this.currentRotation, 0);
     
-    // === Movement ===
+    // Movement
     if (velocity.length() > 0) {
-      velocity.applyQuaternion(this.entity.rotation);
+      if (this.controlMode === 'keyboard') {
+        velocity.applyQuaternion(this.entity.rotation);
+      }
       velocity.normalize().multiplyScalar(this.moveForce);
       this.rigidBody.applyImpulse({ x: velocity.x, y: 0, z: velocity.z }, true);
     } else {
