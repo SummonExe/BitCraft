@@ -328,61 +328,69 @@ export class ChaserNPC {
   }
   
   fireProjectiles(attackIndex) {
-    const config = this.attackProjectileConfigs[attackIndex];
-    if (!config) return;
-    
-    const physicsPos = this.rigidBody.translation();
-    
-    // Calculate base direction towards target
-    const baseDirection = new THREE.Vector3(
-      this.target.entity.position.x - physicsPos.x,
-      0,
-      this.target.entity.position.z - physicsPos.z
-    ).normalize();
-    
-    // Custom pattern function
-    if (config.pattern === 'custom' && config.customPattern) {
-      config.customPattern(this, physicsPos, baseDirection);
-      return;
-    }
-    
-    // Predefined patterns
-    const projectileDirections = this.getProjectileDirections(baseDirection, config.pattern, config.count || 1, config.spreadAngle || 0.3);
-    
-    projectileDirections.forEach(direction => {
-      const startPosition = new THREE.Vector3(
-        physicsPos.x, 
-        physicsPos.y + (config.offsetY || 15), 
-        physicsPos.z
-      );
+      const config = this.attackProjectileConfigs[attackIndex];
+      if (!config) return;
       
-      const projectileOptions = {
-        world: this.world,
-        scene: this.scene,
-        color: config.color || 0x9d00ff,
-        speed: config.speed || 20,
-        damage: config.damage || 40, // Pass damage to projectile
-        team: 'enemy' // Team identification
-      };
+      const physicsPos = this.rigidBody.translation();
       
-      // Add model parameters if model path is provided
-      if (config.modelPath && config.loadModel) {
-        projectileOptions.modelPath = config.modelPath;
-        projectileOptions.loadModel = config.loadModel;
-        projectileOptions.scale = config.scale;
-      } else if (config.modelPath && this.modelLoader) {
-        projectileOptions.modelPath = config.modelPath;
-        projectileOptions.loadModel = this.modelLoader;
-        projectileOptions.scale = config.scale;
+      // Calculate base direction towards target
+      const baseDirection = new THREE.Vector3(
+        this.target.entity.position.x - physicsPos.x,
+        0,
+        this.target.entity.position.z - physicsPos.z
+      ).normalize();
+      
+      // Custom pattern function
+      if (config.pattern === 'custom' && config.customPattern) {
+        config.customPattern(this, physicsPos, baseDirection);
+        return;
       }
       
-      const projectile = new Projectile(
-        { position: startPosition, direction: direction },
-        projectileOptions
-      );
-      this.projectiles.push(projectile);
-    });
-  }
+      // Predefined patterns
+      const projectileDirections = this.getProjectileDirections(baseDirection, config.pattern, config.count || 1, config.spreadAngle || 0.3);
+      
+      // Define two height levels: upper and lower
+      const upperHeight = config.offsetY || 15;
+      const lowerHeight = (config.offsetY || 15) - 12; // 8 units lower
+      const heights = [upperHeight, lowerHeight];
+      
+      // Fire projectiles at both heights
+      heights.forEach(height => {
+        projectileDirections.forEach(direction => {
+          const startPosition = new THREE.Vector3(
+            physicsPos.x, 
+            physicsPos.y + height, 
+            physicsPos.z
+          );
+          
+          const projectileOptions = {
+            world: this.world,
+            scene: this.scene,
+            color: config.color || 0x9d00ff,
+            speed: config.speed || 20,
+            damage: config.damage || 40, // Pass damage to projectile
+            team: 'enemy' // Team identification
+          };
+          
+          // Add model parameters if model path is provided
+          if (config.modelPath && config.loadModel) {
+            projectileOptions.modelPath = config.modelPath;
+            projectileOptions.loadModel = config.loadModel;
+            projectileOptions.scale = config.scale;
+          } else if (config.modelPath && this.modelLoader) {
+            projectileOptions.modelPath = config.modelPath;
+            projectileOptions.loadModel = this.modelLoader;
+            projectileOptions.scale = config.scale;
+          }
+          
+          const projectile = new Projectile(
+            { position: startPosition, direction: direction },
+            projectileOptions
+          );
+          this.projectiles.push(projectile);
+        });
+      });
+    }
   
   getProjectileDirections(baseDirection, pattern, count, spreadAngle) {
     const directions = [];
@@ -501,6 +509,12 @@ export class ChaserNPC {
           
           // Fire projectiles immediately when attack starts
           this.fireProjectiles(attackIndex);
+          // Check if player is very close for melee damage
+          const meleeRange = 15; // Adjust this value for melee range
+          if (distanceToTarget <= meleeRange) {
+            console.log('Witch landed melee attack!');
+            this.target.takeDamage(100);
+          }
         }
       }
       // RETURN TO IDLE IF NOT ATTACKING

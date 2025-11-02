@@ -13,9 +13,13 @@ const score = gamestate['holy-water'];
 // Define max values
 const maxTime = 130;
 const maxScore = 20;
-// Compute mapped values (linear interpolation)
-const value1 = (timeTaken / maxTime) * 2;
-const value2 = (score / maxScore) * 1.5;
+
+// Linear interpolation function
+const lerp = (start, end, t) => start + (end - start) * t;
+
+// Compute mapped values using lerp
+const value1 = lerp(0, 2, timeTaken / maxTime);
+const value2 = lerp(0, 1.5, score / maxScore);
 
 // Clamp to valid ranges (prevent negative/extreme values)
 const clampedValue1 = Math.max(0, Math.min(value1, 2));
