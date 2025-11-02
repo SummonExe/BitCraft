@@ -23,6 +23,8 @@ export default defineConfig({
 		"**/*.glb",
 		"**/*.fbx",
 		"**/*.gltf",
+		"**/*.html",
+		"**/*.css",
 	],
 	server: {
 		fs: {
