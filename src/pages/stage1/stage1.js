@@ -56,6 +56,11 @@ let isPaused = false;
 // Pause menu state
 let gamePaused = false;
 
+// Timer state variables
+let gameStartTime = null;
+let pauseStartTime = null;
+let totalPausedTime = 0;
+
 // Pause menu elements
 const pauseMenu = document.getElementById('pauseMenu');
 const controlsScreen = document.getElementById('controlsScreen');
@@ -72,9 +77,16 @@ function togglePauseMenu() {
   gamePaused = !gamePaused;
   
   if (gamePaused) {
+    // Game is now paused
+    pauseStartTime = Date.now();
     if (pauseMenu) pauseMenu.style.display = 'flex';
     console.log("Game Paused");
   } else {
+    // Game is now resumed
+    if (pauseStartTime !== null) {
+      totalPausedTime += Date.now() - pauseStartTime;
+      pauseStartTime = null;
+    }
     if (pauseMenu) pauseMenu.style.display = 'none';
     if (controlsScreen) controlsScreen.style.display = 'none';
     if (objectiveScreen) objectiveScreen.style.display = 'none';
@@ -211,7 +223,6 @@ const projectiles = [];
 // Bible collection state
 let bibleMesh = null;
 let bibleCollected = false;
-let gameStartTime = null;
 let collectionTime = null;
 
 // Game state
@@ -721,7 +732,9 @@ function checkBibleCollection() {
   if (distance < 30 && keys.Shift && keys.e) {
     bibleCollected = true;
     collectionTime = Date.now();
-    saveGameState('time', Math.floor((collectionTime - gameStartTime) / 1000));
+    // Calculate actual play time (excluding paused time)
+    const actualPlayTime = collectionTime - gameStartTime - totalPausedTime;
+    saveGameState('time', Math.floor(actualPlayTime / 1000));
     
     // Remove bible from scene
     scene.remove(bibleMesh);
@@ -732,7 +745,7 @@ function checkBibleCollection() {
     // Show win screen
     showGameOver(true);
     
-    console.log('Bible collected! Time:', ((collectionTime - gameStartTime) / 1000).toFixed(2), 'seconds');
+    console.log('Bible collected! Time:', (actualPlayTime / 1000).toFixed(2), 'seconds');
   }
 }
 
@@ -809,9 +822,12 @@ function animate() {
     gameStartTime = Date.now();
   }
   
+  // Calculate elapsed time excluding paused time
+  const currentTime = Date.now();
+  const elapsedTime = currentTime - gameStartTime - totalPausedTime;
+  
   // Check if time ran out
   if (!isGameOver && !bibleCollected) {
-    const elapsedTime = Date.now() - gameStartTime;
     if (elapsedTime >= GAME_DURATION) {
       showGameOver(false);
     }
@@ -847,10 +863,9 @@ function animate() {
     checkBibleCollection();
     
     // Update timer (countdown)
-    const elapsedTime = Date.now() - gameStartTime;
     const remainingTime = Math.max(0, GAME_DURATION - elapsedTime);
     const timeDisplay = bibleCollected 
-      ? `Time to collect: ${formatTime(collectionTime - gameStartTime)}`
+      ? `Time to collect: ${formatTime(collectionTime - gameStartTime - totalPausedTime)}`
       : `Time Remaining: ${formatTime(remainingTime)}`;
     
     // Change color when time is running low
