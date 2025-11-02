@@ -11,7 +11,7 @@ const timeTaken = gamestate.time;
 const score = gamestate['holy-water'];
 
 // Define max values
-const maxTime = 130;
+const maxTime = 90;
 const maxScore = 20;
 
 // Linear interpolation function

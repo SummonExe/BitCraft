@@ -216,7 +216,7 @@ let collectionTime = null;
 
 // Game state
 let isGameOver = false;
-const GAME_DURATION = 130000; // 2:15 in milliseconds (135 seconds)
+const GAME_DURATION = 90000; // 2:15 in milliseconds (135 seconds)
 
 // Create spawn indicator (green square)
 const spawnIndicator = new THREE.Mesh(
