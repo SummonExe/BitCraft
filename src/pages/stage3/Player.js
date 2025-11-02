@@ -3,6 +3,27 @@ import * as YUKA from 'yuka';
 import RAPIER from '@dimforge/rapier3d-compat';
 import { Projectile } from './Projectile.js';
 
+import points from "../../../public/gamestate.json";
+// Load gamestate from localStorage (fallback to imported points if no save)
+const gamestate = JSON.parse(localStorage.getItem('gamestate')) || points;
+// Extract values
+const timeTaken = gamestate.time; // If this is ms, use: gamestate.time / 1000;
+const score = gamestate['holy-water'];
+
+// Define max values
+const maxTime = 130; // seconds
+const maxScore = 20;
+// Compute mapped values (linear interpolation)
+const value1 = (timeTaken / maxTime) * 2; // 0 to 2 (time penalty)
+const value2 = (score / maxScore) * 1.5; // 0 to 1.5 (score bonus)
+
+// Clamp to valid ranges (prevent negative/extreme values)
+const clampedValue1 = Math.max(0, Math.min(value1, 2));
+const clampedValue2 = Math.max(0, Math.min(value2, 1.5));
+
+// Adjustment factor
+const adjustment = clampedValue1 - clampedValue2;
+
 import hero from "../../../public/models/cop/Magic Spell Pack/Undercover_Cop_-_Animated.fbx";
 import heroDying from "../../../public/models/cop/Magic Spell Pack/Standing React Death Backward.fbx";
 import heroAttacked from "../../../public/models/cop/Magic Spell Pack/Standing React Small From Front.fbx";
@@ -51,12 +72,12 @@ export class Player {
     
     // In Player constructor, add individual cooldowns:
     this.attackCooldowns = {
-      'p': { duration: 2.0, remaining: 0 },
-      'l': { duration: 4.0, remaining: 0 },
-      'o': { duration: 2.0, remaining: 0 },
-      'k': { duration: 4.0, remaining: 0 },
-      'i': { duration: 8.0, remaining: 0 },
-      'j': { duration: 1.0, remaining: 0 }
+      'p': { duration: Math.max(0.0,2.0 + adjustment), remaining: 0 },
+      'l': { duration: Math.max(0.0,4.0 + adjustment), remaining: 0 },
+      'o': { duration: Math.max(0.0,2.0 + adjustment), remaining: 0 },
+      'k': { duration: Math.max(0.0,4.0 + adjustment), remaining: 0 },
+      'i': { duration: Math.max(0.0,8.0 + adjustment), remaining: 0 },
+      'j': { duration: Math.max(0.0,1.0 + adjustment), remaining: 0 }
     };
     
     // Remove or keep global cooldown as a minimum delay between any attacks

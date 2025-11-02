@@ -12,6 +12,8 @@ import Bible from "../../../public/models/bible/bible.glb";
 
 import MusicSound from "../../../src/assets/sounds/horror.mp3";
 
+import points from "../../../public/gamestate.json";
+
 // === LOADING SCREEN ===
 const loadingScreen = document.getElementById('loadingScreen');
 if (!loadingScreen) {
@@ -37,6 +39,13 @@ function startBackgroundMusic() {
     document.addEventListener('keydown', playOnInteraction, { once: true });
     document.addEventListener('click', playOnInteraction, { once: true });
   });
+}
+
+// Function to save gamestate (add to both stage1.js and stage2.js)
+function saveGameState(key, value) {
+  const currentState = JSON.parse(localStorage.getItem('gamestate') || '{}');
+  currentState[key] = value;
+  localStorage.setItem('gamestate', JSON.stringify(currentState));
 }
 
 // === GLOBAL STATE ===
@@ -712,6 +721,7 @@ function checkBibleCollection() {
   if (distance < 30 && keys.Shift && keys.e) {
     bibleCollected = true;
     collectionTime = Date.now();
+    saveGameState('time', Math.floor((collectionTime - gameStartTime) / 1000));
     
     // Remove bible from scene
     scene.remove(bibleMesh);

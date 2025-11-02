@@ -24,6 +24,15 @@ import kid from "../../../public/models/kid2/Idle.fbx";
 import GhostSound from "../../../src/assets/sounds/ghost-screaming.mp3";
 import GirlScream from "../../../src/assets/sounds/kid-screaming.mp3";
 
+import points from "../../../public/gamestate.json";
+
+// Function to save gamestate (add to both stage1.js and stage2.js)
+function saveGameState(key, value) {
+  const currentState = JSON.parse(localStorage.getItem('gamestate') || '{}');
+  currentState[key] = value;
+  localStorage.setItem('gamestate', JSON.stringify(currentState));
+}
+
 // === CACHE SETUP ===
 const CACHE_NAME = 'stage2-game-cache-v1';
 const ASSET_URLS = [
@@ -248,6 +257,8 @@ function showGameOverScreen(playerWon) {
   message.textContent = playerWon 
     ? `You rescued your child and now escape the mansion! Holy Water Collected: ${score}`
     : 'The creatures have claimed you. Darkness falls eternal.';
+  
+  saveGameState('holy-water', score); // score is your holy water count
   
   // Button container
   const buttonContainer = document.createElement('div');
