@@ -1139,8 +1139,8 @@ async function init() {
   }
 
   async function loadMazeObjects() {
-    loadFlashingModel(FlashingModel, new Vector3(-45.78, 0.60, -46.07));
-    loadFlashingModel(FlashingModel, new Vector3(-45.78, 0.60, 30.00));
+    // loadFlashingModel(FlashingModel, new Vector3(-45.78, 0.60, -46.07));
+    // loadFlashingModel(FlashingModel, new Vector3(-45.78, 0.60, 30.00));
     loadDoorModel(DoorModel, new Vector3(-28.28, -48.51, -74.33), GirlScream);
     loadCoin(Coin, new Vector3(-35, -21, -145));
     loadCoin(Coin, new Vector3(-45, 2, -65));
