@@ -15,6 +15,8 @@ import witch from "../../../public/models/witch/witch_Idle.fbx";
 import kid from "../../../public/models/kid2/Idle.fbx";
 import groundTexture from "../../../public/2025-10-23 123028.png";
 
+import MusicSound from "../../../src/assets/sounds/horror.mp3";
+
 import powerP from "../../../public/models/projectiles/rasengan.glb";
 import powerL from "../../../public/models/projectiles/speakerman_cross_effect.glb";
 import powerO from "../../../public/models/projectiles/adorned_metal_sphere.glb";
@@ -39,6 +41,27 @@ const witchHealthText = document.getElementById('witchHealthText');
 
 if (!loadingScreen) {
   console.error("Loading screen element not found!");
+}
+
+// === BACKGROUND MUSIC ===
+const bgMusic = new Audio(MusicSound);
+bgMusic.loop = true;
+bgMusic.volume = 0.3; // Adjusted for better gameplay experience
+bgMusic.preload = 'auto';
+
+// Function to start music (handles autoplay restrictions)
+function startBackgroundMusic() {
+  bgMusic.play().catch(error => {
+    console.log('Autoplay prevented, waiting for user interaction:', error);
+    // Fallback: play on first user interaction
+    const playOnInteraction = () => {
+      bgMusic.play().catch(() => {});
+      document.removeEventListener('keydown', playOnInteraction);
+      document.removeEventListener('click', playOnInteraction);
+    };
+    document.addEventListener('keydown', playOnInteraction, { once: true });
+    document.addEventListener('click', playOnInteraction, { once: true });
+  });
 }
 
 // === GLOBAL STATE ===
@@ -815,8 +838,10 @@ function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
     // --------------------------------------------------------------
     if (loadingScreen) loadingScreen.style.display = 'none';
     if (healthUI) healthUI.style.display = 'block';
-
+    
+    startBackgroundMusic();
     animate();   // <-- ONLY HERE the game actually starts
+    
   } catch (err) {
     console.error('Game init failed:', err);
     const ls = document.getElementById('loadingScreen');
