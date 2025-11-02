@@ -34,6 +34,7 @@ import power5 from "../../../public/models/projectiles/graveyard_fog_eyeball_-_b
 // === LOADING SCREEN & UI ===
 const loadingScreen = document.getElementById('loadingScreen');
 const healthUI = document.getElementById('healthUI');
+const powerUI = document.getElementById('powerUI');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
 const witchHealthFill = document.getElementById('witchHealthFill');
@@ -73,6 +74,171 @@ let outsideOffset = 50;
 let doorOffset = -15;
 let loadingComplete = false;
 let gameOver = false;
+
+// Create power UI configuration
+const powerConfigs = [
+  { key: 'p', name: 'Triple Shot', color: '#ff6b6b', modelPath: powerP },
+  { key: 'l', name: 'Circle Burst', color: '#4ecdc4', modelPath: powerL },
+  { key: 'o', name: 'Single Shot', color: '#95e1d3', modelPath: powerO },
+  { key: 'k', name: 'Fast Shot', color: '#f38181', modelPath: powerK },
+  { key: 'i', name: 'Spread Shot', color: '#aa96da', modelPath: powerI },
+  { key: 'j', name: 'Magic Orb', color: '#fcbad3', modelPath: powerJ }
+];
+
+// Store mini renderers and scenes for each power
+const powerMiniScenes = new Map();
+
+// Initialize Power UI
+async function initializePowerUI() {
+  if (!powerUI) return;
+  
+  for (const config of powerConfigs) {
+    const slot = document.createElement('div');
+    slot.className = 'power-slot';
+    slot.id = `power-slot-${config.key}`;
+    slot.dataset.key = config.key;
+    
+    // Create mini canvas for 3D model preview
+    const miniCanvas = document.createElement('canvas');
+    miniCanvas.className = 'power-model-preview';
+    miniCanvas.width = 100;  // Static resolution
+    miniCanvas.height = 100;
+    
+    // Create mini scene for this power
+    const miniScene = new THREE.Scene();
+    miniScene.background = new THREE.Color(0x0a0a0a);
+    
+    const miniCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    miniCamera.position.set(0, 0, 3);
+    
+    const miniRenderer = new THREE.WebGLRenderer({ 
+      canvas: miniCanvas, 
+      antialias: true,
+      alpha: true 
+    });
+    miniRenderer.setSize(100, 100);
+    
+    // Lighting for mini scene
+    const ambLight = new THREE.AmbientLight(0xffffff, 0.8);
+    miniScene.add(ambLight);
+    
+    const spotLight = new THREE.SpotLight(config.color, 1.5);
+    spotLight.position.set(2, 2, 2);
+    miniScene.add(spotLight);
+    
+    // Load and add model to mini scene
+    try {
+      if (projectileModelCache.has(config.modelPath)) {
+        const cachedModel = projectileModelCache.get(config.modelPath);
+        const modelClone = cachedModel.clone(true);
+        
+        // Auto-scale and center model
+        const box = new THREE.Box3().setFromObject(modelClone);
+        const size = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 1.8 / maxDim;
+        modelClone.scale.multiplyScalar(scale);
+        
+        // Center the model
+        const center = box.getCenter(new THREE.Vector3());
+        modelClone.position.sub(center.multiplyScalar(scale));
+        
+        miniScene.add(modelClone);
+        
+        // Render ONCE - no animation
+        miniRenderer.render(miniScene, miniCamera);
+        
+        // Dispose of the mini renderer to free memory
+        miniRenderer.dispose();
+      }
+    } catch (error) {
+      console.warn(`Failed to load model for power ${config.key}:`, error);
+    }
+    
+    slot.appendChild(miniCanvas);
+    
+    // Keybind display
+    const keybind = document.createElement('div');
+    keybind.className = 'power-keybind';
+    keybind.textContent = config.key.toUpperCase();
+    keybind.style.color = config.color;
+    keybind.style.borderColor = config.color;
+    keybind.style.textShadow = `0 0 5px ${config.color}`;
+    slot.appendChild(keybind);
+    
+    // Power name
+    const name = document.createElement('div');
+    name.className = 'power-name';
+    name.textContent = config.name;
+    name.dataset.color = config.color;
+    slot.appendChild(name);
+    
+    // Cooldown overlay
+    const cooldownOverlay = document.createElement('div');
+    cooldownOverlay.className = 'power-cooldown-overlay';
+    cooldownOverlay.style.height = '0%';
+    slot.appendChild(cooldownOverlay);
+    
+    // Cooldown text
+    const cooldownText = document.createElement('div');
+    cooldownText.className = 'power-cooldown-text';
+    cooldownText.style.display = 'none';
+    slot.appendChild(cooldownText);
+    
+    // Ready pulse
+    const readyPulse = document.createElement('div');
+    readyPulse.className = 'power-ready-pulse';
+    readyPulse.style.background = `radial-gradient(circle at center, ${config.color}10, transparent)`;
+    slot.appendChild(readyPulse);
+    
+    // Apply color styling
+    slot.style.borderColor = config.color;
+    slot.style.boxShadow = `0 0 20px ${config.color}40, inset 0 0 20px rgba(0, 0, 0, 0.6)`;
+    
+    powerUI.appendChild(slot);
+  }
+  // NO MORE animatePowerModels() call here!
+}
+
+
+
+// Update Power UI based on cooldowns
+function updatePowerUI() {
+  if (!player || !powerUI) return;
+  
+  powerConfigs.forEach(config => {
+    const slot = document.getElementById(`power-slot-${config.key}`);
+    if (!slot) return;
+    
+    const cooldown = player.attackCooldowns[config.key];
+    const cooldownOverlay = slot.querySelector('.power-cooldown-overlay');
+    const cooldownText = slot.querySelector('.power-cooldown-text');
+    const powerName = slot.querySelector('.power-name');
+    
+    if (cooldown.remaining > 0) {
+      // Power on cooldown
+      slot.classList.remove('ready');
+      const percent = (cooldown.remaining / cooldown.duration) * 100;
+      cooldownOverlay.style.height = `${percent}%`;
+      cooldownText.style.display = 'block';
+      cooldownText.textContent = `${cooldown.remaining.toFixed(1)}s`;
+      powerName.style.color = '#666';
+      powerName.style.textShadow = 'none';
+      slot.style.borderColor = 'rgba(80, 80, 80, 0.6)';
+      slot.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 0, 0, 0.6)';
+    } else {
+      // Power ready
+      slot.classList.add('ready');
+      cooldownOverlay.style.height = '0%';
+      cooldownText.style.display = 'none';
+      powerName.style.color = config.color;
+      powerName.style.textShadow = `0 0 8px ${config.color}80`;
+      slot.style.borderColor = config.color;
+      slot.style.boxShadow = `0 0 20px ${config.color}40, inset 0 0 20px rgba(0, 0, 0, 0.6)`;
+    }
+  });
+}
+
 
 // Preload cache for projectile models - MAKE GLOBALLY ACCESSIBLE
 const projectileModelCache = new Map();
@@ -758,6 +924,9 @@ function animate() {
   // Update health UI
   updateHealthUI();
   
+  // Update power UI
+    updatePowerUI();
+  
   // Check for game over conditions
   checkGameOver();
 
@@ -838,6 +1007,10 @@ function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
     // --------------------------------------------------------------
     if (loadingScreen) loadingScreen.style.display = 'none';
     if (healthUI) healthUI.style.display = 'block';
+    if (powerUI) {
+      powerUI.style.display = 'block';
+      await initializePowerUI();
+    }
     
     startBackgroundMusic();
     animate();   // <-- ONLY HERE the game actually starts

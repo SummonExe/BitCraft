@@ -416,3 +416,116 @@ canvas {
   from { opacity: 0; }
   to { opacity: 1; }
 }
+
+/* Power UI Styles */
+#powerUI {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;  /* Changed from 1rem to 6px */
+    z-index: 100;
+    font-family: 'DK Okiku', sans-serif;
+}
+
+.power-slot {
+    position: relative;
+    width: 85px;  /* Changed from 70px to 85px */
+    height: 85px;  /* Changed from 70px to 85px */
+    background: rgba(10, 10, 10, 0.9);
+    border: 2px solid rgba(80, 80, 80, 0.6);  /* Changed from 3px to 2px */
+    border-radius: 6px;  /* Changed from 8px to 6px */
+    overflow: hidden;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    opacity: 0.6;
+    transform: scale(0.95);
+    margin-top: 1rem;
+}
+
+.power-slot.ready {
+    opacity: 1;
+    transform: scale(1);
+    cursor: pointer;
+}
+
+.power-slot.ready:hover {
+    transform: scale(1.05);
+}
+
+.power-model-preview {
+    position: absolute;
+    top: 10px;  /* Changed from 10px to 6px */
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;  /* Changed from 80px to 50px */
+    height: 50px;  /* Changed from 80px to 50px */
+    pointer-events: none;
+    
+}
+
+.power-keybind {
+    position: absolute;
+    top: 5px;  /* Changed from 8px to 5px */
+    left: 5px;  /* Changed from 8px to 5px */
+    width: 18px;  /* Changed from 24px to 18px */
+    height: 18px;  /* Changed from 24px to 18px */
+    background: rgba(0, 0, 0, 0.9);
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;  /* Changed from 14px to 11px */
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.power-name {
+    position: absolute;
+    bottom: 5px;  /* Changed from 8px to 5px */
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 9px;  /* Changed from 11px to 9px */
+    font-family: 'Dudu Calligraphy', cursive;
+    letter-spacing: 0.5px;
+    transition: all 0.3s ease;
+}
+
+.power-cooldown-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.85);
+    transition: height 0.05s linear;
+    border-top: 2px solid rgba(255, 0, 0, 0.4);
+    pointer-events: none;
+}
+
+.power-cooldown-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 18px;  /* Changed from 24px to 18px */
+    font-weight: bold;
+    color: #ff6b6b;
+    text-shadow: 0 0 10px rgba(255, 107, 107, 0.8), 2px 2px 4px rgba(0, 0, 0, 0.9);
+    z-index: 10;
+    pointer-events: none;
+}
+
+.power-ready-pulse {
+    position: absolute;
+    inset: 0;
+    animation: readyPulse 2s infinite;
+    pointer-events: none;
+}
+
+@keyframes readyPulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+}

@@ -49,6 +49,20 @@ export class Player {
     this.attackCooldownDuration = 1.0;
     this.baseAttackSpeed = 50;
     
+    // In Player constructor, add individual cooldowns:
+    this.attackCooldowns = {
+      'p': { duration: 2.0, remaining: 0 },
+      'l': { duration: 4.0, remaining: 0 },
+      'o': { duration: 2.0, remaining: 0 },
+      'k': { duration: 4.0, remaining: 0 },
+      'i': { duration: 8.0, remaining: 0 },
+      'j': { duration: 1.0, remaining: 0 }
+    };
+    
+    // Remove or keep global cooldown as a minimum delay between any attacks
+    this.globalCooldown = 0;
+    this.globalCooldownDuration = 0.3; // Minimum 0.3s between any attacks
+    
     // HEALTH SYSTEM
     this.maxHealth = 1000;
     this.health = 1000;
@@ -366,9 +380,16 @@ export class Player {
   update(delta) {
     if (this.isDead) return;
     
-    // Update cooldown
-    if (this.attackCooldown > 0) {
-      this.attackCooldown -= delta;
+    // Update global cooldown
+    if (this.globalCooldown > 0) {
+      this.globalCooldown -= delta;
+    }
+      
+    // Update individual power cooldowns
+    for (const key in this.attackCooldowns) {
+      if (this.attackCooldowns[key].remaining > 0) {
+        this.attackCooldowns[key].remaining -= delta;
+      }
     }
     
     if (this.mixer && this.actions.idle && this.actions.walk && this.actions.run) {
@@ -413,32 +434,36 @@ export class Player {
     this.isRunning = keys.Shift && this.isMoving;
     this.moveForce = this.isRunning ? this.baseMoveForce + 10 : this.baseMoveForce;
     
-    // === Handle Attack Keys ===
-    if (this.attackCooldown <= 0) {
-      const attackKeyMap = { 'p': 'p', 'l': 'l', 'o': 'o', 'k': 'k', 'i': 'i', 'j': 'j' };
-      let triggeredAttack = null;
-      let attackKey = null;
-
-      for (const [inputKey, key] of Object.entries(attackKeyMap)) {
-        if (keys[inputKey] && this.attacks[key]) {
-          triggeredAttack = this.attacks[key];
-          attackKey = key;
-          break; // First pressed key wins
-        }
-      }
-
-      if (triggeredAttack && this.currentAction !== triggeredAttack) {
-        if (this.currentAction) this.currentAction.fadeOut(0.3);
-        triggeredAttack.reset().fadeIn(0.3).play();
-        this.currentAction = triggeredAttack;
-        
-        // Fire projectiles immediately when attack starts
-        this.fireProjectiles(attackKey);
-        
-        // Start cooldown
-        this.attackCooldown = this.attackCooldownDuration;
-      }
-    }
+    // === Handle Attack Keys with Individual Cooldowns ===
+     if (this.globalCooldown <= 0) {
+       const attackKeyMap = { 'p': 'p', 'l': 'l', 'o': 'o', 'k': 'k', 'i': 'i', 'j': 'j' };
+       let triggeredAttack = null;
+       let attackKey = null;
+   
+       for (const [inputKey, key] of Object.entries(attackKeyMap)) {
+         // Check if key is pressed AND power is off cooldown
+         if (keys[inputKey] && 
+             this.attacks[key] && 
+             this.attackCooldowns[key].remaining <= 0) {
+           triggeredAttack = this.attacks[key];
+           attackKey = key;
+           break;
+         }
+       }
+   
+       if (triggeredAttack && this.currentAction !== triggeredAttack) {
+         if (this.currentAction) this.currentAction.fadeOut(0.3);
+         triggeredAttack.reset().fadeIn(0.3).play();
+         this.currentAction = triggeredAttack;
+         
+         // Fire projectiles
+         this.fireProjectiles(attackKey);
+         
+         // Start cooldowns
+         this.globalCooldown = this.globalCooldownDuration;
+         this.attackCooldowns[attackKey].remaining = this.attackCooldowns[attackKey].duration;
+       }
+     }
     
     // === Rotation ===
     if (rotationInput !== 0) {
