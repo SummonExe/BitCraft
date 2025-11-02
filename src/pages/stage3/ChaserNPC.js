@@ -509,6 +509,12 @@ export class ChaserNPC {
           
           // Fire projectiles immediately when attack starts
           this.fireProjectiles(attackIndex);
+          // Check if player is very close for melee damage
+          const meleeRange = 15; // Adjust this value for melee range
+          if (distanceToTarget <= meleeRange) {
+            console.log('Witch landed melee attack!');
+            this.target.takeDamage(100);
+          }
         }
       }
       // RETURN TO IDLE IF NOT ATTACKING
