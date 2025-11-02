@@ -15,6 +15,8 @@ import witch from "../../../public/models/witch/witch_Idle.fbx";
 import kid from "../../../public/models/kid2/Idle.fbx";
 import groundTexture from "../../../public/2025-10-23 123028.png";
 
+import MusicSound from "../../../src/assets/sounds/horror.mp3";
+
 import powerP from "../../../public/models/projectiles/rasengan.glb";
 import powerL from "../../../public/models/projectiles/speakerman_cross_effect.glb";
 import powerO from "../../../public/models/projectiles/adorned_metal_sphere.glb";
@@ -32,6 +34,7 @@ import power5 from "../../../public/models/projectiles/graveyard_fog_eyeball_-_b
 // === LOADING SCREEN & UI ===
 const loadingScreen = document.getElementById('loadingScreen');
 const healthUI = document.getElementById('healthUI');
+const powerUI = document.getElementById('powerUI');
 const playerHealthFill = document.getElementById('playerHealthFill');
 const playerHealthText = document.getElementById('playerHealthText');
 const witchHealthFill = document.getElementById('witchHealthFill');
@@ -39,6 +42,27 @@ const witchHealthText = document.getElementById('witchHealthText');
 
 if (!loadingScreen) {
   console.error("Loading screen element not found!");
+}
+
+// === BACKGROUND MUSIC ===
+const bgMusic = new Audio(MusicSound);
+bgMusic.loop = true;
+bgMusic.volume = 0.3; // Adjusted for better gameplay experience
+bgMusic.preload = 'auto';
+
+// Function to start music (handles autoplay restrictions)
+function startBackgroundMusic() {
+  bgMusic.play().catch(error => {
+    console.log('Autoplay prevented, waiting for user interaction:', error);
+    // Fallback: play on first user interaction
+    const playOnInteraction = () => {
+      bgMusic.play().catch(() => {});
+      document.removeEventListener('keydown', playOnInteraction);
+      document.removeEventListener('click', playOnInteraction);
+    };
+    document.addEventListener('keydown', playOnInteraction, { once: true });
+    document.addEventListener('click', playOnInteraction, { once: true });
+  });
 }
 
 // === GLOBAL STATE ===
@@ -50,6 +74,171 @@ let outsideOffset = 50;
 let doorOffset = -15;
 let loadingComplete = false;
 let gameOver = false;
+
+// Create power UI configuration
+const powerConfigs = [
+  { key: 'p', name: 'Triple Shot', color: '#ff6b6b', modelPath: powerP },
+  { key: 'l', name: 'Circle Burst', color: '#4ecdc4', modelPath: powerL },
+  { key: 'o', name: 'Single Shot', color: '#95e1d3', modelPath: powerO },
+  { key: 'k', name: 'Fast Shot', color: '#f38181', modelPath: powerK },
+  { key: 'i', name: 'Spread Shot', color: '#aa96da', modelPath: powerI },
+  { key: 'j', name: 'Magic Orb', color: '#fcbad3', modelPath: powerJ }
+];
+
+// Store mini renderers and scenes for each power
+const powerMiniScenes = new Map();
+
+// Initialize Power UI
+async function initializePowerUI() {
+  if (!powerUI) return;
+  
+  for (const config of powerConfigs) {
+    const slot = document.createElement('div');
+    slot.className = 'power-slot';
+    slot.id = `power-slot-${config.key}`;
+    slot.dataset.key = config.key;
+    
+    // Create mini canvas for 3D model preview
+    const miniCanvas = document.createElement('canvas');
+    miniCanvas.className = 'power-model-preview';
+    miniCanvas.width = 100;  // Static resolution
+    miniCanvas.height = 100;
+    
+    // Create mini scene for this power
+    const miniScene = new THREE.Scene();
+    miniScene.background = new THREE.Color(0x0a0a0a);
+    
+    const miniCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+    miniCamera.position.set(0, 0, 3);
+    
+    const miniRenderer = new THREE.WebGLRenderer({ 
+      canvas: miniCanvas, 
+      antialias: true,
+      alpha: true 
+    });
+    miniRenderer.setSize(100, 100);
+    
+    // Lighting for mini scene
+    const ambLight = new THREE.AmbientLight(0xffffff, 0.8);
+    miniScene.add(ambLight);
+    
+    const spotLight = new THREE.SpotLight(config.color, 1.5);
+    spotLight.position.set(2, 2, 2);
+    miniScene.add(spotLight);
+    
+    // Load and add model to mini scene
+    try {
+      if (projectileModelCache.has(config.modelPath)) {
+        const cachedModel = projectileModelCache.get(config.modelPath);
+        const modelClone = cachedModel.clone(true);
+        
+        // Auto-scale and center model
+        const box = new THREE.Box3().setFromObject(modelClone);
+        const size = box.getSize(new THREE.Vector3());
+        const maxDim = Math.max(size.x, size.y, size.z);
+        const scale = 1.8 / maxDim;
+        modelClone.scale.multiplyScalar(scale);
+        
+        // Center the model
+        const center = box.getCenter(new THREE.Vector3());
+        modelClone.position.sub(center.multiplyScalar(scale));
+        
+        miniScene.add(modelClone);
+        
+        // Render ONCE - no animation
+        miniRenderer.render(miniScene, miniCamera);
+        
+        // Dispose of the mini renderer to free memory
+        miniRenderer.dispose();
+      }
+    } catch (error) {
+      console.warn(`Failed to load model for power ${config.key}:`, error);
+    }
+    
+    slot.appendChild(miniCanvas);
+    
+    // Keybind display
+    const keybind = document.createElement('div');
+    keybind.className = 'power-keybind';
+    keybind.textContent = config.key.toUpperCase();
+    keybind.style.color = config.color;
+    keybind.style.borderColor = config.color;
+    keybind.style.textShadow = `0 0 5px ${config.color}`;
+    slot.appendChild(keybind);
+    
+    // Power name
+    const name = document.createElement('div');
+    name.className = 'power-name';
+    name.textContent = config.name;
+    name.dataset.color = config.color;
+    slot.appendChild(name);
+    
+    // Cooldown overlay
+    const cooldownOverlay = document.createElement('div');
+    cooldownOverlay.className = 'power-cooldown-overlay';
+    cooldownOverlay.style.height = '0%';
+    slot.appendChild(cooldownOverlay);
+    
+    // Cooldown text
+    const cooldownText = document.createElement('div');
+    cooldownText.className = 'power-cooldown-text';
+    cooldownText.style.display = 'none';
+    slot.appendChild(cooldownText);
+    
+    // Ready pulse
+    const readyPulse = document.createElement('div');
+    readyPulse.className = 'power-ready-pulse';
+    readyPulse.style.background = `radial-gradient(circle at center, ${config.color}10, transparent)`;
+    slot.appendChild(readyPulse);
+    
+    // Apply color styling
+    slot.style.borderColor = config.color;
+    slot.style.boxShadow = `0 0 20px ${config.color}40, inset 0 0 20px rgba(0, 0, 0, 0.6)`;
+    
+    powerUI.appendChild(slot);
+  }
+  // NO MORE animatePowerModels() call here!
+}
+
+
+
+// Update Power UI based on cooldowns
+function updatePowerUI() {
+  if (!player || !powerUI) return;
+  
+  powerConfigs.forEach(config => {
+    const slot = document.getElementById(`power-slot-${config.key}`);
+    if (!slot) return;
+    
+    const cooldown = player.attackCooldowns[config.key];
+    const cooldownOverlay = slot.querySelector('.power-cooldown-overlay');
+    const cooldownText = slot.querySelector('.power-cooldown-text');
+    const powerName = slot.querySelector('.power-name');
+    
+    if (cooldown.remaining > 0) {
+      // Power on cooldown
+      slot.classList.remove('ready');
+      const percent = (cooldown.remaining / cooldown.duration) * 100;
+      cooldownOverlay.style.height = `${percent}%`;
+      cooldownText.style.display = 'block';
+      cooldownText.textContent = `${cooldown.remaining.toFixed(1)}s`;
+      powerName.style.color = '#666';
+      powerName.style.textShadow = 'none';
+      slot.style.borderColor = 'rgba(80, 80, 80, 0.6)';
+      slot.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.8), inset 0 0 20px rgba(0, 0, 0, 0.6)';
+    } else {
+      // Power ready
+      slot.classList.add('ready');
+      cooldownOverlay.style.height = '0%';
+      cooldownText.style.display = 'none';
+      powerName.style.color = config.color;
+      powerName.style.textShadow = `0 0 8px ${config.color}80`;
+      slot.style.borderColor = config.color;
+      slot.style.boxShadow = `0 0 20px ${config.color}40, inset 0 0 20px rgba(0, 0, 0, 0.6)`;
+    }
+  });
+}
+
 
 // Preload cache for projectile models - MAKE GLOBALLY ACCESSIBLE
 const projectileModelCache = new Map();
@@ -289,6 +478,10 @@ const keys = {
   ArrowDown: false,
   ArrowLeft: false,
   ArrowRight: false,
+  w: false,
+  a: false,
+  s: false,
+  d: false,
   Shift: false,
   i: false,
   j: false,
@@ -296,9 +489,9 @@ const keys = {
   o: false,
   p: false,
   l: false,
-  Escape: false  // Add Escape key
+  Escape: false,
+  c: false  // Add C key for control toggle
 };
-
 // Pause menu state
 let gamePaused = false;
 let lastDeltaTime = 0;
@@ -329,7 +522,58 @@ function togglePauseMenu() {
   }
 }
 
-// Event listeners for pause menu
+// Add this function after the togglePauseMenu function
+function toggleControlMode() {
+  if (!player || !loadingComplete || gameOver) return;
+  
+  const newMode = player.toggleControlMode();
+  
+  // Show notification
+  const notification = document.createElement('div');
+  notification.style.cssText = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(20, 20, 20, 0.95);
+    color: #8b0000;
+    font-family: 'DK Okiku', sans-serif;
+    font-size: 2em;
+    padding: 30px 60px;
+    border: 3px solid rgba(139, 0, 0, 0.7);
+    border-radius: 5px;
+    box-shadow: 0 0 50px rgba(139, 0, 0, 0.4);
+    text-shadow: 0 0 10px rgba(139, 0, 0, 0.8);
+    z-index: 9998;
+    animation: fadeInOut 2s ease-in-out;
+  `;
+  notification.textContent = newMode === 'keyboard' 
+    ? '☠ KEYBOARD MODE ☠' 
+    : '☠ ORBIT MODE ☠';
+  
+  document.body.appendChild(notification);
+  
+  // Add animation style if not already present
+  if (!document.getElementById('controlToggleStyle')) {
+    const style = document.createElement('style');
+    style.id = 'controlToggleStyle';
+    style.textContent = `
+      @keyframes fadeInOut {
+        0% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+        20% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        100% { opacity: 0; transform: translate(-50%, -50%) scale(0.8); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+  
+  setTimeout(() => {
+    notification.remove();
+  }, 2000);
+}
+
+// Update the keydown event listener
 window.addEventListener('keydown', (e) => {
   let key = e.key;
   
@@ -345,9 +589,16 @@ window.addEventListener('keydown', (e) => {
   // Escape key to toggle pause
   if (key === 'Escape' || key === 'Esc') {
     e.preventDefault();
-    // Only allow pausing after loading is complete
     if (loadingComplete && !gameOver) {
       togglePauseMenu();
+    }
+  }
+  
+  // C key to toggle control mode
+  if (key === 'c') {
+    e.preventDefault();
+    if (loadingComplete && !gameOver && !gamePaused) {
+      toggleControlMode();
     }
   }
 });
@@ -380,8 +631,14 @@ if (showObjectiveBtn) {
 if (closeBtns) {
   closeBtns.forEach(btn => {
     btn.addEventListener('click', () => {
-      if (controlsScreen) controlsScreen.style.display = 'none';
-      if (objectiveScreen) objectiveScreen.style.display = 'none';
+      if(loadingComplete){
+        if (controlsScreen) controlsScreen.style.display = 'none';
+        if (objectiveScreen) objectiveScreen.style.display = 'none';
+      }else{
+        if (controlsScreen) controlsScreen.style.display = 'none';
+        if (objectiveScreen) objectiveScreen.style.display = 'none';
+        if (loadingScreen) loadingScreen.style.display = 'flex';
+      }
     });
   });
 }
@@ -390,15 +647,28 @@ if (closeBtns) {
 if (controlsScreen) {
   controlsScreen.addEventListener('click', (e) => {
     if (e.target === controlsScreen) {
-      controlsScreen.style.display = 'none';
+      if(loadingComplete){
+        if (controlsScreen) controlsScreen.style.display = 'none';
+      }else{
+        if (controlsScreen) controlsScreen.style.display = 'none';
+        if (objectiveScreen) objectiveScreen.style.display = 'none';
+        if (loadingScreen) loadingScreen.style.display = 'flex';
+      };
     }
+    
   });
 }
 
 if (objectiveScreen) {
   objectiveScreen.addEventListener('click', (e) => {
     if (e.target === objectiveScreen) {
-      objectiveScreen.style.display = 'none';
+      if(loadingComplete){
+        if (objectiveScreen) objectiveScreen.style.display = 'none';
+      }else{
+        if (controlsScreen) controlsScreen.style.display = 'none';
+        if (objectiveScreen) objectiveScreen.style.display = 'none';
+        if (loadingScreen) loadingScreen.style.display = 'flex';
+      }
     }
   });
 }
@@ -635,18 +905,19 @@ async function initGame() {
     });
 
     player = new Player({
-      position: { x: 0, y: 0, z: 0 + outsideOffset },
-      modelPath: hero,
-      maxSpeed: 4,
-      moveForce: 7,
-      world,
-      scene,
-      mixers,
-      entityManager,
-      loadModel,
-      loadAnimation,
-      projectiles
-    });
+          position: { x: 0, y: 0, z: 0 + outsideOffset },
+          modelPath: hero,
+          maxSpeed: 4,
+          moveForce: 7,
+          world,
+          scene,
+          mixers,
+          entityManager,
+          loadModel,
+          loadAnimation,
+          projectiles,
+          camera: camera  // Add camera reference
+        });
 
     npc1 = new FollowerNPC({
       position: { x: -5, y: 0, z: -8 + outsideOffset },
@@ -687,13 +958,13 @@ async function initGame() {
 
     console.log("All models loaded. Starting game...");
     loadingComplete = true;
-    loadingScreen.style.display = 'none';
-    healthUI.style.display = 'block';
+    // loadingScreen.style.display = 'none';
+    // healthUI.style.display = 'block';
     
     // Initial health UI update
     updateHealthUI();
 
-    animate();
+    // animate();
 
   } catch (error) {
     console.error("Failed to load assets:", error);
@@ -729,6 +1000,9 @@ function animate() {
   // Update health UI
   updateHealthUI();
   
+  // Update power UI
+    updatePowerUI();
+  
   // Check for game over conditions
   checkGameOver();
 
@@ -759,4 +1033,70 @@ function animate() {
   renderer.render(scene, camera);
 }
 
-initGame();
+// ----- HELPER -------------------------------------------------
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+// ------------------------------------------------------------------
+
+// === START GAME – OBJECTIVE IS PART OF LOADING ==================
+(async () => {
+  try {
+    const objectiveScreen = document.getElementById('objectiveScreen');
+    const loadingScreen   = document.getElementById('loadingScreen');
+    const healthUI        = document.getElementById('healthUI');
+
+    // --------------------------------------------------------------
+    // 1. Hide the default loading screen (it is visible in HTML)
+    // --------------------------------------------------------------
+    if (loadingScreen) loadingScreen.style.display = 'none';
+
+    // --------------------------------------------------------------
+    // 2. Show Objective – this is the first loading phase
+    // --------------------------------------------------------------
+    if (objectiveScreen) objectiveScreen.style.display = 'flex';
+
+    // --------------------------------------------------------------
+    // 3. Kick off asset loading **in parallel**
+    // --------------------------------------------------------------
+    const loadingPromise = initGame();   // <-- your existing initGame()
+
+    // --------------------------------------------------------------
+    // 4. Wait **exactly** 30 seconds for the objective phase
+    // --------------------------------------------------------------
+    await wait(10_000);
+
+    // --------------------------------------------------------------
+    // 5. Objective phase finished – hide it
+    // --------------------------------------------------------------
+    if (objectiveScreen) objectiveScreen.style.display = 'none';
+
+    // --------------------------------------------------------------
+    // 6. If assets are not ready yet → show the real loading screen
+    // --------------------------------------------------------------
+    if (!loadingComplete) {
+      if (loadingScreen) loadingScreen.style.display = 'flex';
+      await loadingPromise;          // wait for the rest
+    }
+
+    // --------------------------------------------------------------
+    // 7. Everything is ready – hide loading UI, show game UI,
+    //     and finally start the render loop
+    // --------------------------------------------------------------
+    if (loadingScreen) loadingScreen.style.display = 'none';
+    if (healthUI) healthUI.style.display = 'block';
+    if (powerUI) {
+      powerUI.style.display = 'block';
+      await initializePowerUI();
+    }
+    
+    startBackgroundMusic();
+    animate();   // <-- ONLY HERE the game actually starts
+    
+  } catch (err) {
+    console.error('Game init failed:', err);
+    const ls = document.getElementById('loadingScreen');
+    if (ls) {
+      ls.style.display = 'flex';
+      ls.innerHTML = `<h2>Loading Failed</h2><p>Please refresh.</p>`;
+    }
+  }
+})();
