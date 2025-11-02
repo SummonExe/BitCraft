@@ -152,7 +152,7 @@ export class Player {
       'j': {
         pattern: 'single',
         speed: this.baseAttackSpeed + 80,
-        offsetY: 15,
+        offsetY: 10,
         scale: 5,
         damage: 40,
         modelPath: powerJ,
